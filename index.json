@@ -1,0 +1,80 @@
+{
+  "commands": [
+    {
+      "id": "notes.append-text",
+      "app": "Notes",
+      "request": "add the text {text} to the note titled {title} in Notes",
+      "params": [
+        "text",
+        "title"
+      ],
+      "file": "commands/notes/add-text.json"
+    },
+    {
+      "id": "notes.create-note-with-text",
+      "app": "Notes",
+      "request": "make a note titled {title} with the text {text} in Notes",
+      "params": [
+        "title",
+        "text"
+      ],
+      "file": "commands/notes/body.json"
+    },
+    {
+      "id": "notes.create-folder",
+      "app": "Notes",
+      "request": "make a folder named {name} in Notes",
+      "params": [
+        "name"
+      ],
+      "file": "commands/notes/folder.json"
+    },
+    {
+      "id": "notes.create-note-in-folder",
+      "app": "Notes",
+      "request": "make a note titled {title} in the Notes folder {folder}",
+      "params": [
+        "title",
+        "folder"
+      ],
+      "file": "commands/notes/in-folder.json"
+    },
+    {
+      "id": "notes.pin-note",
+      "app": "Notes",
+      "request": "pin the note titled {title} in Notes",
+      "params": [
+        "title"
+      ],
+      "file": "commands/notes/pin.json"
+    },
+    {
+      "id": "notes.create-note",
+      "app": "Notes",
+      "request": "make a note titled {title} in Notes",
+      "params": [
+        "title"
+      ],
+      "file": "commands/notes/title.json"
+    },
+    {
+      "id": "reminders.add-reminder-to-list",
+      "app": "Reminders",
+      "request": "add a reminder {title} to the list {list} in Reminders",
+      "params": [
+        "title",
+        "list"
+      ],
+      "file": "commands/reminders/in-list.json"
+    },
+    {
+      "id": "reminders.create-list",
+      "app": "Reminders",
+      "request": "make a list {name} in Reminders",
+      "params": [
+        "name"
+      ],
+      "file": "commands/reminders/list.json"
+    }
+  ]
+}
