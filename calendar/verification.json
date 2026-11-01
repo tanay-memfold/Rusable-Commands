@@ -1,0 +1,400 @@
+{
+ "app": "calendar",
+ "verified_on": {
+  "macos": "26.6.2 (25G83)",
+  "app": "16.0 (3036.4.14)"
+ },
+ "date": "2026-11-01",
+ "clones": [
+  "lib-cal3",
+  "lib-cal6"
+ ],
+ "functions": {
+  "calendar_create": {
+   "background": {
+    "verified": true,
+    "cases": 3,
+    "start_states": [
+     "closed",
+     "open"
+    ],
+    "kinds": [
+     "normal",
+     "exists"
+    ],
+    "checks": [
+     "app_stayed_hidden",
+     "distractors_unchanged",
+     "front_app_unchanged",
+     "no_dialog_popover_or_menu_left",
+     "no_error",
+     "no_new_window_or_dialog",
+     "nothing_changed",
+     "one_calendar_made",
+     "raised_AlreadyExists",
+     "return_matches",
+     "screen_unchanged"
+    ],
+    "failures": []
+   },
+   "ui": {
+    "verified": true,
+    "cases": 12,
+    "start_states": [
+     "alert_open",
+     "closed",
+     "hidden",
+     "launching",
+     "minimized",
+     "other_app",
+     "other_view",
+     "popover_open",
+     "search_text",
+     "selected"
+    ],
+    "kinds": [
+     "normal",
+     "blocked",
+     "exists"
+    ],
+    "checks": [
+     "distractors_unchanged",
+     "no_dialog_popover_or_menu_left",
+     "no_error",
+     "nothing_changed",
+     "one_calendar_made",
+     "popover_left_with_its_text",
+     "raised_AlreadyExists",
+     "raised_StateBlocked",
+     "return_matches",
+     "screen_changed_by_ui"
+    ],
+    "failures": []
+   }
+  },
+  "calendar_delete": {
+   "background": {
+    "verified": true,
+    "cases": 3,
+    "start_states": [
+     "closed",
+     "open"
+    ],
+    "kinds": [
+     "normal",
+     "not_found"
+    ],
+    "checks": [
+     "app_stayed_hidden",
+     "deleted",
+     "distractors_unchanged",
+     "front_app_unchanged",
+     "its_events_gone",
+     "no_dialog_popover_or_menu_left",
+     "no_error",
+     "no_new_window_or_dialog",
+     "nothing_changed",
+     "raised_NotFound",
+     "return_matches",
+     "screen_unchanged"
+    ],
+    "failures": []
+   },
+   "ui": {
+    "verified": true,
+    "cases": 11,
+    "start_states": [
+     "alert_open",
+     "closed",
+     "hidden",
+     "launching",
+     "minimized",
+     "other_app",
+     "other_view",
+     "popover_open",
+     "search_text",
+     "selected"
+    ],
+    "kinds": [
+     "normal",
+     "not_found"
+    ],
+    "checks": [
+     "deleted",
+     "distractors_unchanged",
+     "its_events_gone",
+     "no_dialog_popover_or_menu_left",
+     "no_error",
+     "nothing_changed",
+     "raised_NotFound",
+     "return_matches",
+     "screen_changed_by_ui"
+    ],
+    "failures": []
+   }
+  },
+  "calendar_list": {
+   "background": {
+    "verified": true,
+    "cases": 2,
+    "start_states": [
+     "closed",
+     "open"
+    ],
+    "kinds": [
+     "normal"
+    ],
+    "checks": [
+     "app_stayed_hidden",
+     "distractors_unchanged",
+     "front_app_unchanged",
+     "has_local",
+     "no_dialog_popover_or_menu_left",
+     "no_error",
+     "no_new_window_or_dialog",
+     "no_subscribed_or_reminders",
+     "screen_unchanged"
+    ],
+    "failures": []
+   }
+  },
+  "event_create": {
+   "background": {
+    "verified": true,
+    "cases": 8,
+    "start_states": [
+     "closed",
+     "open"
+    ],
+    "kinds": [
+     "shape0",
+     "shape1",
+     "shape2",
+     "shape3"
+    ],
+    "checks": [
+     "all_day",
+     "app_stayed_hidden",
+     "calendar",
+     "distractors_unchanged",
+     "end",
+     "front_app_unchanged",
+     "location",
+     "no_dialog_popover_or_menu_left",
+     "no_error",
+     "no_new_window_or_dialog",
+     "notes",
+     "one_event_made",
+     "return_matches",
+     "screen_unchanged",
+     "start",
+     "title"
+    ],
+    "failures": []
+   }
+  },
+  "event_delete": {
+   "background": {
+    "verified": true,
+    "cases": 4,
+    "start_states": [
+     "closed",
+     "open"
+    ],
+    "kinds": [
+     "normal",
+     "ambiguous",
+     "not_found"
+    ],
+    "checks": [
+     "app_stayed_hidden",
+     "deleted",
+     "distractors_unchanged",
+     "front_app_unchanged",
+     "no_dialog_popover_or_menu_left",
+     "no_error",
+     "no_new_window_or_dialog",
+     "nothing_changed",
+     "raised_Ambiguous",
+     "raised_NotFound",
+     "return_matches",
+     "screen_unchanged"
+    ],
+    "failures": []
+   },
+   "ui": {
+    "verified": true,
+    "cases": 13,
+    "start_states": [
+     "alert_open",
+     "closed",
+     "hidden",
+     "launching",
+     "minimized",
+     "other_app",
+     "other_view",
+     "popover_open",
+     "search_text",
+     "selected"
+    ],
+    "kinds": [
+     "normal",
+     "blocked",
+     "ambiguous",
+     "not_found"
+    ],
+    "checks": [
+     "deleted",
+     "distractors_unchanged",
+     "no_dialog_popover_or_menu_left",
+     "no_error",
+     "nothing_changed",
+     "popover_left_with_its_text",
+     "raised_Ambiguous",
+     "raised_NotFound",
+     "raised_StateBlocked",
+     "return_matches",
+     "screen_changed_by_ui"
+    ],
+    "failures": []
+   }
+  },
+  "event_get": {
+   "background": {
+    "verified": true,
+    "cases": 3,
+    "start_states": [
+     "closed",
+     "open"
+    ],
+    "kinds": [
+     "normal",
+     "not_found"
+    ],
+    "checks": [
+     "app_stayed_hidden",
+     "distractors_unchanged",
+     "fields",
+     "front_app_unchanged",
+     "no_dialog_popover_or_menu_left",
+     "no_error",
+     "no_new_window_or_dialog",
+     "nothing_changed",
+     "only_fields_asked",
+     "raised_NotFound",
+     "screen_unchanged"
+    ],
+    "failures": []
+   }
+  },
+  "event_list": {
+   "background": {
+    "verified": true,
+    "cases": 2,
+    "start_states": [
+     "closed",
+     "open"
+    ],
+    "kinds": [
+     "normal"
+    ],
+    "checks": [
+     "app_stayed_hidden",
+     "distractors_unchanged",
+     "earliest_first",
+     "front_app_unchanged",
+     "no_dialog_popover_or_menu_left",
+     "no_error",
+     "no_new_window_or_dialog",
+     "same_events",
+     "screen_unchanged"
+    ],
+    "failures": []
+   }
+  },
+  "event_search": {
+   "background": {
+    "verified": true,
+    "cases": 2,
+    "start_states": [
+     "closed",
+     "open"
+    ],
+    "kinds": [
+     "normal"
+    ],
+    "checks": [
+     "app_stayed_hidden",
+     "distractors_unchanged",
+     "found",
+     "front_app_unchanged",
+     "no_dialog_popover_or_menu_left",
+     "no_error",
+     "no_new_window_or_dialog",
+     "screen_unchanged"
+    ],
+    "failures": []
+   }
+  },
+  "event_update": {
+   "background": {
+    "verified": true,
+    "cases": 3,
+    "start_states": [
+     "closed",
+     "open"
+    ],
+    "kinds": [
+     "normal",
+     "ambiguous"
+    ],
+    "checks": [
+     "app_stayed_hidden",
+     "calendar",
+     "distractors_unchanged",
+     "end",
+     "event_present",
+     "front_app_unchanged",
+     "location",
+     "no_dialog_popover_or_menu_left",
+     "no_error",
+     "no_new_window_or_dialog",
+     "notes",
+     "nothing_changed",
+     "raised_Ambiguous",
+     "return_matches",
+     "screen_unchanged",
+     "start",
+     "title"
+    ],
+    "failures": []
+   }
+  }
+ },
+ "end_to_end": [
+  {
+   "program": "move_dentist_to_friday.py",
+   "passed": true,
+   "start_state": "popover_open+search_text",
+   "checks": {
+    "program_ok": true,
+    "moved_to_friday_same_time": true,
+    "this_weeks_dentist_untouched": true,
+    "two_dentist_events": true,
+    "team_sync_untouched": true
+   }
+  },
+  {
+   "program": "delete_overlapping_holds.py",
+   "passed": true,
+   "start_state": "popover_open+search_text",
+   "checks": {
+    "program_ok": true,
+    "overlapping_holds_deleted": true,
+    "other_holds_kept": true,
+    "meeting_and_review_kept": true,
+    "listed_everything": true
+   }
+  }
+ ]
+}
