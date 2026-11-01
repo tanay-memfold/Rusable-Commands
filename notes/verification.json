@@ -1,0 +1,869 @@
+{
+ "app": "notes",
+ "verified_on": {
+  "macos": "26.6.2 (25G83)",
+  "app": "4.13 (3146.141.6)"
+ },
+ "date": "2026-11-01",
+ "clones": [
+  "lib-notes4",
+  "lib-notes7",
+  "lib-notes8"
+ ],
+ "functions": {
+  "checklist_create": {
+   "ui": {
+    "verified": true,
+    "cases": 11,
+    "start_states": [
+     "alert_open",
+     "closed",
+     "hidden",
+     "launching",
+     "minimized",
+     "other_app",
+     "other_view",
+     "search_text",
+     "selected_row",
+     "two_windows",
+     "typed_text"
+    ],
+    "kinds": [
+     "normal"
+    ],
+    "checks": [
+     "distractors_and_typed_text_unchanged",
+     "folder",
+     "no_dialog_or_menu_left",
+     "no_error",
+     "one_note_made",
+     "real_checklist",
+     "return_matches",
+     "screen_changed_by_ui",
+     "title",
+     "unchecked"
+    ],
+    "failures": []
+   }
+  },
+  "folder_create": {
+   "background": {
+    "verified": true,
+    "cases": 3,
+    "start_states": [
+     "closed",
+     "open"
+    ],
+    "kinds": [
+     "normal",
+     "exists"
+    ],
+    "checks": [
+     "distractors_and_typed_text_unchanged",
+     "front_app_unchanged",
+     "made",
+     "no_dialog_or_menu_left",
+     "no_error",
+     "no_new_window_or_dialog",
+     "notes_not_shown",
+     "nothing_changed",
+     "only_one_added",
+     "raised_AlreadyExists",
+     "return_matches",
+     "screen_unchanged"
+    ],
+    "failures": []
+   },
+   "ui": {
+    "verified": true,
+    "cases": 13,
+    "start_states": [
+     "alert_open",
+     "closed",
+     "hidden",
+     "launching",
+     "minimized",
+     "other_app",
+     "other_view",
+     "search_text",
+     "selected_row",
+     "two_windows",
+     "typed_text"
+    ],
+    "kinds": [
+     "normal",
+     "blocked",
+     "exists"
+    ],
+    "checks": [
+     "dialog_left_with_its_text",
+     "distractors_and_typed_text_unchanged",
+     "made",
+     "no_dialog_or_menu_left",
+     "no_error",
+     "nothing_changed",
+     "only_one_added",
+     "raised_AlreadyExists",
+     "raised_StateBlocked",
+     "return_matches",
+     "screen_changed_by_ui"
+    ],
+    "failures": []
+   }
+  },
+  "folder_delete": {
+   "background": {
+    "verified": false,
+    "cases": 3,
+    "start_states": [
+     "closed",
+     "open"
+    ],
+    "kinds": [
+     "normal",
+     "not_found"
+    ],
+    "checks": [
+     "deleted",
+     "distractors_and_typed_text_unchanged",
+     "front_app_unchanged",
+     "its_notes_trashed",
+     "no_dialog_or_menu_left",
+     "no_error",
+     "no_new_window_or_dialog",
+     "notes_not_shown",
+     "nothing_changed",
+     "raised_NotFound",
+     "return_matches",
+     "screen_unchanged"
+    ],
+    "failures": [
+     {
+      "state": "open",
+      "kind": "normal",
+      "failed": [
+       "deleted",
+       "its_notes_trashed"
+      ]
+     }
+    ]
+   },
+   "ui": {
+    "verified": true,
+    "cases": 12,
+    "start_states": [
+     "alert_open",
+     "closed",
+     "hidden",
+     "launching",
+     "minimized",
+     "other_app",
+     "other_view",
+     "search_text",
+     "selected_row",
+     "two_windows",
+     "typed_text"
+    ],
+    "kinds": [
+     "normal",
+     "not_found"
+    ],
+    "checks": [
+     "deleted",
+     "distractors_and_typed_text_unchanged",
+     "its_notes_trashed",
+     "no_dialog_or_menu_left",
+     "no_error",
+     "nothing_changed",
+     "raised_NotFound",
+     "return_matches",
+     "screen_changed_by_ui"
+    ],
+    "failures": []
+   }
+  },
+  "folder_list": {
+   "background": {
+    "verified": true,
+    "cases": 2,
+    "start_states": [
+     "closed",
+     "open"
+    ],
+    "kinds": [
+     "normal"
+    ],
+    "checks": [
+     "counts",
+     "distractors_and_typed_text_unchanged",
+     "front_app_unchanged",
+     "names",
+     "no_dialog_or_menu_left",
+     "no_error",
+     "no_new_window_or_dialog",
+     "notes_not_shown",
+     "screen_unchanged"
+    ],
+    "failures": []
+   }
+  },
+  "folder_rename": {
+   "background": {
+    "verified": false,
+    "cases": 2,
+    "start_states": [
+     "closed",
+     "open"
+    ],
+    "kinds": [
+     "normal"
+    ],
+    "checks": [
+     "count_same",
+     "distractors_and_typed_text_unchanged",
+     "front_app_unchanged",
+     "no_dialog_or_menu_left",
+     "no_error",
+     "no_new_window_or_dialog",
+     "notes_not_shown",
+     "renamed",
+     "return_matches",
+     "screen_unchanged"
+    ],
+    "failures": [
+     {
+      "state": "open",
+      "kind": "normal",
+      "failed": [
+       "renamed"
+      ]
+     }
+    ]
+   },
+   "ui": {
+    "verified": true,
+    "cases": 11,
+    "start_states": [
+     "alert_open",
+     "closed",
+     "hidden",
+     "launching",
+     "minimized",
+     "other_app",
+     "other_view",
+     "search_text",
+     "selected_row",
+     "two_windows",
+     "typed_text"
+    ],
+    "kinds": [
+     "normal"
+    ],
+    "checks": [
+     "count_same",
+     "distractors_and_typed_text_unchanged",
+     "no_dialog_or_menu_left",
+     "no_error",
+     "renamed",
+     "return_matches",
+     "screen_changed_by_ui"
+    ],
+    "failures": []
+   }
+  },
+  "note_append": {
+   "background": {
+    "verified": true,
+    "cases": 4,
+    "start_states": [
+     "closed",
+     "open"
+    ],
+    "kinds": [
+     "normal",
+     "not_found",
+     "similar"
+    ],
+    "checks": [
+     "body",
+     "distractors_and_typed_text_unchanged",
+     "folder",
+     "front_app_unchanged",
+     "no_dialog_or_menu_left",
+     "no_error",
+     "no_new_window_or_dialog",
+     "note_present",
+     "notes_not_shown",
+     "nothing_changed",
+     "raised_NotFound",
+     "return_matches",
+     "screen_unchanged",
+     "title"
+    ],
+    "failures": []
+   },
+   "ui": {
+    "verified": true,
+    "cases": 14,
+    "start_states": [
+     "alert_open",
+     "closed",
+     "hidden",
+     "launching",
+     "minimized",
+     "other_app",
+     "other_view",
+     "search_text",
+     "selected_row",
+     "two_windows",
+     "typed_text"
+    ],
+    "kinds": [
+     "normal",
+     "blocked",
+     "not_found",
+     "similar"
+    ],
+    "checks": [
+     "body",
+     "dialog_left_with_its_text",
+     "distractors_and_typed_text_unchanged",
+     "folder",
+     "no_dialog_or_menu_left",
+     "no_error",
+     "note_present",
+     "nothing_changed",
+     "raised_NotFound",
+     "raised_StateBlocked",
+     "return_matches",
+     "screen_changed_by_ui",
+     "title"
+    ],
+    "failures": []
+   }
+  },
+  "note_create": {
+   "background": {
+    "verified": true,
+    "cases": 3,
+    "start_states": [
+     "closed",
+     "open"
+    ],
+    "kinds": [
+     "normal",
+     "empty_body"
+    ],
+    "checks": [
+     "body",
+     "default_folder",
+     "distractors_and_typed_text_unchanged",
+     "empty_body",
+     "folder",
+     "front_app_unchanged",
+     "no_dialog_or_menu_left",
+     "no_error",
+     "no_new_window_or_dialog",
+     "not_pinned",
+     "notes_not_shown",
+     "one_note_made",
+     "return_matches",
+     "screen_unchanged",
+     "title"
+    ],
+    "failures": []
+   },
+   "ui": {
+    "verified": true,
+    "cases": 13,
+    "start_states": [
+     "alert_open",
+     "closed",
+     "hidden",
+     "launching",
+     "minimized",
+     "other_app",
+     "other_view",
+     "search_text",
+     "selected_row",
+     "two_windows",
+     "typed_text"
+    ],
+    "kinds": [
+     "normal",
+     "blocked",
+     "empty_body"
+    ],
+    "checks": [
+     "body",
+     "default_folder",
+     "dialog_left_with_its_text",
+     "distractors_and_typed_text_unchanged",
+     "empty_body",
+     "folder",
+     "new_note_made",
+     "no_dialog_or_menu_left",
+     "no_error",
+     "not_pinned",
+     "nothing_changed",
+     "one_note_made",
+     "raised_StateBlocked",
+     "return_matches",
+     "screen_changed_by_ui",
+     "title",
+     "typed_text_in_database_after_call",
+     "typed_text_landed_before_call"
+    ],
+    "failures": []
+   }
+  },
+  "note_delete": {
+   "background": {
+    "verified": false,
+    "cases": 4,
+    "start_states": [
+     "closed",
+     "open"
+    ],
+    "kinds": [
+     "normal",
+     "ambiguous",
+     "similar"
+    ],
+    "checks": [
+     "body",
+     "distractors_and_typed_text_unchanged",
+     "front_app_unchanged",
+     "no_dialog_or_menu_left",
+     "no_error",
+     "no_new_window_or_dialog",
+     "note_present",
+     "notes_not_shown",
+     "nothing_changed",
+     "raised_Ambiguous",
+     "return_matches",
+     "screen_unchanged",
+     "title",
+     "trashed"
+    ],
+    "failures": [
+     {
+      "state": "open",
+      "kind": "normal",
+      "failed": [
+       "trashed"
+      ]
+     },
+     {
+      "state": "open",
+      "kind": "similar",
+      "failed": [
+       "trashed"
+      ]
+     }
+    ]
+   },
+   "ui": {
+    "verified": true,
+    "cases": 13,
+    "start_states": [
+     "alert_open",
+     "closed",
+     "hidden",
+     "launching",
+     "minimized",
+     "other_app",
+     "other_view",
+     "search_text",
+     "selected_row",
+     "two_windows",
+     "typed_text"
+    ],
+    "kinds": [
+     "normal",
+     "ambiguous",
+     "similar"
+    ],
+    "checks": [
+     "body",
+     "distractors_and_typed_text_unchanged",
+     "no_dialog_or_menu_left",
+     "no_error",
+     "note_present",
+     "nothing_changed",
+     "raised_Ambiguous",
+     "return_matches",
+     "screen_changed_by_ui",
+     "title",
+     "trashed"
+    ],
+    "failures": []
+   }
+  },
+  "note_get": {
+   "background": {
+    "verified": true,
+    "cases": 4,
+    "start_states": [
+     "closed",
+     "open"
+    ],
+    "kinds": [
+     "normal",
+     "ambiguous",
+     "not_found"
+    ],
+    "checks": [
+     "body",
+     "distractors_and_typed_text_unchanged",
+     "folder",
+     "front_app_unchanged",
+     "no_dialog_or_menu_left",
+     "no_error",
+     "no_new_window_or_dialog",
+     "notes_not_shown",
+     "nothing_changed",
+     "only_fields_asked",
+     "raised_Ambiguous",
+     "raised_NotFound",
+     "screen_unchanged",
+     "title"
+    ],
+    "failures": []
+   }
+  },
+  "note_list": {
+   "background": {
+    "verified": true,
+    "cases": 2,
+    "start_states": [
+     "closed",
+     "open"
+    ],
+    "kinds": [
+     "normal"
+    ],
+    "checks": [
+     "all_in_folder",
+     "bodies_match",
+     "distractors_and_typed_text_unchanged",
+     "front_app_unchanged",
+     "no_dialog_or_menu_left",
+     "no_error",
+     "no_new_window_or_dialog",
+     "notes_not_shown",
+     "screen_unchanged"
+    ],
+    "failures": []
+   }
+  },
+  "note_move": {
+   "background": {
+    "verified": true,
+    "cases": 4,
+    "start_states": [
+     "closed",
+     "open"
+    ],
+    "kinds": [
+     "normal",
+     "not_found",
+     "similar"
+    ],
+    "checks": [
+     "body",
+     "distractors_and_typed_text_unchanged",
+     "folder",
+     "front_app_unchanged",
+     "no_dialog_or_menu_left",
+     "no_error",
+     "no_new_window_or_dialog",
+     "not_trashed",
+     "note_present",
+     "notes_not_shown",
+     "nothing_changed",
+     "raised_NotFound",
+     "return_matches",
+     "screen_unchanged",
+     "title"
+    ],
+    "failures": []
+   },
+   "ui": {
+    "verified": true,
+    "cases": 13,
+    "start_states": [
+     "alert_open",
+     "closed",
+     "hidden",
+     "launching",
+     "minimized",
+     "other_app",
+     "other_view",
+     "search_text",
+     "selected_row",
+     "two_windows",
+     "typed_text"
+    ],
+    "kinds": [
+     "normal",
+     "not_found",
+     "similar"
+    ],
+    "checks": [
+     "body",
+     "distractors_and_typed_text_unchanged",
+     "folder",
+     "no_dialog_or_menu_left",
+     "no_error",
+     "not_trashed",
+     "note_present",
+     "nothing_changed",
+     "raised_NotFound",
+     "return_matches",
+     "screen_changed_by_ui",
+     "title"
+    ],
+    "failures": []
+   }
+  },
+  "note_pin": {
+   "ui": {
+    "verified": true,
+    "cases": 12,
+    "start_states": [
+     "alert_open",
+     "closed",
+     "hidden",
+     "launching",
+     "minimized",
+     "other_app",
+     "other_view",
+     "search_text",
+     "selected_row",
+     "two_windows",
+     "typed_text"
+    ],
+    "kinds": [
+     "normal",
+     "similar"
+    ],
+    "checks": [
+     "body",
+     "distractors_and_typed_text_unchanged",
+     "folder",
+     "no_dialog_or_menu_left",
+     "no_error",
+     "note_present",
+     "pinned",
+     "screen_changed_by_ui",
+     "title"
+    ],
+    "failures": []
+   }
+  },
+  "note_rename": {
+   "background": {
+    "verified": false,
+    "cases": 4,
+    "start_states": [
+     "closed",
+     "open"
+    ],
+    "kinds": [
+     "normal",
+     "ambiguous",
+     "similar"
+    ],
+    "checks": [
+     "body",
+     "distractors_and_typed_text_unchanged",
+     "folder",
+     "front_app_unchanged",
+     "no_dialog_or_menu_left",
+     "no_error",
+     "no_new_window_or_dialog",
+     "note_present",
+     "notes_not_shown",
+     "nothing_changed",
+     "raised_Ambiguous",
+     "return_matches",
+     "screen_unchanged",
+     "title"
+    ],
+    "failures": [
+     {
+      "state": "open",
+      "kind": "normal",
+      "failed": [
+       "title",
+       "return_matches"
+      ]
+     },
+     {
+      "state": "open",
+      "kind": "similar",
+      "failed": [
+       "title",
+       "return_matches"
+      ]
+     }
+    ]
+   },
+   "ui": {
+    "verified": true,
+    "cases": 13,
+    "start_states": [
+     "alert_open",
+     "closed",
+     "hidden",
+     "launching",
+     "minimized",
+     "other_app",
+     "other_view",
+     "search_text",
+     "selected_row",
+     "two_windows",
+     "typed_text"
+    ],
+    "kinds": [
+     "normal",
+     "ambiguous",
+     "similar"
+    ],
+    "checks": [
+     "body",
+     "distractors_and_typed_text_unchanged",
+     "folder",
+     "no_dialog_or_menu_left",
+     "no_error",
+     "note_present",
+     "nothing_changed",
+     "raised_Ambiguous",
+     "return_matches",
+     "screen_changed_by_ui",
+     "title"
+    ],
+    "failures": []
+   }
+  },
+  "note_replace_body": {
+   "background": {
+    "verified": true,
+    "cases": 3,
+    "start_states": [
+     "closed",
+     "open"
+    ],
+    "kinds": [
+     "normal",
+     "similar"
+    ],
+    "checks": [
+     "body",
+     "distractors_and_typed_text_unchanged",
+     "folder",
+     "front_app_unchanged",
+     "no_dialog_or_menu_left",
+     "no_error",
+     "no_new_window_or_dialog",
+     "note_present",
+     "notes_not_shown",
+     "return_matches",
+     "screen_unchanged",
+     "title"
+    ],
+    "failures": []
+   },
+   "ui": {
+    "verified": true,
+    "cases": 12,
+    "start_states": [
+     "alert_open",
+     "closed",
+     "hidden",
+     "launching",
+     "minimized",
+     "other_app",
+     "other_view",
+     "search_text",
+     "selected_row",
+     "two_windows",
+     "typed_text"
+    ],
+    "kinds": [
+     "normal",
+     "similar"
+    ],
+    "checks": [
+     "body",
+     "distractors_and_typed_text_unchanged",
+     "folder",
+     "no_dialog_or_menu_left",
+     "no_error",
+     "note_present",
+     "return_matches",
+     "screen_changed_by_ui",
+     "title"
+    ],
+    "failures": []
+   }
+  },
+  "note_search": {
+   "background": {
+    "verified": true,
+    "cases": 2,
+    "start_states": [
+     "closed",
+     "open"
+    ],
+    "kinds": [
+     "normal"
+    ],
+    "checks": [
+     "distractors_and_typed_text_unchanged",
+     "found_all",
+     "front_app_unchanged",
+     "no_dialog_or_menu_left",
+     "no_error",
+     "no_new_window_or_dialog",
+     "notes_not_shown",
+     "screen_unchanged",
+     "two_found"
+    ],
+    "failures": []
+   }
+  }
+ },
+ "end_to_end": [
+  {
+   "program": "goa_trip_and_invoices.py",
+   "passed": false,
+   "start_state": "dialog_open+typed_text",
+   "checks": {
+    "program_ok": true,
+    "newest_goa_note_appended": true,
+    "older_goa_note_unchanged": true,
+    "invoices_folder_made": true,
+    "invoice_notes_moved": true,
+    "two_invoice_notes": true,
+    "invitation_untouched": true,
+    "typed_text_kept": false,
+    "no_dialog_left": true
+   }
+  },
+  {
+   "program": "delete_empty_notes.py",
+   "passed": true,
+   "start_state": "dialog_open+typed_text",
+   "checks": {
+    "program_ok": true,
+    "empty_outside_keep_deleted": true,
+    "empty_in_keep_kept": true,
+    "non_empty_kept": true,
+    "typed_text_kept": true,
+    "no_dialog_left": true
+   }
+  }
+ ]
+}

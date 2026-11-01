@@ -14,6 +14,7 @@ install, no model, no keys.
 
 | App | Folder | Import |
 |---|---|---|
+| Notes | [`notes/`](notes/) | `import notes` |
 | Calendar | [`calendar/`](calendar/) | `import calendar_app as calendar` |
 
 An agent writes a short program with keyword arguments, like this:
@@ -96,6 +97,26 @@ are enabled. Each folder's `verification.json` lists every check and start state
 left out and why.
 
 ### Verified
+
+**Notes** ([README](notes/README.md)):
+
+| Function | Background | UI |
+|---|---|---|
+| `checklist_create` | — | verified |
+| `folder_create` | verified | verified |
+| `folder_delete` | — | verified |
+| `folder_list` | verified | — |
+| `folder_rename` | — | verified |
+| `note_append` | verified | verified |
+| `note_create` | verified | verified |
+| `note_delete` | — | verified |
+| `note_get` | verified | — |
+| `note_list` | verified | — |
+| `note_move` | verified | verified |
+| `note_pin` | — | verified |
+| `note_rename` | — | verified |
+| `note_replace_body` | verified | verified |
+| `note_search` | verified | — |
 
 **Calendar** ([README](calendar/README.md)):
 
