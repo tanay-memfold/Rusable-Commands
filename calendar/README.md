@@ -126,10 +126,10 @@ confirmation.
 
 End-to-end programs (run in UI mode from a messy start state, outcome read from the app's database):
 
-- `examples/move_dentist_to_friday.py`: passed
-- `examples/delete_overlapping_holds.py`: passed
+- Move a dentist appointment to the same time on Friday: passed.
+- Delete overlapping holds: passed.
 
-Verified on macOS 26.6.2 (25G83), calendar 16.0 (3036.4.14), 2026-11-01, in fresh VM clones. Details: `verification.json`.
+Verified on macOS 26.6.2 (25G83), calendar 16.0 (3036.4.14), 2026-11-01, in fresh VM clones.
 
 ## Permissions
 

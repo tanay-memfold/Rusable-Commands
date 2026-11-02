@@ -198,12 +198,10 @@ the confirmation.
 
 End-to-end programs (run in UI mode from a messy start state, outcome read from the app's database):
 
-- Not included: the Goa trip / invoices program. Every outcome check passed (newest Goa note appended, invoice notes moved into a new Invoices folder, other notes untouched), but the half-typed text that was part of its messy start state never reached the other note in that run, so the run doesn't count. `note_create`'s typed-text start state is verified by a direct check instead (see `verification.json`).
-- `examples/delete_empty_notes.py`: passed
+- Delete empty notes except those in a folder: passed.
+- Goa trip / invoices: doesn't count. Every outcome check passed (newest Goa note appended, invoice notes moved into a new Invoices folder, other notes untouched), but the half-typed text that was part of its messy start state never reached the other note in that run. `note_create`'s typed-text start state is verified by a direct check instead.
 
-`demo.mp4`: a UI-mode run of the Goa trip / invoices program from a messy start state (a search typed, text half-typed in another note).
-
-Verified on macOS 26.6.2 (25G83), notes 4.13 (3146.141.6), 2026-11-01, in fresh VM clones. Details: `verification.json`.
+Verified on macOS 26.6.2 (25G83), notes 4.13 (3146.141.6), 2026-11-01, in fresh VM clones.
 
 ## Permissions
 
