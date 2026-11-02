@@ -1,0 +1,787 @@
+{
+  "app": "Calendar",
+  "import": "import calendar_app as calendar",
+  "macos_version": "26.6.2 (25G83)",
+  "app_version": "16.0 (3036.4.14)",
+  "commands": [
+    {
+      "name": "event_create",
+      "description": "Makes a new event, timed or all-day.",
+      "args": [
+        {
+          "name": "title",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The event's title; one non-empty line."
+        },
+        {
+          "name": "start",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "Start as \"YYYY-MM-DD HH:MM\" local time, or \"YYYY-MM-DD\" with all_day=True."
+        },
+        {
+          "name": "end",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "End as \"YYYY-MM-DD HH:MM\" local time, or the last day as \"YYYY-MM-DD\" with all_day=True."
+        },
+        {
+          "name": "location",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "Where it happens."
+        },
+        {
+          "name": "calendar",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "Local calendar to put it in, by exact name; None means the first local calendar."
+        },
+        {
+          "name": "all_day",
+          "type": "bool",
+          "required": false,
+          "default": false,
+          "meaning": "True for an all-day event."
+        },
+        {
+          "name": "notes",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "Notes for the event."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "background",
+          "meaning": "\"ui\" or \"background\"; use one of this command's modes."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "background"
+        ],
+        "default": "background"
+      },
+      "example_requests": [
+        "Add a dentist appointment on 18 November from 3:15 to 4 pm in Room 4",
+        "Put a team offsite on my Work calendar for 30 November and 1 December",
+        "Block out Friday afternoon for the car service",
+        "Add Mum's birthday as an all-day event on 5 December"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "If calendar is given, exactly one local calendar has that name; if not, at least one local calendar exists. For background mode, it has Automation permission for Calendar.",
+      "postcondition": "A new event exists with these values. Other events with the same title are left alone.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "uid",
+          "title",
+          "start",
+          "end",
+          "all_day",
+          "location",
+          "notes",
+          "calendar"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "title is not one non-empty line, a date is not in the right format, or end is not after start, or mode is not \"ui\" or \"background\""
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"ui\": typing into Calendar's date fields through System Events was not reliable"
+        },
+        {
+          "name": "NotFound",
+          "when": "no local calendar has that exact name"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one local calendar has that name; nothing is changed"
+        },
+        {
+          "name": "UIError",
+          "when": "Calendar's scripting failed, or the change was not seen in time"
+        }
+      ]
+    },
+    {
+      "name": "event_list",
+      "description": "Lists the events that start between two days, both included, earliest first, counting only the first occurrence of a repeating event.",
+      "args": [
+        {
+          "name": "from_date",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "First day, \"YYYY-MM-DD\"."
+        },
+        {
+          "name": "to_date",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "Last day, \"YYYY-MM-DD\"."
+        },
+        {
+          "name": "limit",
+          "type": "int",
+          "required": false,
+          "default": 50,
+          "meaning": "The most events to return."
+        },
+        {
+          "name": "fields",
+          "type": "str | list | None",
+          "required": false,
+          "default": null,
+          "meaning": "Keys to return, as a comma-separated string or a list; None means the default set."
+        },
+        {
+          "name": "calendar",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "Local calendar to list, by exact name; None means every local calendar."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "background",
+          "meaning": "\"ui\" or \"background\"; use one of this command's modes."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "background"
+        ],
+        "default": "background"
+      },
+      "example_requests": [
+        "What's on my calendar on 18 November?",
+        "Show me everything next week",
+        "List my Work calendar for this month"
+      ],
+      "effects": "read_only",
+      "destructive": false,
+      "precondition": "If calendar is given, exactly one local calendar has that name. For background mode, it has Automation permission for Calendar.",
+      "postcondition": "Nothing is changed.",
+      "returns": {
+        "type": "list",
+        "fields": [
+          "title",
+          "start",
+          "end",
+          "all_day",
+          "location",
+          "notes",
+          "calendar"
+        ],
+        "optional_fields": [
+          "uid"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "a date is not YYYY-MM-DD, fields names an unknown key and there are results, or mode is not \"ui\" or \"background\""
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"ui\": this command only reads, and has no verified ui mode"
+        },
+        {
+          "name": "NotFound",
+          "when": "no local calendar has that exact name"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one local calendar has that name; nothing is changed"
+        },
+        {
+          "name": "UIError",
+          "when": "Calendar's scripting failed, or the change was not seen in time"
+        }
+      ]
+    },
+    {
+      "name": "event_search",
+      "description": "Finds events between two days whose title, location or notes contain some words, ignoring case.",
+      "args": [
+        {
+          "name": "query",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The text to look for."
+        },
+        {
+          "name": "from_date",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "First day, \"YYYY-MM-DD\"."
+        },
+        {
+          "name": "to_date",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "Last day, \"YYYY-MM-DD\"."
+        },
+        {
+          "name": "fields",
+          "type": "str | list | None",
+          "required": false,
+          "default": null,
+          "meaning": "Keys to return, as a comma-separated string or a list; None means the default set."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "background",
+          "meaning": "\"ui\" or \"background\"; use one of this command's modes."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "background"
+        ],
+        "default": "background"
+      },
+      "example_requests": [
+        "When is my dentist appointment this month?",
+        "Find anything in Room 4 next week",
+        "Do I have a meeting about the budget in November?"
+      ],
+      "effects": "read_only",
+      "destructive": false,
+      "precondition": "For background mode, it has Automation permission for Calendar.",
+      "postcondition": "Nothing is changed.",
+      "returns": {
+        "type": "list",
+        "fields": [
+          "title",
+          "start",
+          "end",
+          "all_day",
+          "location",
+          "notes",
+          "calendar"
+        ],
+        "optional_fields": [
+          "uid"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "a date is not YYYY-MM-DD, fields names an unknown key and there are results, or mode is not \"ui\" or \"background\""
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"ui\": this command only reads, and has no verified ui mode"
+        },
+        {
+          "name": "UIError",
+          "when": "Calendar's scripting failed, or the change was not seen in time"
+        }
+      ]
+    },
+    {
+      "name": "event_get",
+      "description": "Gets the event with an exact title that starts on a given day.",
+      "args": [
+        {
+          "name": "match",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The event's exact title."
+        },
+        {
+          "name": "date",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The day it starts, \"YYYY-MM-DD\"."
+        },
+        {
+          "name": "fields",
+          "type": "str | list | None",
+          "required": false,
+          "default": null,
+          "meaning": "Keys to return, as a comma-separated string or a list; None means the default set."
+        },
+        {
+          "name": "calendar",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "Local calendar to look in, by exact name, when the same title exists twice that day."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "background",
+          "meaning": "\"ui\" or \"background\"; use one of this command's modes."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "background"
+        ],
+        "default": "background"
+      },
+      "example_requests": [
+        "What time is the Dentist on 18 November?",
+        "Where is the Team offsite on 30 November?",
+        "Show me the details of Standup on Wednesday"
+      ],
+      "effects": "read_only",
+      "destructive": false,
+      "precondition": "Exactly one event with that title starts that day, within calendar if given. For background mode, it has Automation permission for Calendar.",
+      "postcondition": "Nothing is changed.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "title",
+          "start",
+          "end",
+          "all_day",
+          "location",
+          "notes",
+          "calendar"
+        ],
+        "optional_fields": [
+          "uid"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "a date is not YYYY-MM-DD, fields names an unknown key, or mode is not \"ui\" or \"background\""
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"ui\": this command only reads, and has no verified ui mode"
+        },
+        {
+          "name": "NotFound",
+          "when": "no event with that exact title starts that day, within calendar if given, or calendar is given and no local calendar has that name"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one event matches; nothing is changed"
+        },
+        {
+          "name": "UIError",
+          "when": "Calendar's scripting failed, or the change was not seen in time"
+        }
+      ]
+    },
+    {
+      "name": "event_update",
+      "description": "Changes the given values of an event and leaves the rest as they are.",
+      "args": [
+        {
+          "name": "match",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The event's exact title now."
+        },
+        {
+          "name": "date",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The day it starts now, \"YYYY-MM-DD\"."
+        },
+        {
+          "name": "title",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "New title; one non-empty line."
+        },
+        {
+          "name": "start",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "New start, \"YYYY-MM-DD HH:MM\", or \"YYYY-MM-DD\" for an all-day event; give end too to move the event."
+        },
+        {
+          "name": "end",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "New end, \"YYYY-MM-DD HH:MM\", or the last day as \"YYYY-MM-DD\" for an all-day event."
+        },
+        {
+          "name": "location",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "New location."
+        },
+        {
+          "name": "notes",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "New notes."
+        },
+        {
+          "name": "all_day",
+          "type": "bool | None",
+          "required": false,
+          "default": null,
+          "meaning": "True or False to change whether it is all-day; None leaves it."
+        },
+        {
+          "name": "calendar",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "Local calendar to look in, by exact name, when the same title exists twice that day. It does not move the event."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "background",
+          "meaning": "\"ui\" or \"background\"; use one of this command's modes."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "background"
+        ],
+        "default": "background"
+      },
+      "example_requests": [
+        "Move my dentist appointment on the 18th to the 20th at the same time",
+        "Change the Standup on Wednesday to Room 5",
+        "Rename the Team offsite on 30 November to Team retreat",
+        "Add a note to Friday's Gym saying bring a towel"
+      ],
+      "effects": "idempotent",
+      "destructive": false,
+      "precondition": "Exactly one event with that title starts that day, within calendar if given. For background mode, it has Automation permission for Calendar.",
+      "postcondition": "The event holds the new values, and values not given are unchanged.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "uid",
+          "title",
+          "start",
+          "end",
+          "all_day",
+          "location",
+          "notes",
+          "calendar"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "title is not one non-empty line, a date is not YYYY-MM-DD, a date is not in the right format, or end is not after start, or mode is not \"ui\" or \"background\""
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"ui\": typing into Calendar's date fields through System Events was not reliable"
+        },
+        {
+          "name": "NotFound",
+          "when": "no event with that exact title starts that day, within calendar if given, or calendar is given and no local calendar has that name"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one event matches; nothing is changed"
+        },
+        {
+          "name": "UIError",
+          "when": "Calendar's scripting failed, or the change was not seen in time"
+        }
+      ]
+    },
+    {
+      "name": "event_delete",
+      "description": "Deletes the event with an exact title that starts on a given day.",
+      "args": [
+        {
+          "name": "match",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The event's exact title."
+        },
+        {
+          "name": "date",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The day it starts, \"YYYY-MM-DD\"."
+        },
+        {
+          "name": "calendar",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "Local calendar to look in, by exact name, when the same title exists twice that day."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "\"ui\" or \"background\"; use one of this command's modes."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "background",
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Delete the Dentist on 18 November",
+        "Cancel my Gym session on Friday",
+        "Remove the Hold: focus event on the 18th from my Work calendar"
+      ],
+      "effects": "idempotent",
+      "destructive": true,
+      "confirm": "Delete the event <title> on <date>?",
+      "precondition": "Exactly one event with that title starts that day, within calendar if given. For ui mode, the program running Python has Accessibility and Automation permission for System Events and Calendar. For background mode, it has Automation permission for Calendar.",
+      "postcondition": "The event is gone.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "uid",
+          "title",
+          "start",
+          "end",
+          "all_day",
+          "location",
+          "notes",
+          "calendar",
+          "deleted"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "a date is not YYYY-MM-DD, or mode is not \"ui\" or \"background\""
+        },
+        {
+          "name": "NotFound",
+          "when": "no event with that exact title starts that day, within calendar if given, or calendar is given and no local calendar has that name"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one event matches; nothing is changed"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "Calendar shows a dialog with typed text or with no Cancel button, or a Quick Event with typed text; nothing is changed"
+        },
+        {
+          "name": "UIError",
+          "when": "a screen element never appeared in time, Calendar's scripting failed, or the change was not seen in time"
+        }
+      ]
+    },
+    {
+      "name": "calendar_create",
+      "description": "Makes a new local calendar in On My Mac.",
+      "args": [
+        {
+          "name": "name",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The calendar's name; one non-empty line."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "\"ui\" or \"background\"; use one of this command's modes."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "background",
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Make a new calendar called Running club",
+        "Create a Family calendar",
+        "I need a separate calendar for Work"
+      ],
+      "effects": "idempotent",
+      "destructive": false,
+      "precondition": "No local calendar has that name. For ui mode, the program running Python has Accessibility and Automation permission for System Events and Calendar. For background mode, it has Automation permission for Calendar.",
+      "postcondition": "A local calendar with that name exists.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "name is not one non-empty line, or mode is not \"ui\" or \"background\""
+        },
+        {
+          "name": "AlreadyExists",
+          "when": "a local calendar has that name"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "Calendar shows a dialog with typed text or with no Cancel button, or a Quick Event with typed text, in which case nothing is changed; or another app is in front when the call goes to type"
+        },
+        {
+          "name": "UIError",
+          "when": "a screen element never appeared in time, Calendar's scripting failed, or the change was not seen in time"
+        }
+      ]
+    },
+    {
+      "name": "calendar_list",
+      "description": "Lists the local calendars that can hold events.",
+      "args": [
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "background",
+          "meaning": "\"ui\" or \"background\"; use one of this command's modes."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "background"
+        ],
+        "default": "background"
+      },
+      "example_requests": [
+        "What calendars do I have?",
+        "List my calendars",
+        "Which calendars can I add events to?"
+      ],
+      "effects": "read_only",
+      "destructive": false,
+      "precondition": "For background mode, it has Automation permission for Calendar.",
+      "postcondition": "Nothing is changed.",
+      "returns": {
+        "type": "list",
+        "fields": [
+          "name"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "mode is not \"ui\" or \"background\""
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"ui\": this command only reads, and has no verified ui mode"
+        },
+        {
+          "name": "UIError",
+          "when": "Calendar's scripting failed, or the change was not seen in time"
+        }
+      ]
+    },
+    {
+      "name": "calendar_delete",
+      "description": "Deletes a local calendar and its events.",
+      "args": [
+        {
+          "name": "name",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The calendar's exact name."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "\"ui\" or \"background\"; use one of this command's modes."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "background",
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Delete my Running club calendar",
+        "Remove the old Family calendar",
+        "Get rid of the calendar called Test"
+      ],
+      "effects": "idempotent",
+      "destructive": true,
+      "confirm": "Delete the calendar <name> and all its events?",
+      "precondition": "Exactly one local calendar has that name. For ui mode, the program running Python has Accessibility and Automation permission for System Events and Calendar. For background mode, it has Automation permission for Calendar.",
+      "postcondition": "The calendar and its events are gone.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name",
+          "deleted"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "mode is not \"ui\" or \"background\""
+        },
+        {
+          "name": "NotFound",
+          "when": "no local calendar has that exact name"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one local calendar has that name; nothing is changed"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "Calendar shows a dialog with typed text or with no Cancel button, or a Quick Event with typed text; nothing is changed"
+        },
+        {
+          "name": "UIError",
+          "when": "a screen element never appeared in time, Calendar's scripting failed, or the change was not seen in time"
+        }
+      ]
+    }
+  ]
+}

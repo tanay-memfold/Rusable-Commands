@@ -25,6 +25,24 @@ calendar.event_create(title="Dentist", start="2026-11-18 15:15", end="2026-11-18
 Put the app folders on `sys.path` (or copy the files next to the program). `calendar_app.py` is named so that it
 doesn't clash with Python's own `calendar` module, so import it `as calendar`.
 
+## Catalog
+
+`notes/catalog.json` and `calendar/catalog.json` describe every verified command, so an agent can find and call
+one without reading the code. Each file gives the app, its import line, the versions it was verified on, and one
+entry per command: description, arguments, verified and default modes, example requests, effects, whether it is
+destructive, precondition, postcondition, returned fields and errors.
+
+To use them, match the request against `description` and `example_requests`, check `precondition`, then write a
+program with the `import` line and the `args`, using only a mode listed under `modes`. Results can also carry the
+version keys described under [Versions](#versions).
+
+- `idempotent` (in `effects`): a repeat with the same arguments changes nothing more, though it may raise an error
+  such as `NotFound`.
+- `destructive`: true if the effect can't be easily undone. These commands also have `confirm`, the question to ask
+  the user first, with roles like `<title>` to fill in.
+- `known_gaps` (optional): behaviours that are untested or not directly confirmed. Read them before calling the
+  command.
+
 ## Two modes, one interface
 
 Every function takes `mode=` and returns the same value in both modes:

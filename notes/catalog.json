@@ -1,0 +1,1193 @@
+{
+  "app": "Notes",
+  "import": "import notes",
+  "macos_version": "26.6.2 (25G83)",
+  "app_version": "4.13 (3146.141.6)",
+  "commands": [
+    {
+      "name": "note_create",
+      "description": "Makes a new note with a title and optional body text.",
+      "args": [
+        {
+          "name": "title",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The note's first line; one non-empty line."
+        },
+        {
+          "name": "body",
+          "type": "str",
+          "required": false,
+          "default": "",
+          "meaning": "Text after the title; line breaks are kept."
+        },
+        {
+          "name": "folder",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "Folder to put it in, by exact name; None means the default folder."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "\"ui\" or \"background\"; use one of this command's modes."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "background",
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Make a note called Packing list",
+        "Write a note titled Gate code that says 4417",
+        "Add a new note to my Travel folder called Hotel with the booking number in it",
+        "Start a note named Ideas for the party"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "Notes has a local account named \"On My Mac\". If folder is given, exactly one folder has that name. For ui mode, the program running Python has Accessibility and Automation permission for System Events and Notes. For background mode, it has Automation permission for Notes.",
+      "postcondition": "A new note holds title as its first line and body after it, in folder or the default folder. Other notes with the same title are left alone.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "id",
+          "title",
+          "body",
+          "folder",
+          "modified_date"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "title is not one non-empty line, or mode is not \"ui\" or \"background\""
+        },
+        {
+          "name": "NotFound",
+          "when": "no folder has that exact name"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one folder has that name; nothing is changed"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "Notes shows a dialog with typed text or with no Cancel button, in which case nothing is changed; or another app is in front when the call goes to type"
+        },
+        {
+          "name": "UIError",
+          "when": "a screen element never appeared in time, Notes' scripting failed, or the change was not seen in time"
+        }
+      ]
+    },
+    {
+      "name": "checklist_create",
+      "description": "Makes a new note holding a real Notes checklist with one unchecked item per entry.",
+      "args": [
+        {
+          "name": "title",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The note's first line."
+        },
+        {
+          "name": "items",
+          "type": "list",
+          "required": true,
+          "default": null,
+          "meaning": "The checklist items, as strings; each must be one non-empty line, and at least one is needed."
+        },
+        {
+          "name": "folder",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "Folder to put it in, by exact name; None means the default folder."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "\"ui\" or \"background\"; use one of this command's modes."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Make a checklist called Groceries with milk, eggs and coffee",
+        "Create a packing checklist: boots, tent, stove",
+        "Start a to-do checklist in my Travel folder for visa, tickets and insurance"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "Notes has a local account named \"On My Mac\". If folder is given, exactly one folder has that name. For ui mode, the program running Python has Accessibility and Automation permission for System Events and Notes.",
+      "postcondition": "A new note holds title as its first line and the items as an unchecked checklist, in folder or the default folder.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "id",
+          "title",
+          "body",
+          "folder",
+          "modified_date",
+          "items"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "items is empty or has an entry that is not one non-empty line, or mode is not \"ui\" or \"background\""
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\": Notes' scripting can't make a checklist"
+        },
+        {
+          "name": "NotFound",
+          "when": "no folder has that exact name"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one folder has that name; nothing is changed"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "Notes shows a dialog with typed text or with no Cancel button, in which case nothing is changed; or another app is in front when the call goes to type"
+        },
+        {
+          "name": "UIError",
+          "when": "a screen element never appeared in time, Notes' scripting failed, or the change was not seen in time"
+        }
+      ]
+    },
+    {
+      "name": "note_get",
+      "description": "Gets the note with an exact title.",
+      "args": [
+        {
+          "name": "match",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The note's exact title."
+        },
+        {
+          "name": "fields",
+          "type": "str | list | None",
+          "required": false,
+          "default": null,
+          "meaning": "Keys to return, as a comma-separated string or a list; None means the default set."
+        },
+        {
+          "name": "folder",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "Folder to look in, by exact name, when the same title exists in several folders."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "background",
+          "meaning": "\"ui\" or \"background\"; use one of this command's modes."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "background"
+        ],
+        "default": "background"
+      },
+      "example_requests": [
+        "What does my note called Packing list say?",
+        "Show me the Gate code note",
+        "When did I create the note titled Hotel?"
+      ],
+      "effects": "read_only",
+      "destructive": false,
+      "precondition": "Notes has a local account named \"On My Mac\". Exactly one note has that title, within folder if given. For background mode, it has Automation permission for Notes.",
+      "postcondition": "Nothing is changed.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "title",
+          "body",
+          "folder",
+          "modified_date"
+        ],
+        "optional_fields": [
+          "id",
+          "created_date"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "fields names an unknown key, or mode is not \"ui\" or \"background\""
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"ui\": this command only reads, and has no verified ui mode"
+        },
+        {
+          "name": "NotFound",
+          "when": "no note has that exact title, within folder if given"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one note has that title; nothing is changed"
+        },
+        {
+          "name": "UIError",
+          "when": "Notes' scripting failed, or the change was not seen in time"
+        }
+      ]
+    },
+    {
+      "name": "note_search",
+      "description": "Finds notes whose title or text contains some words, ignoring case, newest first.",
+      "args": [
+        {
+          "name": "query",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The text to look for."
+        },
+        {
+          "name": "limit",
+          "type": "int",
+          "required": false,
+          "default": 20,
+          "meaning": "The most notes to return."
+        },
+        {
+          "name": "fields",
+          "type": "str | list | None",
+          "required": false,
+          "default": null,
+          "meaning": "Keys to return, as a comma-separated string or a list; None means the default set."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "background",
+          "meaning": "\"ui\" or \"background\"; use one of this command's modes."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "background"
+        ],
+        "default": "background"
+      },
+      "example_requests": [
+        "Find my notes about the Goa trip",
+        "Do I have any notes mentioning invoices?",
+        "Search my notes for the wifi password"
+      ],
+      "effects": "read_only",
+      "destructive": false,
+      "precondition": "Notes has a local account named \"On My Mac\". For background mode, it has Automation permission for Notes.",
+      "postcondition": "Nothing is changed.",
+      "returns": {
+        "type": "list",
+        "fields": [
+          "title",
+          "body",
+          "folder",
+          "modified_date"
+        ],
+        "optional_fields": [
+          "id",
+          "created_date"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "fields names an unknown key and there are results, or mode is not \"ui\" or \"background\""
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"ui\": this command only reads, and has no verified ui mode"
+        },
+        {
+          "name": "UIError",
+          "when": "Notes' scripting failed, or the change was not seen in time"
+        }
+      ]
+    },
+    {
+      "name": "note_list",
+      "description": "Lists the notes in one folder or in every folder, newest first.",
+      "args": [
+        {
+          "name": "folder",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "Folder to list, by exact name; None means every folder."
+        },
+        {
+          "name": "limit",
+          "type": "int",
+          "required": false,
+          "default": 50,
+          "meaning": "The most notes to return."
+        },
+        {
+          "name": "fields",
+          "type": "str | list | None",
+          "required": false,
+          "default": null,
+          "meaning": "Keys to return, as a comma-separated string or a list; None means the default set."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "background",
+          "meaning": "\"ui\" or \"background\"; use one of this command's modes."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "background"
+        ],
+        "default": "background"
+      },
+      "example_requests": [
+        "What's in my Travel folder?",
+        "List my most recent notes",
+        "Show me all my notes"
+      ],
+      "effects": "read_only",
+      "destructive": false,
+      "precondition": "Notes has a local account named \"On My Mac\". If folder is given, exactly one folder has that name. For background mode, it has Automation permission for Notes.",
+      "postcondition": "Nothing is changed.",
+      "returns": {
+        "type": "list",
+        "fields": [
+          "title",
+          "body",
+          "folder",
+          "modified_date"
+        ],
+        "optional_fields": [
+          "id",
+          "created_date"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "fields names an unknown key and there are results, or mode is not \"ui\" or \"background\""
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"ui\": this command only reads, and has no verified ui mode"
+        },
+        {
+          "name": "NotFound",
+          "when": "no folder has that exact name"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one folder has that name; nothing is changed"
+        },
+        {
+          "name": "UIError",
+          "when": "Notes' scripting failed, or the change was not seen in time"
+        }
+      ]
+    },
+    {
+      "name": "note_append",
+      "description": "Adds text as new lines at the end of a note.",
+      "args": [
+        {
+          "name": "match",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The note's exact title."
+        },
+        {
+          "name": "text",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The text to add; line breaks are kept."
+        },
+        {
+          "name": "folder",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "Folder to look in, by exact name, when the same title exists in several folders."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "\"ui\" or \"background\"; use one of this command's modes."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "background",
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Add sunscreen to my Packing list note",
+        "Put Book the cab at the end of the Goa trip note",
+        "Append the new gate code to my Gate code note"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "Notes has a local account named \"On My Mac\". Exactly one note has that title, within folder if given. For ui mode, the program running Python has Accessibility and Automation permission for System Events and Notes. For background mode, it has Automation permission for Notes.",
+      "postcondition": "The note's body is its old body followed by text on new lines.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "id",
+          "title",
+          "body",
+          "folder",
+          "modified_date"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "mode is not \"ui\" or \"background\""
+        },
+        {
+          "name": "NotFound",
+          "when": "no note has that exact title, within folder if given"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one note has that title; nothing is changed"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "Notes shows a dialog with typed text or with no Cancel button, in which case nothing is changed; or another app is in front when the call goes to type"
+        },
+        {
+          "name": "UIError",
+          "when": "a screen element never appeared in time, Notes' scripting failed, or the change was not seen in time"
+        }
+      ],
+      "known_gaps": [
+        "In UI mode, a note with only a title, made in the UI, is untested and may raise UIError."
+      ]
+    },
+    {
+      "name": "note_rename",
+      "description": "Changes a note's title, which is its first line.",
+      "args": [
+        {
+          "name": "match",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The note's exact title now."
+        },
+        {
+          "name": "title",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The new title; one non-empty line."
+        },
+        {
+          "name": "folder",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "Folder to look in, by exact name, when the same title exists in several folders."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "\"ui\" or \"background\"; use one of this command's modes."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Rename my note Hotel to Hotel in Goa",
+        "Change the title of the Ideas note to Party ideas",
+        "Call the Packing list note Winter packing instead"
+      ],
+      "effects": "idempotent",
+      "destructive": false,
+      "precondition": "Notes has a local account named \"On My Mac\". Exactly one note has the title match, within folder if given. For ui mode, the program running Python has Accessibility and Automation permission for System Events and Notes.",
+      "postcondition": "The note's title is the new title and its body is unchanged.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "id",
+          "title",
+          "body",
+          "folder",
+          "modified_date"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "title is not one non-empty line, or mode is not \"ui\" or \"background\""
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\": with Notes open, this change did not reach Notes' database within 150 s when verified"
+        },
+        {
+          "name": "NotFound",
+          "when": "no note has that exact title, within folder if given"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one note has that title; nothing is changed"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "Notes shows a dialog with typed text or with no Cancel button, in which case nothing is changed; or another app is in front when the call goes to type"
+        },
+        {
+          "name": "UIError",
+          "when": "a screen element never appeared in time, Notes' scripting failed, or the change was not seen in time"
+        }
+      ],
+      "known_gaps": [
+        "In UI mode, a note with only a title, made in the UI, is untested and may raise UIError."
+      ]
+    },
+    {
+      "name": "note_replace_body",
+      "description": "Replaces everything after a note's title with new text.",
+      "args": [
+        {
+          "name": "match",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The note's exact title."
+        },
+        {
+          "name": "body",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The new text after the title; line breaks are kept."
+        },
+        {
+          "name": "folder",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "Folder to look in, by exact name, when the same title exists in several folders."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "\"ui\" or \"background\"; use one of this command's modes."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "background",
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Replace what's in my Gate code note with 5521",
+        "Rewrite the Hotel note so it just says check-in Friday",
+        "Change the text of my Ideas note to these three lines"
+      ],
+      "effects": "non_idempotent",
+      "destructive": true,
+      "confirm": "Replace all the text in the note <title>?",
+      "precondition": "Notes has a local account named \"On My Mac\". Exactly one note has that title, within folder if given. For ui mode, the program running Python has Accessibility and Automation permission for System Events and Notes. For background mode, it has Automation permission for Notes.",
+      "postcondition": "The note keeps its title and its body is the new text.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "id",
+          "title",
+          "body",
+          "folder",
+          "modified_date"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "mode is not \"ui\" or \"background\""
+        },
+        {
+          "name": "NotFound",
+          "when": "no note has that exact title, within folder if given"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one note has that title; nothing is changed"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "Notes shows a dialog with typed text or with no Cancel button, in which case nothing is changed; or another app is in front when the call goes to type"
+        },
+        {
+          "name": "UIError",
+          "when": "a screen element never appeared in time, Notes' scripting failed, or the change was not seen in time"
+        }
+      ],
+      "known_gaps": [
+        "An empty body in UI mode is untested and might delete the last letter of the title; use background mode or don't send an empty body.",
+        "In UI mode, a note with only a title, made in the UI, is untested and may raise UIError."
+      ]
+    },
+    {
+      "name": "note_move",
+      "description": "Moves a note into another folder.",
+      "args": [
+        {
+          "name": "match",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The note's exact title."
+        },
+        {
+          "name": "folder",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The folder to move it to, by exact name."
+        },
+        {
+          "name": "from_folder",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "Folder it is in now, by exact name, when the same title exists in several folders."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "\"ui\" or \"background\"; use one of this command's modes."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "background",
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Move the Acme invoice note to my Invoices folder",
+        "Put the Hotel note in Travel",
+        "File my Ideas note under Work"
+      ],
+      "effects": "idempotent",
+      "destructive": false,
+      "precondition": "Notes has a local account named \"On My Mac\". Exactly one note has that title, within from_folder if given, and exactly one folder is named folder. For ui mode, the program running Python has Accessibility and Automation permission for System Events and Notes. For background mode, it has Automation permission for Notes.",
+      "postcondition": "The note is in folder.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "id",
+          "title",
+          "body",
+          "folder",
+          "modified_date"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "mode is not \"ui\" or \"background\""
+        },
+        {
+          "name": "NotFound",
+          "when": "no note has that exact title, within from_folder if given, or no folder is named folder"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one note has that title, or more than one folder is named folder; nothing is changed"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "Notes shows a dialog with typed text or with no Cancel button; nothing is changed"
+        },
+        {
+          "name": "UIError",
+          "when": "a screen element never appeared in time, Notes' scripting failed, or the change was not seen in time"
+        }
+      ],
+      "known_gaps": [
+        "In UI mode, a note with only a title, made in the UI, is untested and may raise UIError."
+      ]
+    },
+    {
+      "name": "note_delete",
+      "description": "Moves a note to Recently Deleted.",
+      "args": [
+        {
+          "name": "match",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The note's exact title."
+        },
+        {
+          "name": "folder",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "Folder to look in, by exact name, when the same title exists in several folders."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "\"ui\" or \"background\"; use one of this command's modes."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Delete my note called Old ideas",
+        "Get rid of the Gate code note",
+        "Trash the Hotel note in my Travel folder"
+      ],
+      "effects": "idempotent",
+      "destructive": false,
+      "precondition": "Notes has a local account named \"On My Mac\". Exactly one note has that title, within folder if given. For ui mode, the program running Python has Accessibility and Automation permission for System Events and Notes.",
+      "postcondition": "The note is no longer in its folder; it is in Recently Deleted.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "id",
+          "title",
+          "body",
+          "folder",
+          "modified_date",
+          "deleted"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "mode is not \"ui\" or \"background\""
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\": with Notes open, this change did not reach Notes' database within 150 s when verified"
+        },
+        {
+          "name": "NotFound",
+          "when": "no note has that exact title, within folder if given"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one note has that title; nothing is changed"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "Notes shows a dialog with typed text or with no Cancel button; nothing is changed"
+        },
+        {
+          "name": "UIError",
+          "when": "a screen element never appeared in time, Notes' scripting failed, or the change was not seen in time"
+        }
+      ],
+      "known_gaps": [
+        "In UI mode, a note with only a title, made in the UI, is untested and may raise UIError."
+      ]
+    },
+    {
+      "name": "note_pin",
+      "description": "Pins a note.",
+      "args": [
+        {
+          "name": "match",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The note's exact title."
+        },
+        {
+          "name": "folder",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "Folder to look in, by exact name, when the same title exists in several folders."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "\"ui\" or \"background\"; use one of this command's modes."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Pin my Packing list note",
+        "Keep the Gate code note at the top",
+        "Pin the Hotel note in my Travel folder"
+      ],
+      "effects": "idempotent",
+      "destructive": false,
+      "precondition": "Notes has a local account named \"On My Mac\". Exactly one note has that title, within folder if given. For ui mode, the program running Python has Accessibility and Automation permission for System Events and Notes.",
+      "postcondition": "The note is pinned.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "id",
+          "title",
+          "body",
+          "folder",
+          "modified_date",
+          "pinned"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "mode is not \"ui\" or \"background\""
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\": Notes' scripting has no pinned property"
+        },
+        {
+          "name": "NotFound",
+          "when": "no note has that exact title, within folder if given"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one note has that title; nothing is changed"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "Notes shows a dialog with typed text or with no Cancel button; nothing is changed"
+        },
+        {
+          "name": "UIError",
+          "when": "a screen element never appeared in time, Notes' scripting failed, or the change was not seen in time"
+        }
+      ],
+      "known_gaps": [
+        "In UI mode, a note with only a title, made in the UI, is untested and may raise UIError.",
+        "Calling it on an already-pinned note is untested and may raise UIError; the note stays pinned either way."
+      ]
+    },
+    {
+      "name": "folder_create",
+      "description": "Makes a new top-level folder in On My Mac.",
+      "args": [
+        {
+          "name": "name",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The folder's name; one non-empty line."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "\"ui\" or \"background\"; use one of this command's modes."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "background",
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Make a folder called Invoices in Notes",
+        "Create a new Notes folder named Travel",
+        "I need a Notes folder for Work"
+      ],
+      "effects": "idempotent",
+      "destructive": false,
+      "precondition": "Notes has a local account named \"On My Mac\". No folder has that name. For ui mode, the program running Python has Accessibility and Automation permission for System Events and Notes. For background mode, it has Automation permission for Notes.",
+      "postcondition": "A folder with that name exists.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name",
+          "notes"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "name is not one non-empty line, or mode is not \"ui\" or \"background\""
+        },
+        {
+          "name": "AlreadyExists",
+          "when": "a folder has that name"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "Notes shows a dialog with typed text or with no Cancel button, in which case nothing is changed; or another app is in front when the call goes to type"
+        },
+        {
+          "name": "UIError",
+          "when": "a screen element never appeared in time, Notes' scripting failed, or the change was not seen in time"
+        }
+      ]
+    },
+    {
+      "name": "folder_list",
+      "description": "Lists every folder in On My Mac except Recently Deleted, with its number of notes.",
+      "args": [
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "background",
+          "meaning": "\"ui\" or \"background\"; use one of this command's modes."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "background"
+        ],
+        "default": "background"
+      },
+      "example_requests": [
+        "What folders do I have in Notes?",
+        "List my Notes folders",
+        "How many notes are in each folder?"
+      ],
+      "effects": "read_only",
+      "destructive": false,
+      "precondition": "Notes has a local account named \"On My Mac\". For background mode, it has Automation permission for Notes.",
+      "postcondition": "Nothing is changed.",
+      "returns": {
+        "type": "list",
+        "fields": [
+          "name",
+          "notes"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "mode is not \"ui\" or \"background\""
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"ui\": this command only reads, and has no verified ui mode"
+        },
+        {
+          "name": "UIError",
+          "when": "Notes' scripting failed, or the change was not seen in time"
+        }
+      ]
+    },
+    {
+      "name": "folder_rename",
+      "description": "Renames a folder.",
+      "args": [
+        {
+          "name": "name",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The folder's exact name now."
+        },
+        {
+          "name": "to",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The new name; one non-empty line."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "\"ui\" or \"background\"; use one of this command's modes."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Rename my Notes folder Work to Office",
+        "Change the Travel folder's name to Trips",
+        "Call the Invoices folder Bills"
+      ],
+      "effects": "idempotent",
+      "destructive": false,
+      "precondition": "Notes has a local account named \"On My Mac\". Exactly one folder is named name, and no folder is named to. For ui mode, the program running Python has Accessibility and Automation permission for System Events and Notes.",
+      "postcondition": "The folder has the new name.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name",
+          "notes"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "to is not one non-empty line, or mode is not \"ui\" or \"background\""
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\": with Notes open, this change did not reach Notes' database within 150 s when verified"
+        },
+        {
+          "name": "NotFound",
+          "when": "no folder has that exact name"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one folder has that name; nothing is changed"
+        },
+        {
+          "name": "AlreadyExists",
+          "when": "a folder is named to"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "Notes shows a dialog with typed text or with no Cancel button, in which case nothing is changed; or another app is in front when the call goes to type"
+        },
+        {
+          "name": "UIError",
+          "when": "a screen element never appeared in time, Notes' scripting failed, or the change was not seen in time"
+        }
+      ]
+    },
+    {
+      "name": "folder_delete",
+      "description": "Deletes a folder.",
+      "args": [
+        {
+          "name": "name",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The folder's exact name."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "\"ui\" or \"background\"; use one of this command's modes."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Delete my Notes folder called Old stuff",
+        "Remove the Trips folder from Notes",
+        "Get rid of the Bills folder in Notes"
+      ],
+      "effects": "idempotent",
+      "destructive": true,
+      "confirm": "Delete the folder <name> and the notes in it?",
+      "precondition": "Notes has a local account named \"On My Mac\". Exactly one folder has that name. For ui mode, the program running Python has Accessibility and Automation permission for System Events and Notes.",
+      "postcondition": "The folder is gone.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name",
+          "notes",
+          "deleted"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "mode is not \"ui\" or \"background\""
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\": with Notes open, this change did not reach Notes' database within 150 s when verified"
+        },
+        {
+          "name": "NotFound",
+          "when": "no folder has that exact name"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one folder has that name; nothing is changed"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "Notes shows a dialog with typed text or with no Cancel button; nothing is changed"
+        },
+        {
+          "name": "UIError",
+          "when": "a screen element never appeared in time, Notes' scripting failed, or the change was not seen in time"
+        }
+      ],
+      "known_gaps": [
+        "That its notes go to Recently Deleted is not directly confirmed."
+      ]
+    }
+  ]
+}
