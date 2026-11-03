@@ -1,0 +1,864 @@
+{
+  "app": "Gmail",
+  "import": "import gmail",
+  "macos_version": "26.6.2 (25G83)",
+  "app_version": "26.6.2 (21624.5.1.11.3)",
+  "commands": [
+    {
+      "name": "message_search",
+      "description": "Runs any Gmail search and returns the matching rows without opening a message.",
+      "args": [
+        {
+          "name": "query",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "Any Gmail search text."
+        },
+        {
+          "name": "limit",
+          "type": "int",
+          "required": false,
+          "default": 20,
+          "meaning": "The most rows to return; one page holds at most 50."
+        },
+        {
+          "name": "fields",
+          "type": "str | list | None",
+          "required": false,
+          "default": null,
+          "meaning": "Row fields to return, as a comma-separated string or a list; adds labels if asked."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": Gmail has no background mode."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Find emails from billing",
+        "Search my mail for the invoice",
+        "Do I have mail about the Goa trip?"
+      ],
+      "effects": "read_only",
+      "destructive": false,
+      "precondition": "Safari is signed in to Gmail in a session you set up, with its display language set to English; the program has Accessibility and Automation for System Events.",
+      "postcondition": "Nothing is changed and no message is opened.",
+      "returns": {
+        "type": "list",
+        "fields": [
+          "sender",
+          "subject",
+          "date",
+          "snippet",
+          "unread",
+          "starred"
+        ],
+        "optional_fields": [
+          "labels"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "a compose or reply window holds typed text, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "SignedOut",
+          "when": "Gmail isn't signed in; the call doesn't try to sign in"
+        },
+        {
+          "name": "UnsupportedLanguage",
+          "when": "Gmail's elements weren't found by their English names"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode isn't \"ui\", or the command wasn't verified"
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared within the timeout"
+        }
+      ],
+      "known_gaps": [
+        "message_get is left out because it wasn't shown reliable, so use message_search or message_list to read rows, which opens nothing.",
+        "A message with an empty body can't be found by exact subject, so it raises NotFound and changes nothing.",
+        "Read-back in testing used the same browser and page, so it isn't independent of Gmail itself.",
+        "Only one page is read, so at most 50 rows come back."
+      ]
+    },
+    {
+      "name": "message_list",
+      "description": "Lists the rows under a label without opening a message.",
+      "args": [
+        {
+          "name": "label",
+          "type": "str",
+          "required": false,
+          "default": "Inbox",
+          "meaning": "The label to list."
+        },
+        {
+          "name": "limit",
+          "type": "int",
+          "required": false,
+          "default": 20,
+          "meaning": "The most rows to return; one page holds at most 50."
+        },
+        {
+          "name": "fields",
+          "type": "str | list | None",
+          "required": false,
+          "default": null,
+          "meaning": "Row fields to return, as a comma-separated string or a list; adds labels if asked."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": Gmail has no background mode."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "What's in my inbox?",
+        "List my recent mail",
+        "Show the mail under my Travel label"
+      ],
+      "effects": "read_only",
+      "destructive": false,
+      "precondition": "Safari is signed in to Gmail in a session you set up, with its display language set to English; the program has Accessibility and Automation for System Events.",
+      "postcondition": "Nothing is changed and no message is opened.",
+      "returns": {
+        "type": "list",
+        "fields": [
+          "sender",
+          "subject",
+          "date",
+          "snippet",
+          "unread",
+          "starred"
+        ],
+        "optional_fields": [
+          "labels"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "a compose or reply window holds typed text, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "SignedOut",
+          "when": "Gmail isn't signed in; the call doesn't try to sign in"
+        },
+        {
+          "name": "UnsupportedLanguage",
+          "when": "Gmail's elements weren't found by their English names"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode isn't \"ui\", or the command wasn't verified"
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared within the timeout"
+        }
+      ],
+      "known_gaps": [
+        "message_get is left out because it wasn't shown reliable, so use message_search or message_list to read rows, which opens nothing.",
+        "Read-back in testing used the same browser and page, so it isn't independent of Gmail itself.",
+        "Only one page is read, so at most 50 rows come back."
+      ]
+    },
+    {
+      "name": "message_send",
+      "description": "Sends a new message to addresses on the allowed list, then reads it back from Sent.",
+      "args": [
+        {
+          "name": "to",
+          "type": "str | list",
+          "required": true,
+          "default": null,
+          "meaning": "One address or a list of addresses."
+        },
+        {
+          "name": "subject",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "One non-empty line."
+        },
+        {
+          "name": "body",
+          "type": "str",
+          "required": false,
+          "default": "",
+          "meaning": "The message text; an empty or whitespace-only body is refused before anything else runs, so always give one when you send."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": Gmail has no background mode."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Email the team about Friday",
+        "Send Sam a note saying I'm running late",
+        "Send this summary to my own address"
+      ],
+      "effects": "non_idempotent",
+      "destructive": true,
+      "precondition": "Safari is signed in to Gmail in a session you set up, with its display language set to English; the program has Accessibility and Automation for System Events. GMAIL_ALLOWED_RECIPIENTS lists every recipient.",
+      "postcondition": "The message was read back from Sent; it can't be taken back.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "to",
+          "subject",
+          "sent"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "a compose or reply window holds typed text, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "SignedOut",
+          "when": "Gmail isn't signed in; the call doesn't try to sign in"
+        },
+        {
+          "name": "UnsupportedLanguage",
+          "when": "Gmail's elements weren't found by their English names"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode isn't \"ui\", or the command wasn't verified"
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared within the timeout"
+        },
+        {
+          "name": "RecipientNotAllowed",
+          "when": "GMAIL_ALLOWED_RECIPIENTS isn't set, or a recipient isn't on it or can't be confirmed; nothing is sent"
+        },
+        {
+          "name": "NotConfirmed",
+          "when": "Send was pressed but the message wasn't read back from Sent; it may have gone out"
+        }
+      ],
+      "confirm": "Send this message to <to> with the subject <subject>?",
+      "known_gaps": [
+        "On NotConfirmed the message may have gone out, so check Sent before retrying and don't resend automatically.",
+        "Empty-body sends are refused with ValueError.",
+        "Attachments, CC and BCC aren't supported.",
+        "Read-back in testing used the same browser and page, so it isn't independent of Gmail itself."
+      ]
+    },
+    {
+      "name": "draft_create",
+      "description": "Saves a new draft and reads it back from Drafts, without ever sending it.",
+      "args": [
+        {
+          "name": "to",
+          "type": "str | list",
+          "required": true,
+          "default": null,
+          "meaning": "One address or a list of addresses."
+        },
+        {
+          "name": "subject",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "One non-empty line."
+        },
+        {
+          "name": "body",
+          "type": "str",
+          "required": false,
+          "default": "",
+          "meaning": "The message text; an empty or whitespace-only body is refused before anything else runs, so always give one when you save a draft."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": Gmail has no background mode."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Draft an email to Sam",
+        "Save a draft about the budget",
+        "Write a draft but don't send it"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "Safari is signed in to Gmail in a session you set up, with its display language set to English; the program has Accessibility and Automation for System Events.",
+      "postcondition": "A draft exists in Drafts; nothing was sent.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "to",
+          "subject",
+          "draft"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "a compose or reply window holds typed text, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "SignedOut",
+          "when": "Gmail isn't signed in; the call doesn't try to sign in"
+        },
+        {
+          "name": "UnsupportedLanguage",
+          "when": "Gmail's elements weren't found by their English names"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode isn't \"ui\", or the command wasn't verified"
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared within the timeout"
+        },
+        {
+          "name": "NotConfirmed",
+          "when": "Save & close was pressed but the draft wasn't read back from Drafts"
+        }
+      ],
+      "known_gaps": [
+        "Empty-body drafts are refused with ValueError.",
+        "Attachments, CC and BCC aren't supported.",
+        "Read-back in testing used the same browser and page, so it isn't independent of Gmail itself."
+      ]
+    },
+    {
+      "name": "message_reply",
+      "description": "Replies to a conversation's newest message and reads the reply's own text back, which marks the conversation read.",
+      "args": [
+        {
+          "name": "match",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The message's exact subject."
+        },
+        {
+          "name": "body",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The reply text; it must not be empty."
+        },
+        {
+          "name": "sender",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "The sender's name as shown in the row, when the same subject exists more than once."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": Gmail has no background mode."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Reply to the invoice email saying thanks",
+        "Answer the Friday plans message",
+        "Reply that I'll be there"
+      ],
+      "effects": "non_idempotent",
+      "destructive": true,
+      "precondition": "Safari is signed in to Gmail in a session you set up, with its display language set to English; the program has Accessibility and Automation for System Events. GMAIL_ALLOWED_RECIPIENTS lists the reply's recipients.",
+      "postcondition": "The reply's text was read back in the conversation, which is now marked read; it can't be taken back.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "subject",
+          "to",
+          "sent"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "a compose or reply window holds typed text, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "SignedOut",
+          "when": "Gmail isn't signed in; the call doesn't try to sign in"
+        },
+        {
+          "name": "UnsupportedLanguage",
+          "when": "Gmail's elements weren't found by their English names"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode isn't \"ui\", or the command wasn't verified"
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared within the timeout"
+        },
+        {
+          "name": "NotFound",
+          "when": "no message has that exact subject, from that sender if given; nothing is changed"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one message matches; nothing is changed"
+        },
+        {
+          "name": "RecipientNotAllowed",
+          "when": "GMAIL_ALLOWED_RECIPIENTS isn't set, or a recipient isn't on it or can't be confirmed; nothing is sent"
+        },
+        {
+          "name": "NotConfirmed",
+          "when": "Send was pressed but the reply's own text wasn't read back; it may have gone out"
+        }
+      ],
+      "confirm": "Reply to <match> with this text?",
+      "known_gaps": [
+        "On NotConfirmed the message may have gone out, so check Sent before retrying and don't resend automatically.",
+        "Replying was tested only with Safari closed, another app in front, a message open and a popup open, not from the other eight start states.",
+        "A reply form shows names, so a reply-to address that differs behind the same display name can't be seen.",
+        "A message with an empty body can't be found by exact subject, so it raises NotFound and changes nothing.",
+        "Read-back in testing used the same browser and page, so it isn't independent of Gmail itself."
+      ]
+    },
+    {
+      "name": "message_archive",
+      "description": "Removes a message from the Inbox without opening it.",
+      "args": [
+        {
+          "name": "match",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The message's exact subject."
+        },
+        {
+          "name": "sender",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "The sender's name as shown in the row, when the same subject exists more than once."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": Gmail has no background mode."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Archive the invoice email",
+        "Get the receipt out of my inbox",
+        "Archive that message"
+      ],
+      "effects": "idempotent",
+      "destructive": false,
+      "precondition": "Safari is signed in to Gmail in a session you set up, with its display language set to English; the program has Accessibility and Automation for System Events.",
+      "postcondition": "The message is out of the Inbox and still exists.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "sender",
+          "subject",
+          "date",
+          "snippet",
+          "unread",
+          "starred",
+          "archived"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "a compose or reply window holds typed text, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "SignedOut",
+          "when": "Gmail isn't signed in; the call doesn't try to sign in"
+        },
+        {
+          "name": "UnsupportedLanguage",
+          "when": "Gmail's elements weren't found by their English names"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode isn't \"ui\", or the command wasn't verified"
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared within the timeout"
+        },
+        {
+          "name": "NotFound",
+          "when": "no message has that exact subject, from that sender if given; nothing is changed"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one message matches; nothing is changed"
+        }
+      ],
+      "known_gaps": [
+        "Archiving the same message twice wasn't verified, because that repeat case never completed.",
+        "A message with an empty body can't be found by exact subject, so it raises NotFound and changes nothing.",
+        "Read-back in testing used the same browser and page, so it isn't independent of Gmail itself."
+      ]
+    },
+    {
+      "name": "message_trash",
+      "description": "Moves a message to the Bin without opening it.",
+      "args": [
+        {
+          "name": "match",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The message's exact subject."
+        },
+        {
+          "name": "sender",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "The sender's name as shown in the row, when the same subject exists more than once."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": Gmail has no background mode."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Bin the invoice email",
+        "Delete that message",
+        "Move the receipt to the trash"
+      ],
+      "effects": "non_idempotent",
+      "destructive": true,
+      "precondition": "Safari is signed in to Gmail in a session you set up, with its display language set to English; the program has Accessibility and Automation for System Events.",
+      "postcondition": "The message is in the Bin, and nothing is permanently deleted.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "sender",
+          "subject",
+          "date",
+          "snippet",
+          "unread",
+          "starred",
+          "trashed"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "a compose or reply window holds typed text, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "SignedOut",
+          "when": "Gmail isn't signed in; the call doesn't try to sign in"
+        },
+        {
+          "name": "UnsupportedLanguage",
+          "when": "Gmail's elements weren't found by their English names"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode isn't \"ui\", or the command wasn't verified"
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared within the timeout"
+        },
+        {
+          "name": "NotFound",
+          "when": "no message has that exact subject, from that sender if given; nothing is changed"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one message matches; nothing is changed"
+        }
+      ],
+      "confirm": "Move <match> to the Bin?",
+      "known_gaps": [
+        "A message with an empty body can't be found by exact subject, so it raises NotFound and changes nothing.",
+        "Read-back in testing used the same browser and page, so it isn't independent of Gmail itself."
+      ]
+    },
+    {
+      "name": "message_star",
+      "description": "Stars a message without opening it, and a starred message stays starred.",
+      "args": [
+        {
+          "name": "match",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The message's exact subject."
+        },
+        {
+          "name": "sender",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "The sender's name as shown in the row, when the same subject exists more than once."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": Gmail has no background mode."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Star the invoice email",
+        "Mark that message as important with a star",
+        "Star the Friday plans email"
+      ],
+      "effects": "idempotent",
+      "destructive": false,
+      "precondition": "Safari is signed in to Gmail in a session you set up, with its display language set to English; the program has Accessibility and Automation for System Events.",
+      "postcondition": "The message is starred.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "sender",
+          "subject",
+          "date",
+          "snippet",
+          "unread",
+          "starred"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "a compose or reply window holds typed text, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "SignedOut",
+          "when": "Gmail isn't signed in; the call doesn't try to sign in"
+        },
+        {
+          "name": "UnsupportedLanguage",
+          "when": "Gmail's elements weren't found by their English names"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode isn't \"ui\", or the command wasn't verified"
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared within the timeout"
+        },
+        {
+          "name": "NotFound",
+          "when": "no message has that exact subject, from that sender if given; nothing is changed"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one message matches; nothing is changed"
+        }
+      ],
+      "known_gaps": [
+        "A message with an empty body can't be found by exact subject, so it raises NotFound and changes nothing.",
+        "Read-back in testing used the same browser and page, so it isn't independent of Gmail itself.",
+        "There is no command to remove a star."
+      ]
+    },
+    {
+      "name": "message_mark_read",
+      "description": "Marks a message read without opening it.",
+      "args": [
+        {
+          "name": "match",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The message's exact subject."
+        },
+        {
+          "name": "sender",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "The sender's name as shown in the row, when the same subject exists more than once."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": Gmail has no background mode."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Mark the invoice email as read",
+        "Mark that message read",
+        "Clear the unread dot on the receipt"
+      ],
+      "effects": "idempotent",
+      "destructive": false,
+      "precondition": "Safari is signed in to Gmail in a session you set up, with its display language set to English; the program has Accessibility and Automation for System Events.",
+      "postcondition": "The message is marked read.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "sender",
+          "subject",
+          "date",
+          "snippet",
+          "unread",
+          "starred"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "a compose or reply window holds typed text, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "SignedOut",
+          "when": "Gmail isn't signed in; the call doesn't try to sign in"
+        },
+        {
+          "name": "UnsupportedLanguage",
+          "when": "Gmail's elements weren't found by their English names"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode isn't \"ui\", or the command wasn't verified"
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared within the timeout"
+        },
+        {
+          "name": "NotFound",
+          "when": "no message has that exact subject, from that sender if given; nothing is changed"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one message matches; nothing is changed"
+        }
+      ],
+      "known_gaps": [
+        "A message with an empty body can't be found by exact subject, so it raises NotFound and changes nothing.",
+        "Read-back in testing used the same browser and page, so it isn't independent of Gmail itself.",
+        "There is no command to mark a message unread."
+      ]
+    }
+  ]
+}

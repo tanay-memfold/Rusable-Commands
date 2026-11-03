@@ -9,6 +9,7 @@ install, no model, no keys.
 |---|---|---|
 | Notes | [`notes/`](notes/) | `import notes` |
 | Calendar | [`calendar/`](calendar/) | `import calendar_app as calendar` |
+| Gmail | [`gmail/`](gmail/) | `import gmail` |
 
 An agent writes a short program with keyword arguments, like this:
 
@@ -27,7 +28,7 @@ doesn't clash with Python's own `calendar` module, so import it `as calendar`.
 
 ## Catalog
 
-`notes/catalog.json` and `calendar/catalog.json` describe every verified command, so an agent can find and call
+`notes/catalog.json`, `calendar/catalog.json` and `gmail/catalog.json` describe every verified command, so an agent can find and call
 one without reading the code. Each file gives the app, its import line, the versions it was verified on, and one
 entry per command: description, arguments, verified and default modes, example requests, effects, whether it is
 destructive, precondition, postcondition, returned fields and errors.
@@ -143,3 +144,17 @@ are enabled. Each folder's README lists the cases and start states, and what was
 | `event_list` | verified | — |
 | `event_search` | verified | — |
 | `event_update` | verified | — |
+
+**Gmail** ([README](gmail/README.md)):
+
+| Function | Background | UI |
+|---|---|---|
+| `draft_create` | — | verified |
+| `message_archive` | — | verified |
+| `message_list` | — | verified |
+| `message_mark_read` | — | verified |
+| `message_reply` | — | verified |
+| `message_search` | — | verified |
+| `message_send` | — | verified |
+| `message_star` | — | verified |
+| `message_trash` | — | verified |
