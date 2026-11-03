@@ -497,9 +497,6 @@
           "name": "UIError",
           "when": "a screen element never appeared in time, Notes' scripting failed, or the change was not seen in time"
         }
-      ],
-      "known_gaps": [
-        "In UI mode, a note with only a title, made in the UI, is untested and may raise UIError."
       ]
     },
     {
@@ -585,9 +582,6 @@
           "name": "UIError",
           "when": "a screen element never appeared in time, Notes' scripting failed, or the change was not seen in time"
         }
-      ],
-      "known_gaps": [
-        "In UI mode, a note with only a title, made in the UI, is untested and may raise UIError."
       ]
     },
     {
@@ -606,7 +600,7 @@
           "type": "str",
           "required": true,
           "default": null,
-          "meaning": "The new text after the title; line breaks are kept."
+          "meaning": "The new text after the title; line breaks are kept; empty clears the text and keeps the title."
         },
         {
           "name": "folder",
@@ -635,7 +629,7 @@
         "Rewrite the Hotel note so it just says check-in Friday",
         "Change the text of my Ideas note to these three lines"
       ],
-      "effects": "non_idempotent",
+      "effects": "idempotent",
       "destructive": true,
       "confirm": "Replace all the text in the note <title>?",
       "precondition": "Notes has a local account named \"On My Mac\". Exactly one note has that title, within folder if given. For ui mode, the program running Python has Accessibility and Automation permission for System Events and Notes. For background mode, it has Automation permission for Notes.",
@@ -671,10 +665,6 @@
           "name": "UIError",
           "when": "a screen element never appeared in time, Notes' scripting failed, or the change was not seen in time"
         }
-      ],
-      "known_gaps": [
-        "An empty body in UI mode is untested and might delete the last letter of the title; use background mode or don't send an empty body.",
-        "In UI mode, a note with only a title, made in the UI, is untested and may raise UIError."
       ]
     },
     {
@@ -757,9 +747,6 @@
           "name": "UIError",
           "when": "a screen element never appeared in time, Notes' scripting failed, or the change was not seen in time"
         }
-      ],
-      "known_gaps": [
-        "In UI mode, a note with only a title, made in the UI, is untested and may raise UIError."
       ]
     },
     {
@@ -839,14 +826,11 @@
           "name": "UIError",
           "when": "a screen element never appeared in time, Notes' scripting failed, or the change was not seen in time"
         }
-      ],
-      "known_gaps": [
-        "In UI mode, a note with only a title, made in the UI, is untested and may raise UIError."
       ]
     },
     {
       "name": "note_pin",
-      "description": "Pins a note.",
+      "description": "Pins a note; a note that is already pinned stays pinned.",
       "args": [
         {
           "name": "match",
@@ -921,10 +905,6 @@
           "name": "UIError",
           "when": "a screen element never appeared in time, Notes' scripting failed, or the change was not seen in time"
         }
-      ],
-      "known_gaps": [
-        "In UI mode, a note with only a title, made in the UI, is untested and may raise UIError.",
-        "Calling it on an already-pinned note is untested and may raise UIError; the note stays pinned either way."
       ]
     },
     {
@@ -1118,7 +1098,7 @@
     },
     {
       "name": "folder_delete",
-      "description": "Deletes a folder.",
+      "description": "Deletes a folder and moves its notes to Recently Deleted.",
       "args": [
         {
           "name": "name",
@@ -1150,7 +1130,7 @@
       "destructive": true,
       "confirm": "Delete the folder <name> and the notes in it?",
       "precondition": "Notes has a local account named \"On My Mac\". Exactly one folder has that name. For ui mode, the program running Python has Accessibility and Automation permission for System Events and Notes.",
-      "postcondition": "The folder is gone.",
+      "postcondition": "The folder is gone and its notes are in Recently Deleted.",
       "returns": {
         "type": "object",
         "fields": [
@@ -1184,9 +1164,6 @@
           "name": "UIError",
           "when": "a screen element never appeared in time, Notes' scripting failed, or the change was not seen in time"
         }
-      ],
-      "known_gaps": [
-        "That its notes go to Recently Deleted is not directly confirmed."
       ]
     }
   ]

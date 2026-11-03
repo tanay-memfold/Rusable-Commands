@@ -537,7 +537,7 @@ def _paste(text: str, landed) -> None:
 
 EDITOR = """      repeat with a in scroll areas of splitter group 1 of w
         repeat with t in (text areas of a)
-          if item 1 of argv is "" or (value of t starts with item 1 of argv) then
+          if value of t is item 1 of argv or (value of t starts with (item 1 of argv & linefeed)) then
             set focused of t to true
             if focused of t then return "ok"
           end if
@@ -580,7 +580,7 @@ def _editor_text() -> str:
 def _open_note(note_id: str, title: str) -> None:
     """Show the note and put the cursor in its text, after checking the editor holds that note."""
     _data("show", id=note_id)
-    _until(f"the note {title!r} in the editor", EDITOR, title + "\n")
+    _until(f"the note {title!r} in the editor", EDITOR, title)
 
 
 FOLDER_ROW = """      set sidebar to first outline of scroll area 1 of splitter group 1 of w whose description is "Folders"
@@ -613,6 +613,9 @@ NEW_NOTE = """      if name of w is not item 1 of argv then
           end repeat
         end repeat
       end if"""
+
+PIN_STATE = """      if exists menu item "Unpin Note" of menu "File" of menu bar item "File" of menu bar 1 then return "pinned"
+      if exists menu item "Pin Note" of menu "File" of menu bar item "File" of menu bar 1 then return "unpinned\""""
 
 MENU_ITEM = """      click menu item (item 2 of argv) of menu (item 1 of argv) of menu bar item (item 1 of argv) of menu bar 1
       return "ok\""""
@@ -804,7 +807,7 @@ def note_replace_body(match: str, body: str, folder: str | None = None, mode: st
         _keys(f"cmd+{UP}", f"cmd+{RIGHT}", f"shift+cmd+{DOWN}")
         if body:
             _paste("\n" + body, lambda: _editor_text() == match + "\n" + body)
-        else:
+        elif _data("info", ids=[note_id])[0]["body"]:
             _keys(DELETE)
         _done()
     note = _saved(note_id, lambda n: n["title"] == match and n["body"] == body)
@@ -846,12 +849,14 @@ def note_delete(match: str, folder: str | None = None, mode: str = "ui") -> dict
 
 
 def note_pin(match: str, folder: str | None = None, mode: str = "ui") -> dict:
-    """Pin the note titled match (it stays pinned if it already is)."""
+    """Pin the note titled match. A note that is already pinned stays pinned, and the call succeeds."""
     _mode("note_pin", mode, ("ui",))
     _ready_for(mode)
     note_id = _one(match, folder)
     _open_note(note_id, match)
-    _until("Pin Note in the File menu", MENU_ITEM, "File", "Pin Note")
+    if _until("Pin Note or Unpin Note in the File menu", PIN_STATE) == "unpinned":
+        _until("Pin Note in the File menu", MENU_ITEM, "File", "Pin Note")
+        _wait_for("the note to be pinned", lambda: _until("Pin Note or Unpin Note in the File menu", PIN_STATE) == "pinned")
     _done()
     return _checked("note_pin", mode, {**_shape(_data("info", ids=[note_id])[0], "id," + DEFAULT_FIELDS),
                                        "pinned": True})

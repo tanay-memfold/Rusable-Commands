@@ -43,6 +43,8 @@ version keys described under [Versions](#versions).
 - `known_gaps` (optional): behaviours that are untested or not directly confirmed. Read them before calling the
   command.
 
+On `NotFound`, report it or ask; don't create a replacement unless told to.
+
 ## Two modes, one interface
 
 Every function takes `mode=` and returns the same value in both modes:

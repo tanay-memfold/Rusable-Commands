@@ -135,7 +135,7 @@ UI steps: show the note, select its first line (⌘↑, then ⇧⌘→), paste `
 ### note_replace_body(match, body, folder=None, mode="ui") → note
 Replaces everything after the title with `body`.
 UI steps: show the note, select from the end of the first line to the end of the note (⌘↑, ⌘→, ⇧⌘↓), paste a
-line break and `body`; an empty `body` deletes the selection instead.
+line break and `body`. An empty `body` deletes the selection, or does nothing if the note has no text after its title.
 
 ### note_move(match, folder, from_folder=None, mode="ui") → note
 UI steps: show the note, then the toolbar menu **More** › **Move to** › *folder*.
@@ -149,8 +149,8 @@ UI steps: show the note, then the toolbar menu **More** › **Delete Note**. If 
 ("Deleted notes are moved to the Recently Deleted folder"), the call clicks **OK**.
 
 ### note_pin(match, folder=None, mode="ui") → note + `"pinned": true`
-UI only: Notes' scripting has no pinned property.
-UI steps: show the note, then the menu **File** › **Pin Note**.
+UI only: Notes' scripting has no pinned property. A note that is already pinned stays pinned, and the call succeeds.
+UI steps: show the note, then the menu **File** › **Pin Note**, and wait for the item to change to **Unpin Note**.
 
 ### folder_create(name, mode="ui") → {name, notes}
 UI steps: click the toolbar button **Add Folder**, wait for the new folder's name field to take focus, paste
@@ -201,7 +201,7 @@ End-to-end programs (run in UI mode from a messy start state, outcome read from 
 - Delete empty notes except those in a folder: passed.
 - Goa trip / invoices: doesn't count. Every outcome check passed (newest Goa note appended, invoice notes moved into a new Invoices folder, other notes untouched), but the half-typed text that was part of its messy start state never reached the other note in that run. `note_create`'s typed-text start state is verified by a direct check instead.
 
-Verified on macOS 26.6.2 (25G83), notes 4.13 (3146.141.6), 2026-11-01, in fresh VM clones.
+Verified on macOS 26.6.2 (25G83), notes 4.13 (3146.141.6), 2026-11-02, in fresh VM clones.
 
 ## Permissions
 
