@@ -1,0 +1,841 @@
+{
+  "app": "Finder",
+  "import": "import finder",
+  "macos_version": "15.6.1 (24G90)",
+  "app_version": "15.5 (1732.6.4)",
+  "commands": [
+    {
+      "name": "file_list",
+      "description": "Lists the files and folders directly in a folder, by name, leaving out hidden ones.",
+      "args": [
+        {
+          "name": "folder",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "An absolute path, or one starting with ~."
+        },
+        {
+          "name": "limit",
+          "type": "int",
+          "required": false,
+          "default": 100,
+          "meaning": "The most items to return."
+        },
+        {
+          "name": "fields",
+          "type": "str | list | None",
+          "required": false,
+          "default": null,
+          "meaning": "Fields to return, as a comma-separated string or a list; adds created_date if asked."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "background",
+          "meaning": "Must be \"background\": this command has no verified ui mode."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "background"
+        ],
+        "default": "background"
+      },
+      "example_requests": [
+        "What's in my Downloads folder?",
+        "List the files in Invoices",
+        "Show me this folder"
+      ],
+      "effects": "read_only",
+      "destructive": false,
+      "precondition": "The program can read the folder; macOS may ask once for protected folders.",
+      "postcondition": "Nothing is changed.",
+      "returns": {
+        "type": "list",
+        "fields": [
+          "name",
+          "path",
+          "kind",
+          "size",
+          "modified_date"
+        ],
+        "optional_fields": [
+          "created_date"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "NotFound",
+          "when": "nothing exists at the path, or the folder is missing; nothing is changed"
+        },
+        {
+          "name": "OutsideAllowedRoot",
+          "when": "FINDER_ALLOWED_ROOT is set and a path is outside it; nothing is done"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"ui\": this command only reads, and has no verified ui mode"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only touches what FINDER_ALLOWED_ROOT allows if it is set; if it isn't set, any path you can reach is accepted."
+      ]
+    },
+    {
+      "name": "file_find",
+      "description": "Finds files and folders under a folder by name or pattern, newest first.",
+      "args": [
+        {
+          "name": "query",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "Text in the name, ignoring case, or a pattern such as *.pdf."
+        },
+        {
+          "name": "folder",
+          "type": "str",
+          "required": false,
+          "default": "~",
+          "meaning": "Where to look, including subfolders."
+        },
+        {
+          "name": "limit",
+          "type": "int",
+          "required": false,
+          "default": 100,
+          "meaning": "The most items to return."
+        },
+        {
+          "name": "fields",
+          "type": "str | list | None",
+          "required": false,
+          "default": null,
+          "meaning": "Fields to return, as a comma-separated string or a list; adds created_date if asked."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "background",
+          "meaning": "Must be \"background\": this command has no verified ui mode."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "background"
+        ],
+        "default": "background"
+      },
+      "example_requests": [
+        "Find my PDFs in Downloads",
+        "Where is the invoice file?",
+        "Search for files called budget"
+      ],
+      "effects": "read_only",
+      "destructive": false,
+      "precondition": "The program can read the folder; macOS may ask once for protected folders.",
+      "postcondition": "Nothing is changed.",
+      "returns": {
+        "type": "list",
+        "fields": [
+          "name",
+          "path",
+          "kind",
+          "size",
+          "modified_date"
+        ],
+        "optional_fields": [
+          "created_date"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "NotFound",
+          "when": "nothing exists at the path, or the folder is missing; nothing is changed"
+        },
+        {
+          "name": "OutsideAllowedRoot",
+          "when": "FINDER_ALLOWED_ROOT is set and a path is outside it; nothing is done"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"ui\": this command only reads, and has no verified ui mode"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only touches what FINDER_ALLOWED_ROOT allows if it is set; if it isn't set, any path you can reach is accepted.",
+        "Hidden folders and ~/Library are skipped."
+      ]
+    },
+    {
+      "name": "file_info",
+      "description": "Returns the name, kind, size and dates of one file or folder.",
+      "args": [
+        {
+          "name": "path",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "An absolute path, or one starting with ~."
+        },
+        {
+          "name": "fields",
+          "type": "str | list | None",
+          "required": false,
+          "default": null,
+          "meaning": "Fields to return, as a comma-separated string or a list; adds created_date if asked."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "background",
+          "meaning": "Must be \"background\": this command has no verified ui mode."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "background"
+        ],
+        "default": "background"
+      },
+      "example_requests": [
+        "How big is this file?",
+        "When was the report last changed?",
+        "Get info on this folder"
+      ],
+      "effects": "read_only",
+      "destructive": false,
+      "precondition": "The program can read the folder; macOS may ask once for protected folders.",
+      "postcondition": "Nothing is changed.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name",
+          "path",
+          "kind",
+          "size",
+          "modified_date"
+        ],
+        "optional_fields": [
+          "created_date"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "NotFound",
+          "when": "nothing exists at the path, or the folder is missing; nothing is changed"
+        },
+        {
+          "name": "OutsideAllowedRoot",
+          "when": "FINDER_ALLOWED_ROOT is set and a path is outside it; nothing is done"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"ui\": this command only reads, and has no verified ui mode"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only touches what FINDER_ALLOWED_ROOT allows if it is set; if it isn't set, any path you can reach is accepted."
+      ]
+    },
+    {
+      "name": "folder_create",
+      "description": "Makes a new folder whose parent already exists.",
+      "args": [
+        {
+          "name": "path",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "An absolute path, or one starting with ~."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "\"ui\" or \"background\"; use one of this command's modes."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui",
+          "background"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Make a folder called Invoices in Documents",
+        "Create a new folder for the trip",
+        "Add a Photos folder here"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "For ui mode, the program has Accessibility, and Automation for System Events.",
+      "postcondition": "The folder exists and is empty.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name",
+          "path",
+          "kind",
+          "size",
+          "modified_date"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "a name is being edited, a dialog holds text, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "nothing exists at the path, or the folder is missing; nothing is changed"
+        },
+        {
+          "name": "AlreadyExists",
+          "when": "the new path is taken; nothing is overwritten"
+        },
+        {
+          "name": "OutsideAllowedRoot",
+          "when": "FINDER_ALLOWED_ROOT is set and a path is outside it; nothing is done"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only touches what FINDER_ALLOWED_ROOT allows if it is set; if it isn't set, any path you can reach is accepted.",
+        "UI mode depends on English names and was tested only in English.",
+        "Only small folders were tested, so very long folders in ui mode are untested."
+      ]
+    },
+    {
+      "name": "file_copy",
+      "description": "Copies a file or folder into another folder, keeping its name.",
+      "args": [
+        {
+          "name": "path",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "An absolute path, or one starting with ~."
+        },
+        {
+          "name": "to_folder",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The folder to put it in, which must exist."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "\"ui\" or \"background\"; use one of this command's modes."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui",
+          "background"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Copy the report to Archive",
+        "Put a copy of this file in Documents",
+        "Duplicate this folder into Backups"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "For ui mode, the program has Accessibility, and Automation for System Events.",
+      "postcondition": "The copy exists with the same content, and the original is unchanged.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name",
+          "path",
+          "kind",
+          "size",
+          "modified_date"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "a name is being edited, a dialog holds text, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "nothing exists at the path, or the folder is missing; nothing is changed"
+        },
+        {
+          "name": "AlreadyExists",
+          "when": "the new path is taken; nothing is overwritten"
+        },
+        {
+          "name": "OutsideAllowedRoot",
+          "when": "FINDER_ALLOWED_ROOT is set and a path is outside it; nothing is done"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only touches what FINDER_ALLOWED_ROOT allows if it is set; if it isn't set, any path you can reach is accepted.",
+        "UI mode depends on English names and was tested only in English.",
+        "Only small folders were tested, so very long folders in ui mode are untested."
+      ]
+    },
+    {
+      "name": "file_move",
+      "description": "Moves a file or folder into another folder, keeping its name.",
+      "args": [
+        {
+          "name": "path",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "An absolute path, or one starting with ~."
+        },
+        {
+          "name": "to_folder",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The folder to put it in, which must exist."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "\"ui\" or \"background\"; use one of this command's modes."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui",
+          "background"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Move the report to Archive",
+        "Put this PDF in Invoices",
+        "Move this folder into Documents"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "For ui mode, the program has Accessibility, and Automation for System Events.",
+      "postcondition": "It is in the new folder with the same content, and gone from the old one.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name",
+          "path",
+          "kind",
+          "size",
+          "modified_date"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "a name is being edited, a dialog holds text, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "nothing exists at the path, or the folder is missing; nothing is changed"
+        },
+        {
+          "name": "AlreadyExists",
+          "when": "the new path is taken; nothing is overwritten"
+        },
+        {
+          "name": "OutsideAllowedRoot",
+          "when": "FINDER_ALLOWED_ROOT is set and a path is outside it; nothing is done"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only touches what FINDER_ALLOWED_ROOT allows if it is set; if it isn't set, any path you can reach is accepted.",
+        "UI mode depends on English names and was tested only in English.",
+        "Only small folders were tested, so very long folders in ui mode are untested."
+      ]
+    },
+    {
+      "name": "file_rename",
+      "description": "Renames a file or folder in the same place.",
+      "args": [
+        {
+          "name": "path",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "An absolute path, or one starting with ~."
+        },
+        {
+          "name": "to",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The new name, without / or line breaks."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "\"ui\" or \"background\"; use one of this command's modes."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui",
+          "background"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Rename this file to report.pdf",
+        "Call this folder Old",
+        "Change the name of the invoice file"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "For ui mode, the program has Accessibility, and Automation for System Events.",
+      "postcondition": "It has the new name and the same content.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name",
+          "path",
+          "kind",
+          "size",
+          "modified_date"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "a name is being edited, a dialog holds text, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "nothing exists at the path, or the folder is missing; nothing is changed"
+        },
+        {
+          "name": "AlreadyExists",
+          "when": "the new path is taken; nothing is overwritten"
+        },
+        {
+          "name": "OutsideAllowedRoot",
+          "when": "FINDER_ALLOWED_ROOT is set and a path is outside it; nothing is done"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only touches what FINDER_ALLOWED_ROOT allows if it is set; if it isn't set, any path you can reach is accepted.",
+        "UI mode depends on English names and was tested only in English.",
+        "Only small folders were tested, so very long folders in ui mode are untested.",
+        "Finder can store a pasted name in a different Unicode form."
+      ]
+    },
+    {
+      "name": "file_trash",
+      "description": "Moves a file or folder to the Trash, from where it can be put back.",
+      "args": [
+        {
+          "name": "path",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "An absolute path, or one starting with ~."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "\"ui\" or \"background\"; use one of this command's modes."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui",
+          "background"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Move this file to the Trash",
+        "Bin the old report",
+        "Trash this folder"
+      ],
+      "effects": "non_idempotent",
+      "destructive": true,
+      "precondition": "For ui mode, the program has Accessibility, and Automation for System Events.",
+      "postcondition": "It is in the Trash, and nothing is permanently deleted.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name",
+          "path",
+          "kind",
+          "size",
+          "modified_date",
+          "trashed"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "a name is being edited, a dialog holds text, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "nothing exists at the path, or the folder is missing; nothing is changed"
+        },
+        {
+          "name": "OutsideAllowedRoot",
+          "when": "FINDER_ALLOWED_ROOT is set and a path is outside it; nothing is done"
+        }
+      ],
+      "confirm": "Move <path> to the Trash?",
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only touches what FINDER_ALLOWED_ROOT allows if it is set; if it isn't set, any path you can reach is accepted.",
+        "UI mode depends on English names and was tested only in English.",
+        "Only small folders were tested, so very long folders in ui mode are untested.",
+        "Emptying the Trash and permanent delete are left out on purpose."
+      ]
+    },
+    {
+      "name": "file_reveal",
+      "description": "Shows a file or folder selected in a Finder window, changing nothing on disk.",
+      "args": [
+        {
+          "name": "path",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "An absolute path, or one starting with ~."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": this command only shows something on screen."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Show me this file in Finder",
+        "Reveal the report",
+        "Where is this file? Show me"
+      ],
+      "effects": "idempotent",
+      "destructive": false,
+      "precondition": "For ui mode, the program has Accessibility, and Automation for System Events.",
+      "postcondition": "Finder shows it selected, and nothing on disk changed.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name",
+          "path",
+          "kind",
+          "size",
+          "modified_date",
+          "revealed"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "a name is being edited, a dialog holds text, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "nothing exists at the path, or the folder is missing; nothing is changed"
+        },
+        {
+          "name": "OutsideAllowedRoot",
+          "when": "FINDER_ALLOWED_ROOT is set and a path is outside it; nothing is done"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\": this command only shows something on screen"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only touches what FINDER_ALLOWED_ROOT allows if it is set; if it isn't set, any path you can reach is accepted.",
+        "UI mode depends on English names and was tested only in English.",
+        "Only small folders were tested, so very long folders in ui mode are untested.",
+        "What it shows was read back through Finder's window, which isn't independent of Finder."
+      ]
+    },
+    {
+      "name": "folder_open",
+      "description": "Shows a folder in a Finder window, changing nothing on disk.",
+      "args": [
+        {
+          "name": "path",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "An absolute path, or one starting with ~."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": this command only shows something on screen."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Open my Documents folder",
+        "Show me the Invoices folder",
+        "Open this folder in Finder"
+      ],
+      "effects": "idempotent",
+      "destructive": false,
+      "precondition": "For ui mode, the program has Accessibility, and Automation for System Events.",
+      "postcondition": "Finder shows the folder, and nothing on disk changed.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name",
+          "path",
+          "kind",
+          "size",
+          "modified_date",
+          "opened"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "a name is being edited, a dialog holds text, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "nothing exists at the path, or the folder is missing; nothing is changed"
+        },
+        {
+          "name": "OutsideAllowedRoot",
+          "when": "FINDER_ALLOWED_ROOT is set and a path is outside it; nothing is done"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\": this command only shows something on screen"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only touches what FINDER_ALLOWED_ROOT allows if it is set; if it isn't set, any path you can reach is accepted.",
+        "UI mode depends on English names and was tested only in English.",
+        "What it shows was read back through Finder's window, which isn't independent of Finder."
+      ]
+    }
+  ]
+}

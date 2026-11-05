@@ -10,6 +10,9 @@ install, no model, no keys.
 | Notes | [`notes/`](notes/) | `import notes` |
 | Calendar | [`calendar/`](calendar/) | `import calendar_app as calendar` |
 | Gmail | [`gmail/`](gmail/) | `import gmail` |
+| Finder | [`finder/`](finder/) | `import finder` |
+| Safari | [`safari/`](safari/) | `import safari` |
+| Google Chrome | [`chrome/`](chrome/) | `import chrome` |
 
 An agent writes a short program with keyword arguments, like this:
 
@@ -28,7 +31,7 @@ doesn't clash with Python's own `calendar` module, so import it `as calendar`.
 
 ## Catalog
 
-`notes/catalog.json`, `calendar/catalog.json` and `gmail/catalog.json` describe every verified command, so an agent can find and call
+`notes/catalog.json`, `calendar/catalog.json`, `gmail/catalog.json`, `finder/catalog.json`, `safari/catalog.json` and `chrome/catalog.json` describe every verified command, so an agent can find and call
 one without reading the code. Each file gives the app, its import line, the versions it was verified on, and one
 entry per command: description, arguments, verified and default modes, example requests, effects, whether it is
 destructive, precondition, postcondition, returned fields and errors.
@@ -111,6 +114,8 @@ are enabled. Each folder's README lists the cases and start states, and what was
 
 ## Verified
 
+Each app's catalog gives the versions it was verified on. **Finder, Safari and Chrome were verified on macOS 15.6.1 only**, not macOS 26. **Safari and Chrome are UI mode only**, including for reads, and were verified against a local test server only, not real websites.
+
 **Notes** ([README](notes/README.md)):
 
 | Function | Background | UI |
@@ -158,3 +163,52 @@ are enabled. Each folder's README lists the cases and start states, and what was
 | `message_send` | — | verified |
 | `message_star` | — | verified |
 | `message_trash` | — | verified |
+
+**Finder** ([README](finder/README.md)):
+
+| Function | Background | UI |
+|---|---|---|
+| `file_copy` | verified | verified |
+| `file_find` | verified | — |
+| `file_info` | verified | — |
+| `file_list` | verified | — |
+| `file_move` | verified | verified |
+| `file_rename` | verified | verified |
+| `file_reveal` | — | verified |
+| `file_trash` | verified | verified |
+| `folder_create` | verified | verified |
+| `folder_open` | — | verified |
+
+**Safari** ([README](safari/README.md)):
+
+| Function | Background | UI |
+|---|---|---|
+| `link_click` | — | verified |
+| `page_back` | — | verified |
+| `page_forward` | — | verified |
+| `page_go` | — | verified |
+| `page_info` | — | verified |
+| `page_links` | — | verified |
+| `page_reload` | — | verified |
+| `page_text` | — | verified |
+| `tab_activate` | — | verified |
+| `tab_close` | — | verified |
+| `tab_list` | — | verified |
+| `tab_open` | — | verified |
+
+**Google Chrome** ([README](chrome/README.md)):
+
+| Function | Background | UI |
+|---|---|---|
+| `link_click` | — | verified |
+| `page_back` | — | verified |
+| `page_forward` | — | verified |
+| `page_go` | — | verified |
+| `page_info` | — | verified |
+| `page_links` | — | verified |
+| `page_reload` | — | verified |
+| `page_text` | — | verified |
+| `tab_activate` | — | verified |
+| `tab_close` | — | verified |
+| `tab_list` | — | verified |
+| `tab_open` | — | verified |
