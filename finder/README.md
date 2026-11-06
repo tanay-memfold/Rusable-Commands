@@ -115,6 +115,9 @@ won't show it. Only items trashed through Finder were tested.
 ### file_add_tag(path, tag, mode="ui") → item, with `tags`
 Adds a tag in the item's **Get Info** window (macOS 15.6.1's File menu has no Tags… item). Other tags stay.
 
+### file_make_alias(path, mode="ui") → {name, path, original}
+**File > Make Alias**: an alias next to the item, named by Finder ("name alias").
+
 ### folder_new_with_selection(paths, name, mode="ui") → the new folder, with `items`
 **File > New Folder with Selection**, then names the folder (when Finder doesn't leave the new name ready to type, it renames the
 folder like any other item). At least two items.
@@ -144,6 +147,7 @@ large clipboard (about 3.5 MB, text and other data) that had to come back exactl
 | `file_find` | background | yes | 21 | a confirmation dialog open, app closed, app hidden, minimized, another app in front, another folder/list/view showing, search field with text, another item selected, two windows open |
 | `file_info` | background | yes | 13 | a confirmation dialog open, app closed, app hidden, minimized, another app in front, another folder/list/view showing, search field with text, another item selected, two windows open |
 | `file_list` | background | yes | 13 | a confirmation dialog open, app closed, app hidden, minimized, another app in front, another folder/list/view showing, search field with text, another item selected, two windows open |
+| `file_make_alias` | ui | yes | 20 | a confirmation dialog open, app closed, app hidden, minimized, another app in front, another folder/list/view showing, search field with text, another item selected, two windows open |
 | `file_move` | background | yes | 16 | a confirmation dialog open, app closed, app hidden, minimized, another app in front, another folder/list/view showing, search field with text, another item selected, two windows open |
 | `file_move` | ui | yes | 17 | a confirmation dialog open, app closed, app hidden, minimized, another app in front, another folder/list/view showing, search field with text, another item selected, two windows open, half-typed text in another item |
 | `file_put_back` | ui | yes | 11 | a confirmation dialog open, app closed, app hidden, minimized, another app in front, another folder/list/view showing, search field with text, another item selected, two windows open |
@@ -157,7 +161,7 @@ large clipboard (about 3.5 MB, text and other data) that had to come back exactl
 | `folder_new_with_selection` | ui | yes | 13 | a confirmation dialog open, app closed, app hidden, minimized, another app in front, another folder/list/view showing, search field with text, another item selected, two windows open, half-typed text in another item |
 | `folder_open` | ui | yes | 11 | a confirmation dialog open, app closed, app hidden, minimized, another app in front, another folder/list/view showing, search field with text, another item selected, two windows open, half-typed text in another item |
 
-Verified on macOS 15.6.1 (24G90), finder 15.5 (1732.6.4), 2026-11-05, in fresh VM clones.
+Verified on macOS 15.6.1 (24G90), finder 15.5 (1732.6.4), 2026-11-06, in fresh VM clones.
 
 ## Permissions
 

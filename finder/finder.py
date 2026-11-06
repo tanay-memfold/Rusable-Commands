@@ -84,6 +84,12 @@ VERIFIED: dict = {
             "app": "15.5 (1732.6.4)"
         }
     },
+    "file_make_alias": {
+        "ui": {
+            "macos": "15.6.1 (24G90)",
+            "app": "15.5 (1732.6.4)"
+        }
+    },
     "file_move": {
         "background": {
             "macos": "15.6.1 (24G90)",
@@ -1067,3 +1073,23 @@ def folder_new_with_selection(paths: list, name: str, mode: str = "ui") -> dict:
     _done()
     return _checked("folder_new_with_selection", mode, {**_shape(_info(target), None),
                                                         "items": sorted(os.listdir(target))})
+
+
+def file_make_alias(path: str, mode: str = "ui") -> dict:
+    """Make a Finder alias of the item at path, next to it, with File > Make Alias. Finder names it ("name alias")."""
+    _mode("file_make_alias", mode, ("ui",))
+    full = _existing(path)
+    folder = os.path.dirname(full)
+    before = set(os.listdir(folder))
+    _ready()
+    _select(full)
+    _until("Make Alias in the File menu", MENU_ITEM, "File", "Make Alias")
+    made = _new_items(folder, before)
+    if len(made) != 1:
+        raise UIError(f"expected one alias, found {made}")
+    alias = os.path.join(folder, made[0])
+    # A new alias's name can be left ready to edit; Return keeps Finder's name.
+    if _ui(EDITING) == "ok":
+        _keys(RETURN)
+    _done()
+    return _checked("file_make_alias", mode, {"name": made[0], "path": alias, "original": full})

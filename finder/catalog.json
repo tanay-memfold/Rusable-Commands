@@ -1318,6 +1318,81 @@
         "UI mode depends on English names and was tested only in English.",
         "It needs at least two items."
       ]
+    },
+    {
+      "name": "file_make_alias",
+      "description": "Makes a Finder alias of an item, next to it, with File > Make Alias.",
+      "args": [
+        {
+          "name": "path",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "An absolute path, or one starting with ~."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": Finder has no scripting or file API that is the same action."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Make an alias of this folder",
+        "Create a shortcut to the report",
+        "Add an alias of the app here"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "For ui mode, the program has Accessibility, and Automation for System Events.",
+      "postcondition": "An alias named by Finder (\"name alias\") is next to the item and opens it.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name",
+          "path",
+          "original"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "a name is being edited, a dialog holds text, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "nothing exists at the path, or the folder is missing; nothing is changed"
+        },
+        {
+          "name": "OutsideAllowedRoot",
+          "when": "FINDER_ALLOWED_ROOT is set and a path is outside it; nothing is done"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\": there is no background mode for this command"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only touches what FINDER_ALLOWED_ROOT allows if it is set; if it isn't set, any path you can reach is accepted.",
+        "UI mode depends on English names and was tested only in English.",
+        "Finder names the alias; a clashing name gets a number."
+      ]
     }
   ]
 }
