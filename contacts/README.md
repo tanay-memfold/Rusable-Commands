@@ -108,6 +108,12 @@ Removes the numbers under that label; the others stay. `NotFound` if there are n
 ### contact_remove_email(match, label, mode="background") → details
 The same for email addresses.
 
+### contact_set_birthday(match, date, mode="background") → {id, name, birthday}
+Sets the birthday, `YYYY-MM-DD`.
+
+### contact_add_address(match, street, city, zip=None, country=None, label="home", mode="background") → {id, name, addresses}
+Adds a postal address under a label; addresses already there stay. Street line breaks are kept.
+
 ### contact_export_vcard(path, match=None, mode="background") → {path, count}
 Writes one card, or every card with no `match`, to a new `.vcf` file, as Contacts makes the vCards. Nothing is overwritten.
 
@@ -122,12 +128,13 @@ In fresh copies of one VM with no contacts in it to begin with, using made-up da
 Results were read back from Contacts' own database, not through scripting or the library, and every other card and list was compared
 before and after.
 
-Every case was rerun on the final code.
+Every case ran on the final code of its commands. The commands added on day 3 sit in their own section at the end of the file and were tested on their own; the code above them is unchanged.
 
 Each UI command that changes something was also run with a very large clipboard (about 3.5 MB, text and other data): the change had to land and the clipboard had to come back exactly, read back with `pbpaste` and separate code.
 
 | Function | Mode | Verified | Cases | Start states |
 |---|---|---|---|---|
+| `contact_add_address` | background | yes | 10 | app closed, app hidden, app open, another app in front |
 | `contact_add_email` | background | yes | 5 | app closed, app hidden, another app in front, another folder/list/view showing |
 | `contact_add_phone` | background | yes | 5 | app closed, app hidden, another app in front, another folder/list/view showing |
 | `contact_create` | background | yes | 21 | app closed, app hidden, app still launching, minimized, no window open, app open, another app in front, another folder/list/view showing, search field with text, another item selected |
@@ -142,6 +149,7 @@ Each UI command that changes something was also run with a very large clipboard 
 | `contact_remove_email` | background | yes | 5 | app closed, app hidden, another app in front, another folder/list/view showing |
 | `contact_remove_phone` | background | yes | 5 | app closed, app hidden, another app in front, another folder/list/view showing |
 | `contact_search` | background | yes | 10 | app closed, app hidden, app still launching, minimized, no window open, app open, another app in front, another folder/list/view showing, search field with text, another item selected |
+| `contact_set_birthday` | background | yes | 15 | app closed, app hidden, app open, another app in front |
 | `contact_set_job_title` | background | yes | 6 | app closed, app hidden, another app in front, another folder/list/view showing |
 | `contact_set_phone` | background | yes | 5 | app closed, app hidden, another app in front, another folder/list/view showing |
 | `contact_update` | background | yes | 12 | app closed, app hidden, app still launching, minimized, no window open, app open, another app in front, another folder/list/view showing, search field with text, another item selected |
@@ -156,7 +164,7 @@ Each UI command that changes something was also run with a very large clipboard 
 | `group_rename` | background | yes | 12 | app closed, app hidden, app still launching, minimized, no window open, app open, another app in front, another folder/list/view showing, search field with text, another item selected |
 | `group_rename` | ui | yes | 14 | app closed, app hidden, app still launching, minimized, no window open, app open, another app in front, another folder/list/view showing, search field with text, another item selected, half-typed text in another item |
 
-Verified on macOS 15.6.1 (24G90), contacts 14.0 (2695.500.71), 2026-11-05, in fresh VM clones.
+Verified on macOS 15.6.1 (24G90), contacts 14.0 (2695.500.71), 2026-11-06, in fresh VM clones.
 
 ## Permissions
 

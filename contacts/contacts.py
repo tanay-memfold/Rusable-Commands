@@ -26,6 +26,12 @@ FIELDS = ("id", "name", "first", "last", "company", "emails", "phones", "note", 
 DEFAULT_FIELDS = "name,first,last,company,emails,phones,note,groups"
 
 VERIFIED: dict = {
+    "contact_add_address": {
+        "background": {
+            "macos": "15.6.1 (24G90)",
+            "app": "14.0 (2695.500.71)"
+        }
+    },
     "contact_add_email": {
         "background": {
             "macos": "15.6.1 (24G90)",
@@ -101,6 +107,12 @@ VERIFIED: dict = {
         }
     },
     "contact_search": {
+        "background": {
+            "macos": "15.6.1 (24G90)",
+            "app": "14.0 (2695.500.71)"
+        }
+    },
+    "contact_set_birthday": {
         "background": {
             "macos": "15.6.1 (24G90)",
             "app": "14.0 (2695.500.71)"
@@ -1043,3 +1055,62 @@ def contact_merge(match: str, mode: str = "ui") -> dict:
     _menu("Card", "Merge Selected Cards")
     _wait_for("the cards to merge", lambda: len(_data("find", name=match)) == 1, SAVE_TIMEOUT, 1)
     return _checked("contact_merge", mode, _shape(_one(match), "id," + DEFAULT_FIELDS))
+
+
+# Birthday and addresses -------------------------------------------------------------------------------------------
+# Added later with their own script, so the code above is unchanged.
+
+MORE = r"""
+function run(argv) {
+  const C = Application("Contacts"), a = JSON.parse(argv[1]);
+  const p = C.people.byId(a.id);
+  const pad = n => String(n).padStart(2, "0");
+  const read = () => {
+    const b = p.birthDate();
+    return JSON.stringify({birthday: b ? `${b.getFullYear()}-${pad(b.getMonth() + 1)}-${pad(b.getDate())}` : null,
+      addresses: p.addresses().map(x => ({label: x.label(), street: x.street() || "", city: x.city() || "", zip: x.zip() || "", country: x.country() || ""}))});
+  };
+  if (argv[0] === "birthday") { p.birthDate = new Date(a.y, a.m - 1, a.d, 12, 0, 0); C.save(); }
+  if (argv[0] === "address") {
+    const props = {label: a.label, street: a.street, city: a.city};
+    if (a.zip) props.zip = a.zip;
+    if (a.country) props.country = a.country;
+    p.addresses.push(C.Address(props)); C.save();
+  }
+  return read();
+}"""
+
+
+def _more(op: str, **args):
+    return json.loads(_jxa(MORE, op, json.dumps(args)))
+
+
+def contact_set_birthday(match: str, date: str, mode: str = "background") -> dict:
+    """Set the birthday ("YYYY-MM-DD") of the card named match."""
+    import datetime as _dt
+    _mode("contact_set_birthday", mode, ("background",))
+    try:
+        day = _dt.date.fromisoformat(date)
+    except (TypeError, ValueError):
+        raise ValueError("date must be YYYY-MM-DD") from None
+    _ready_for(mode)
+    item = _one(match)
+    _more("birthday", id=item["id"], y=day.year, m=day.month, d=day.day)
+    got = _wait_for("the birthday to be saved", lambda: (lambda r: r if r["birthday"] == day.isoformat() else None)(_more("read", id=item["id"])), SAVE_TIMEOUT, 1)
+    return _checked("contact_set_birthday", mode, {"id": item["id"], "name": item["name"], "birthday": got["birthday"]})
+
+
+def contact_add_address(match: str, street: str, city: str, zip: str | None = None, country: str | None = None,
+                        label: str = "home", mode: str = "background") -> dict:
+    """Add a postal address with a label such as home or work to the card named match. Addresses already there stay."""
+    _mode("contact_add_address", mode, ("background",))
+    for name, value in (("street", street), ("city", city)):
+        if not isinstance(value, str) or not value.strip():
+            raise ValueError(f"{name} must be non-empty text")
+    _label(label)
+    _ready_for(mode)
+    item = _one(match)
+    before = len(_more("read", id=item["id"])["addresses"])
+    _more("address", id=item["id"], label=label, street=street, city=city, zip=zip, country=country)
+    got = _wait_for("the address to be saved", lambda: (lambda r: r if len(r["addresses"]) == before + 1 else None)(_more("read", id=item["id"])), SAVE_TIMEOUT, 1)
+    return _checked("contact_add_address", mode, {"id": item["id"], "name": item["name"], "addresses": got["addresses"]})

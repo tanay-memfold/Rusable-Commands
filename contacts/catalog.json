@@ -1732,6 +1732,187 @@
         "UI mode depends on English names and was tested only in English.",
         "Which card's name, company and note win is Contacts' own choice; the test checked that both cards' emails and phones were kept and the company of either was."
       ]
+    },
+    {
+      "name": "contact_set_birthday",
+      "description": "Sets a card's birthday.",
+      "args": [
+        {
+          "name": "match",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The card's exact name as Contacts shows it."
+        },
+        {
+          "name": "date",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The birthday as YYYY-MM-DD."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "background",
+          "meaning": "Must be \"background\": this command has no verified ui mode."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "background"
+        ],
+        "default": "background"
+      },
+      "example_requests": [
+        "Set Sam's birthday to 15 June 1987",
+        "Priya was born on 29 February 2000",
+        "Add a birthday to this contact"
+      ],
+      "effects": "idempotent",
+      "destructive": false,
+      "precondition": "The program has access to Contacts and Automation permission for Contacts.",
+      "postcondition": "The card has that birthday; nothing else on it changed.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "id",
+          "name",
+          "birthday"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "NotFound",
+          "when": "no card or list has that name; nothing is changed"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one matches; nothing is changed"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"ui\": this command has no verified ui mode"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only tested with no account signed in to Contacts."
+      ]
+    },
+    {
+      "name": "contact_add_address",
+      "description": "Adds a postal address with a label to a card, keeping the addresses already there.",
+      "args": [
+        {
+          "name": "match",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The card's exact name as Contacts shows it."
+        },
+        {
+          "name": "street",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The street lines; line breaks are kept."
+        },
+        {
+          "name": "city",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The city."
+        },
+        {
+          "name": "zip",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "The postal code."
+        },
+        {
+          "name": "country",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "The country."
+        },
+        {
+          "name": "label",
+          "type": "str",
+          "required": false,
+          "default": "home",
+          "meaning": "The label as Contacts stores it, such as mobile, home or work."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "background",
+          "meaning": "Must be \"background\": this command has no verified ui mode."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "background"
+        ],
+        "default": "background"
+      },
+      "example_requests": [
+        "Add Sam's home address: 12 Park Road, Pune",
+        "Give Priya a work address in Mumbai",
+        "Save this address on the contact"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "The program has access to Contacts and Automation permission for Contacts.",
+      "postcondition": "The card has the new address under the label, and its other addresses stay.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "id",
+          "name",
+          "addresses"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "NotFound",
+          "when": "no card or list has that name; nothing is changed"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one matches; nothing is changed"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"ui\": this command has no verified ui mode"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only tested with no account signed in to Contacts.",
+        "State and region fields weren't tested."
+      ]
     }
   ]
 }
