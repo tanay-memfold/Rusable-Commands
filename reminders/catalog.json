@@ -1,0 +1,1024 @@
+{
+  "app": "Reminders",
+  "import": "import reminders",
+  "macos_version": "15.6.1 (24G90)",
+  "app_version": "7.0 (3740)",
+  "commands": [
+    {
+      "name": "reminder_create",
+      "description": "Adds a reminder to a list, or the default list.",
+      "args": [
+        {
+          "name": "title",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "One non-empty line."
+        },
+        {
+          "name": "list",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "The list to add it to; the default list if not given."
+        },
+        {
+          "name": "due",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "\"YYYY-MM-DD HH:MM\" in local time or \"YYYY-MM-DD\"; needs background mode, and 00:00 is refused."
+        },
+        {
+          "name": "notes",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "The reminder's notes."
+        },
+        {
+          "name": "priority",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "\"high\", \"medium\" or \"low\"; needs background mode."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "\"ui\" or \"background\"; use one of this command's modes."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui",
+          "background"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Remind me to call the dentist",
+        "Add milk to my Shopping list",
+        "Add a reminder to pay rent on 1 December at 9am"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "Reminders' local account is available, and the program has Automation permission for Reminders. For ui mode, the program also has Accessibility, and Automation for System Events.",
+      "postcondition": "One new reminder exists with these values.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "id",
+          "title",
+          "notes",
+          "list",
+          "due",
+          "priority",
+          "completed"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "the screen holds typed text or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "no reminder has that title, or no list has that name; nothing is changed"
+        },
+        {
+          "name": "NotSupported",
+          "when": "the mode can't do this, including due or priority in ui mode"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only the local account was tested, with no iCloud or other account signed in to Reminders.",
+        "Due dates and priority can't be set in ui mode because the date field exposes no parts to Accessibility, so use background mode.",
+        "A due time of 00:00 is refused because it can't be told apart from a day without a time.",
+        "UI mode depends on English names and was tested only in English."
+      ]
+    },
+    {
+      "name": "reminder_list",
+      "description": "Lists reminders in a list or in every list, newest first.",
+      "args": [
+        {
+          "name": "list",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "Only look in the list with this name."
+        },
+        {
+          "name": "completed",
+          "type": "bool | None",
+          "required": false,
+          "default": false,
+          "meaning": "False for open ones, True for done ones, None for both."
+        },
+        {
+          "name": "limit",
+          "type": "int",
+          "required": false,
+          "default": 100,
+          "meaning": "The most reminders to return."
+        },
+        {
+          "name": "fields",
+          "type": "str | list | None",
+          "required": false,
+          "default": null,
+          "meaning": "Fields to return, as a comma-separated string or a list; adds id and completed_date if asked."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "background",
+          "meaning": "Must be \"background\": this command has no verified ui mode."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "background"
+        ],
+        "default": "background"
+      },
+      "example_requests": [
+        "What's on my Shopping list?",
+        "Show my reminders",
+        "What have I completed in Work?"
+      ],
+      "effects": "read_only",
+      "destructive": false,
+      "precondition": "Reminders' local account is available, and the program has Automation permission for Reminders.",
+      "postcondition": "Nothing is changed.",
+      "returns": {
+        "type": "list",
+        "fields": [
+          "title",
+          "notes",
+          "list",
+          "due",
+          "priority",
+          "completed"
+        ],
+        "optional_fields": [
+          "id",
+          "completed_date"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "NotFound",
+          "when": "no reminder has that title, or no list has that name; nothing is changed"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"ui\": this command only reads, and has no verified ui mode"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only the local account was tested, with no iCloud or other account signed in to Reminders."
+      ]
+    },
+    {
+      "name": "reminder_search",
+      "description": "Finds reminders whose title or notes contain some text, ignoring case.",
+      "args": [
+        {
+          "name": "query",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The text to look for."
+        },
+        {
+          "name": "fields",
+          "type": "str | list | None",
+          "required": false,
+          "default": null,
+          "meaning": "Fields to return, as a comma-separated string or a list; adds id and completed_date if asked."
+        },
+        {
+          "name": "completed",
+          "type": "bool | None",
+          "required": false,
+          "default": null,
+          "meaning": "False for open ones, True for done ones, None for both."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "background",
+          "meaning": "Must be \"background\": this command has no verified ui mode."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "background"
+        ],
+        "default": "background"
+      },
+      "example_requests": [
+        "Do I have a reminder about the dentist?",
+        "Find reminders mentioning rent",
+        "Search my reminders for passport"
+      ],
+      "effects": "read_only",
+      "destructive": false,
+      "precondition": "Reminders' local account is available, and the program has Automation permission for Reminders.",
+      "postcondition": "Nothing is changed.",
+      "returns": {
+        "type": "list",
+        "fields": [
+          "title",
+          "notes",
+          "list",
+          "due",
+          "priority",
+          "completed"
+        ],
+        "optional_fields": [
+          "id",
+          "completed_date"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"ui\": this command only reads, and has no verified ui mode"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only the local account was tested, with no iCloud or other account signed in to Reminders."
+      ]
+    },
+    {
+      "name": "reminder_get",
+      "description": "Returns the one reminder with this exact title.",
+      "args": [
+        {
+          "name": "match",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The reminder's exact title."
+        },
+        {
+          "name": "list",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "Only look in the list with this name."
+        },
+        {
+          "name": "fields",
+          "type": "str | list | None",
+          "required": false,
+          "default": null,
+          "meaning": "Fields to return, as a comma-separated string or a list; adds id and completed_date if asked."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "background",
+          "meaning": "Must be \"background\": this command has no verified ui mode."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "background"
+        ],
+        "default": "background"
+      },
+      "example_requests": [
+        "When is the dentist reminder due?",
+        "Show me the rent reminder",
+        "What are the notes on my passport reminder?"
+      ],
+      "effects": "read_only",
+      "destructive": false,
+      "precondition": "Reminders' local account is available, and the program has Automation permission for Reminders.",
+      "postcondition": "Nothing is changed.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "title",
+          "notes",
+          "list",
+          "due",
+          "priority",
+          "completed"
+        ],
+        "optional_fields": [
+          "id",
+          "completed_date"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "NotFound",
+          "when": "no reminder has that title, or no list has that name; nothing is changed"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one matches; nothing is changed"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"ui\": this command only reads, and has no verified ui mode"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only the local account was tested, with no iCloud or other account signed in to Reminders.",
+        "A completed and an open reminder with the same title are Ambiguous."
+      ]
+    },
+    {
+      "name": "reminder_update",
+      "description": "Changes a reminder's title, notes, due date or priority, and only the values given.",
+      "args": [
+        {
+          "name": "match",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The reminder's exact title."
+        },
+        {
+          "name": "list",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "Only look in the list with this name."
+        },
+        {
+          "name": "title",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "The new title, one non-empty line."
+        },
+        {
+          "name": "due",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "\"YYYY-MM-DD HH:MM\" in local time or \"YYYY-MM-DD\"; needs background mode, and 00:00 is refused."
+        },
+        {
+          "name": "notes",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "The reminder's notes."
+        },
+        {
+          "name": "priority",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "\"high\", \"medium\" or \"low\"; needs background mode."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "background",
+          "meaning": "\"ui\" or \"background\"; use one of this command's modes."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui",
+          "background"
+        ],
+        "default": "background"
+      },
+      "example_requests": [
+        "Move the dentist reminder to Friday",
+        "Rename the rent reminder",
+        "Make the passport reminder high priority"
+      ],
+      "effects": "idempotent",
+      "destructive": false,
+      "precondition": "Reminders' local account is available, and the program has Automation permission for Reminders. For ui mode, the program also has Accessibility, and Automation for System Events.",
+      "postcondition": "The reminder has the new values and the rest are unchanged.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "id",
+          "title",
+          "notes",
+          "list",
+          "due",
+          "priority",
+          "completed"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "the screen holds typed text or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "no reminder has that title, or no list has that name; nothing is changed"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one matches; nothing is changed"
+        },
+        {
+          "name": "NotSupported",
+          "when": "the mode can't do this, including due or priority in ui mode"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only the local account was tested, with no iCloud or other account signed in to Reminders.",
+        "UI mode changes title and notes only, because due dates and priority can't be set on screen safely.",
+        "A due date can't be cleared.",
+        "UI mode depends on English names and was tested only in English."
+      ]
+    },
+    {
+      "name": "reminder_complete",
+      "description": "Marks a reminder as completed.",
+      "args": [
+        {
+          "name": "match",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The reminder's exact title."
+        },
+        {
+          "name": "list",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "Only look in the list with this name."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "\"ui\" or \"background\"; use one of this command's modes."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui",
+          "background"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "I've done the dentist reminder",
+        "Tick off the milk",
+        "Complete the rent reminder"
+      ],
+      "effects": "idempotent",
+      "destructive": false,
+      "precondition": "Reminders' local account is available, and the program has Automation permission for Reminders. For ui mode, the program also has Accessibility, and Automation for System Events.",
+      "postcondition": "The reminder is completed.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "id",
+          "title",
+          "notes",
+          "list",
+          "due",
+          "priority",
+          "completed"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "the screen holds typed text or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "no reminder has that title, or no list has that name; nothing is changed"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one matches; nothing is changed"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only the local account was tested, with no iCloud or other account signed in to Reminders.",
+        "There is no command to mark a completed reminder as not done.",
+        "UI mode depends on English names and was tested only in English."
+      ]
+    },
+    {
+      "name": "reminder_delete",
+      "description": "Deletes a reminder.",
+      "args": [
+        {
+          "name": "match",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The reminder's exact title."
+        },
+        {
+          "name": "list",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "Only look in the list with this name."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "\"ui\" or \"background\"; use one of this command's modes."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui",
+          "background"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Delete the dentist reminder",
+        "Remove the milk reminder",
+        "Get rid of the rent reminder"
+      ],
+      "effects": "non_idempotent",
+      "destructive": true,
+      "precondition": "Reminders' local account is available, and the program has Automation permission for Reminders. For ui mode, the program also has Accessibility, and Automation for System Events.",
+      "postcondition": "The reminder is gone.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "id",
+          "title",
+          "notes",
+          "list",
+          "due",
+          "priority",
+          "completed",
+          "deleted"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "the screen holds typed text or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "no reminder has that title, or no list has that name; nothing is changed"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one matches; nothing is changed"
+        }
+      ],
+      "confirm": "Delete the reminder <match>?",
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only the local account was tested, with no iCloud or other account signed in to Reminders.",
+        "UI mode depends on English names and was tested only in English."
+      ]
+    },
+    {
+      "name": "list_create",
+      "description": "Makes a new list in the local account.",
+      "args": [
+        {
+          "name": "name",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "One non-empty line, not already taken."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "\"ui\" or \"background\"; use one of this command's modes."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui",
+          "background"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Make a list called Trip",
+        "Create a Shopping list",
+        "Add a new reminders list for work"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "Reminders' local account is available, and the program has Automation permission for Reminders. For ui mode, the program also has Accessibility, and Automation for System Events.",
+      "postcondition": "The list exists and is empty.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name",
+          "open"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "the screen holds typed text or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "AlreadyExists",
+          "when": "a list with that name already exists; nothing is changed"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only the local account was tested, with no iCloud or other account signed in to Reminders.",
+        "A list's colour and icon can't be chosen.",
+        "UI mode depends on English names and was tested only in English."
+      ]
+    },
+    {
+      "name": "list_list",
+      "description": "Lists the local lists with how many open reminders each has.",
+      "args": [
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "background",
+          "meaning": "Must be \"background\": this command has no verified ui mode."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "background"
+        ],
+        "default": "background"
+      },
+      "example_requests": [
+        "What reminder lists do I have?",
+        "List my lists",
+        "How many reminders are in each list?"
+      ],
+      "effects": "read_only",
+      "destructive": false,
+      "precondition": "Reminders' local account is available, and the program has Automation permission for Reminders.",
+      "postcondition": "Nothing is changed.",
+      "returns": {
+        "type": "list",
+        "fields": [
+          "name",
+          "open"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"ui\": this command only reads, and has no verified ui mode"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only the local account was tested, with no iCloud or other account signed in to Reminders.",
+        "Smart lists aren't included."
+      ]
+    },
+    {
+      "name": "list_rename",
+      "description": "Renames a list, and its reminders stay in it.",
+      "args": [
+        {
+          "name": "name",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The list's exact name."
+        },
+        {
+          "name": "to",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The new name, one non-empty line, not already taken."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "\"ui\" or \"background\"; use one of this command's modes."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui",
+          "background"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Rename my Trip list to Goa",
+        "Change the Work list's name to Office",
+        "Call the Shopping list Groceries"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "Reminders' local account is available, and the program has Automation permission for Reminders. For ui mode, the program also has Accessibility, and Automation for System Events.",
+      "postcondition": "The list has the new name and the same reminders.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name",
+          "open"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "the screen holds typed text or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "no reminder has that title, or no list has that name; nothing is changed"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one matches; nothing is changed"
+        },
+        {
+          "name": "AlreadyExists",
+          "when": "a list with that name already exists; nothing is changed"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only the local account was tested, with no iCloud or other account signed in to Reminders.",
+        "UI mode depends on English names and was tested only in English."
+      ]
+    },
+    {
+      "name": "reminder_move",
+      "description": "Moves a reminder to another list, keeping its title, notes, due date and priority.",
+      "args": [
+        {
+          "name": "match",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The reminder's exact title."
+        },
+        {
+          "name": "to_list",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The exact name of the list to move it to."
+        },
+        {
+          "name": "list",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "Only look in the list with this name."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "background",
+          "meaning": "Must be \"background\": this command has no verified ui mode."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "background"
+        ],
+        "default": "background"
+      },
+      "example_requests": [
+        "Move the milk reminder to Shopping",
+        "Put this task in my Work list",
+        "Move 'Call dentist' to Personal"
+      ],
+      "effects": "idempotent",
+      "destructive": false,
+      "precondition": "The program has access to Reminders and Automation permission for Reminders.",
+      "postcondition": "The reminder is in to_list and no longer in its old list.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "id",
+          "title",
+          "notes",
+          "list",
+          "due",
+          "priority",
+          "completed"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "NotFound",
+          "when": "no reminder has that title, or no list has that name; nothing is changed"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one matches; nothing is changed"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"ui\": moving on screen means dragging, and these commands use no screen positions"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only the local account was tested, with no iCloud or other account signed in to Reminders.",
+        "In one of two full runs, Reminders came to the front once when this started it from closed; the rerun passed."
+      ]
+    },
+    {
+      "name": "list_delete",
+      "description": "Deletes a list and every reminder in it.",
+      "args": [
+        {
+          "name": "name",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The list's exact name."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "\"ui\" or \"background\"; use one of this command's modes."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui",
+          "background"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Delete my Trip list",
+        "Remove the Shopping list",
+        "Get rid of the old Work list"
+      ],
+      "effects": "non_idempotent",
+      "destructive": true,
+      "precondition": "Reminders' local account is available, and the program has Automation permission for Reminders. For ui mode, the program also has Accessibility, and Automation for System Events.",
+      "postcondition": "The list and its reminders are gone.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name",
+          "open",
+          "deleted"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "the screen holds typed text or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "no reminder has that title, or no list has that name; nothing is changed"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one matches; nothing is changed"
+        }
+      ],
+      "confirm": "Delete the list <name> and all its reminders?",
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only the local account was tested, with no iCloud or other account signed in to Reminders.",
+        "UI mode depends on English names and was tested only in English."
+      ]
+    }
+  ]
+}
