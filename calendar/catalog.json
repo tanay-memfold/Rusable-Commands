@@ -782,6 +782,297 @@
           "when": "a screen element never appeared in time, Calendar's scripting failed, or the change was not seen in time"
         }
       ]
+    },
+    {
+      "name": "event_details",
+      "description": "Gets an event with its repeat rule and its alerts.",
+      "args": [
+        {
+          "name": "match",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The event's exact title."
+        },
+        {
+          "name": "date",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The day it starts, \"YYYY-MM-DD\"."
+        },
+        {
+          "name": "calendar",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "Local calendar to look in, by exact name, when the same title exists twice that day."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "background",
+          "meaning": "Must be \"background\": this command has no verified ui mode."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "background"
+        ],
+        "default": "background"
+      },
+      "example_requests": [
+        "Does the Standup on Monday repeat?",
+        "What alerts are set for the Dentist on 18 November?",
+        "Show me how often Team sync repeats"
+      ],
+      "effects": "read_only",
+      "destructive": false,
+      "precondition": "Exactly one event with that title starts that day, within calendar if given. It has Automation permission for Calendar.",
+      "postcondition": "Nothing is changed.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "uid",
+          "title",
+          "start",
+          "end",
+          "all_day",
+          "location",
+          "notes",
+          "calendar",
+          "repeat",
+          "alerts"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode is not \"ui\" or \"background\""
+        },
+        {
+          "name": "NotFound",
+          "when": "no event with that exact title starts that day, within calendar if given"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one event matches; nothing is changed"
+        },
+        {
+          "name": "UIError",
+          "when": "Calendar's scripting failed, or the change was not seen in time"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"ui\": this command only reads, and has no verified ui mode"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, unlike this app's other commands (macOS 26.6.2), so it isn't known to work on macOS 26 or any other version.",
+        "repeat is the RRULE text as Calendar stores it, or None; alerts are minutes before the start, leaving out Calendar's own default alert."
+      ],
+      "verified_on": "15.6.1"
+    },
+    {
+      "name": "event_set_repeat",
+      "description": "Makes an event repeat by an iCalendar RRULE, replacing any repeat it has.",
+      "args": [
+        {
+          "name": "match",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The event's exact title."
+        },
+        {
+          "name": "date",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The day it starts, \"YYYY-MM-DD\"."
+        },
+        {
+          "name": "rule",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "An RRULE such as \"FREQ=WEEKLY;COUNT=5\": FREQ (DAILY, WEEKLY, MONTHLY, YEARLY), INTERVAL, COUNT or UNTIL, BYDAY, BYMONTHDAY, BYMONTH."
+        },
+        {
+          "name": "calendar",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "Local calendar to look in, by exact name, when the same title exists twice that day."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "background",
+          "meaning": "Must be \"background\": this command has no verified ui mode."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "background"
+        ],
+        "default": "background"
+      },
+      "example_requests": [
+        "Make the Standup repeat every weekday",
+        "Repeat the Book club monthly for six months",
+        "Set Team sync to every two weeks on Monday and Wednesday"
+      ],
+      "effects": "idempotent",
+      "destructive": false,
+      "precondition": "Exactly one event with that title starts that day, within calendar if given. It has Automation permission for Calendar.",
+      "postcondition": "The event repeats by the rule; its title and times are unchanged.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "uid",
+          "title",
+          "start",
+          "end",
+          "all_day",
+          "location",
+          "notes",
+          "calendar",
+          "repeat"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode is not \"ui\" or \"background\""
+        },
+        {
+          "name": "NotFound",
+          "when": "no event with that exact title starts that day, within calendar if given"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one event matches; nothing is changed"
+        },
+        {
+          "name": "UIError",
+          "when": "Calendar's scripting failed, or the change was not seen in time"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"ui\", or rule is None: stopping a repeat isn't supported"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, unlike this app's other commands (macOS 26.6.2), so it isn't known to work on macOS 26 or any other version.",
+        "Stopping a repeat isn't supported: Calendar's scripting kept the repeat when it was cleared.",
+        "Only the first occurrence can be found by match and date, because Calendar's scripting doesn't expand repeats."
+      ],
+      "verified_on": "15.6.1"
+    },
+    {
+      "name": "event_add_alert",
+      "description": "Adds an on-screen alert some minutes before an event starts.",
+      "args": [
+        {
+          "name": "match",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The event's exact title."
+        },
+        {
+          "name": "date",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The day it starts, \"YYYY-MM-DD\"."
+        },
+        {
+          "name": "minutes_before",
+          "type": "int",
+          "required": true,
+          "default": null,
+          "meaning": "Minutes before the start, from 0 (at the start) to 40320 (four weeks)."
+        },
+        {
+          "name": "calendar",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "Local calendar to look in, by exact name, when the same title exists twice that day."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "background",
+          "meaning": "Must be \"background\": this command has no verified ui mode."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "background"
+        ],
+        "default": "background"
+      },
+      "example_requests": [
+        "Remind me 15 minutes before the Dentist",
+        "Add a one-day alert to the flight",
+        "Alert me when the Team sync starts"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "Exactly one event with that title starts that day, within calendar if given. It has Automation permission for Calendar.",
+      "postcondition": "The event has the alert, and its other alerts stay.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "uid",
+          "title",
+          "start",
+          "end",
+          "all_day",
+          "location",
+          "notes",
+          "calendar",
+          "alerts"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode is not \"ui\" or \"background\""
+        },
+        {
+          "name": "NotFound",
+          "when": "no event with that exact title starts that day, within calendar if given"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one event matches; nothing is changed"
+        },
+        {
+          "name": "UIError",
+          "when": "Calendar's scripting failed, or the change was not seen in time"
+        },
+        {
+          "name": "AlreadyExists",
+          "when": "the event already has an alert that many minutes before; nothing is changed"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"ui\": this command has no ui mode"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, unlike this app's other commands (macOS 26.6.2), so it isn't known to work on macOS 26 or any other version.",
+        "Removing alerts isn't supported: every delete of an alert through Calendar's scripting failed.",
+        "Only on-screen alerts; sound and email alerts aren't covered."
+      ],
+      "verified_on": "15.6.1"
     }
   ]
 }

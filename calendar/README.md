@@ -107,6 +107,38 @@ Deletes the calendar and its events.
 UI steps: select the calendar's row in the calendar list, then **Edit** › **Delete**, and click **Delete** in the
 confirmation.
 
+## Repeats and alerts (added later, macOS 15.6.1 only)
+
+These were verified on macOS 15.6.1 with Calendar 15.0, unlike the commands above (macOS 26.6.2). They use their own script, added
+after the code above, which is unchanged. Background mode only.
+
+### event_details(match, date, calendar=None, mode="background") → event, with `repeat` and `alerts`
+`repeat` is the RRULE text as Calendar stores it, or `None`. `alerts` is a sorted list of minutes before the start; Calendar's own
+default alert isn't listed.
+
+### event_set_repeat(match, date, rule, calendar=None, mode="background") → event, with `repeat`
+Makes the event repeat by an iCalendar RRULE, such as `"FREQ=WEEKLY;COUNT=5"` or `"FREQ=WEEKLY;INTERVAL=2;BYDAY=MO,WE"`. Allowed
+parts: FREQ (DAILY, WEEKLY, MONTHLY, YEARLY), INTERVAL, COUNT or UNTIL, BYDAY, BYMONTHDAY and BYMONTH. Any repeat it had is replaced.
+**Stopping a repeat isn't supported** (`rule=None` raises `NotSupported`): Calendar's scripting kept the repeat when it was cleared.
+
+### event_add_alert(match, date, minutes_before, calendar=None, mode="background") → event, with `alerts`
+Adds an on-screen alert `minutes_before` minutes before the start (0 to 40320). `AlreadyExists` if one is already set for that
+time. **Removing alerts isn't supported**: every delete of an alert through Calendar's scripting failed.
+
+Left out: exporting a calendar as `.ics`. On a fresh macOS 15.6.1 VM Calendar first shows a What's New screen that leads into
+location use, which the tests don't click through, and the Export menu offered only Export Event… and Calendar Archive….
+
+These were read back from Calendar.sqlitedb (its repeat and alarm tables), not through Calendar, and every other event in the
+database was compared before and after.
+
+Commands added later, verified separately:
+
+| Function | Mode | Verified | Cases | macOS | App |
+|---|---|---|---|---|---|
+| `event_add_alert` | background | yes | 23 | 15.6.1 (24G90) | 15.0 (2995.7.1) |
+| `event_details` | background | yes | 10 | 15.6.1 (24G90) | 15.0 (2995.7.1) |
+| `event_set_repeat` | background | yes | 36 | 15.6.1 (24G90) | 15.0 (2995.7.1) |
+
 ## Verification
 
 | Function | Mode | Verified | Cases | Start states |

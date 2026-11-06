@@ -57,6 +57,12 @@ VERIFIED: dict = {
             "app": "16.0 (3036.4.14)"
         }
     },
+    "event_add_alert": {
+        "background": {
+            "macos": "15.6.1 (24G90)",
+            "app": "15.0 (2995.7.1)"
+        }
+    },
     "event_create": {
         "background": {
             "macos": "26.6.2 (25G83)",
@@ -71,6 +77,12 @@ VERIFIED: dict = {
         "ui": {
             "macos": "26.6.2 (25G83)",
             "app": "16.0 (3036.4.14)"
+        }
+    },
+    "event_details": {
+        "background": {
+            "macos": "15.6.1 (24G90)",
+            "app": "15.0 (2995.7.1)"
         }
     },
     "event_get": {
@@ -89,6 +101,12 @@ VERIFIED: dict = {
         "background": {
             "macos": "26.6.2 (25G83)",
             "app": "16.0 (3036.4.14)"
+        }
+    },
+    "event_set_repeat": {
+        "background": {
+            "macos": "15.6.1 (24G90)",
+            "app": "15.0 (2995.7.1)"
         }
     },
     "event_update": {
@@ -765,3 +783,114 @@ def calendar_delete(name: str, mode: str = "ui") -> dict:
         _done()
     _wait_for("the calendar to go", lambda: not [c for c in _data("calendars") if c["name"] == name])
     return _checked("calendar_delete", mode, {"name": name, "deleted": True})
+
+
+# Repeats and alerts -----------------------------------------------------------------------------------------------
+# Added later and verified separately, on macOS 15.6.1 only (see VERIFIED). They use their own script, so the code
+# above is unchanged.
+
+MORE = r"""
+function run(argv) {
+  const Cal = Application("Calendar");
+  const op = argv[0], a = JSON.parse(argv[1]);
+  const notLocal = %NOT_LOCAL%;
+  const local = () => Cal.calendars().filter(c => c.writable() && !notLocal.includes(c.name()));
+  const byUid = uid => {
+    for (const c of local()) {
+      const found = c.events.whose({uid: uid})();
+      if (found.length) return found[0];
+    }
+    throw new Error("no event " + uid);
+  };
+  const e = byUid(a.uid);
+  const alerts = () => e.displayAlarms().map(x => -Math.round(x.triggerInterval()));
+  switch (op) {
+    case "details": return JSON.stringify({repeat: e.recurrence() || null, alerts: alerts()});
+    case "repeat": e.recurrence = a.rule; return "true";
+    case "alert": e.displayAlarms.push(Cal.DisplayAlarm({triggerInterval: -a.minutes})); return "true";
+  }
+  throw new Error("unknown op " + op);
+}""".replace("%NOT_LOCAL%", json.dumps(list(NOT_LOCAL)))
+
+REPEAT_KEYS = {"FREQ", "INTERVAL", "COUNT", "UNTIL", "BYDAY", "BYMONTHDAY", "BYMONTH"}
+FREQS = {"DAILY", "WEEKLY", "MONTHLY", "YEARLY"}
+
+
+def _more(op: str, **args):
+    return json.loads(_jxa(MORE, op, json.dumps(args)))
+
+
+def _rule(rule: str) -> str:
+    """A repeat rule in the iCalendar RRULE form, such as "FREQ=WEEKLY;INTERVAL=2;COUNT=5", checked and normalised."""
+    parts = {}
+    for part in rule.strip().upper().removeprefix("RRULE:").split(";"):
+        key, _, value = part.partition("=")
+        if key not in REPEAT_KEYS or not value or key in parts:
+            raise ValueError(f"repeat rule part {part!r} isn't one of {', '.join(sorted(REPEAT_KEYS))}")
+        parts[key] = value
+    if parts.get("FREQ") not in FREQS:
+        raise ValueError(f"the repeat rule needs FREQ set to one of {', '.join(sorted(FREQS))}")
+    for key in ("INTERVAL", "COUNT"):
+        if key in parts and not (parts[key].isdigit() and int(parts[key]) > 0):
+            raise ValueError(f"{key} must be a whole number above 0")
+    if "COUNT" in parts and "UNTIL" in parts:
+        raise ValueError("a repeat rule can have COUNT or UNTIL, not both")
+    order = ["FREQ", "INTERVAL", "COUNT", "UNTIL", "BYMONTH", "BYMONTHDAY", "BYDAY"]
+    return ";".join(f"{k}={parts[k]}" for k in order if k in parts)
+
+
+def _same_rule(stored, want) -> bool:
+    if not want:
+        return not stored
+    if not stored:
+        return False
+    have = dict(p.partition("=")[::2] for p in stored.upper().split(";") if p)
+    need = dict(p.partition("=")[::2] for p in want.split(";"))
+    have.setdefault("INTERVAL", "1")
+    need.setdefault("INTERVAL", "1")
+    return all(have.get(k) == v for k, v in need.items())
+
+
+def event_details(match: str, date: str, calendar: str | None = None, mode: str = "background") -> dict:
+    """The event titled match on date, with its repeat rule (None if it doesn't repeat) and its alerts in minutes before."""
+    _mode("event_details", mode, ("background",))
+    _ready_for(mode)
+    event = _one(match, date, calendar)
+    more = _more("details", uid=event["uid"])
+    return _checked("event_details", mode, {**_shape(event, "uid," + DEFAULT_FIELDS), "repeat": more["repeat"],
+                                            "alerts": sorted(more["alerts"])})
+
+
+def event_set_repeat(match: str, date: str, rule: str, calendar: str | None = None, mode: str = "background") -> dict:
+    """Make the event titled match on date repeat by an RRULE such as "FREQ=WEEKLY;COUNT=5", replacing any repeat it has.
+    Allowed parts: FREQ (DAILY, WEEKLY, MONTHLY, YEARLY), INTERVAL, COUNT or UNTIL, BYDAY, BYMONTHDAY, BYMONTH."""
+    _mode("event_set_repeat", mode, ("background",))
+    if rule is None:
+        raise NotSupported("stopping a repeat isn't supported: Calendar's scripting on macOS 15.6.1 kept the repeat when it "
+                           "was cleared; nothing was changed")
+    want = _rule(rule)
+    _ready_for(mode)
+    event = _one(match, date, calendar)
+    _more("repeat", uid=event["uid"], rule=want)
+    done = _wait_for("the repeat being saved",
+                     lambda: (lambda m: m if _same_rule(m["repeat"], want) else None)(_more("details", uid=event["uid"])),
+                     SAVE_TIMEOUT)
+    return _checked("event_set_repeat", mode, {**_shape(event, "uid," + DEFAULT_FIELDS), "repeat": done["repeat"]})
+
+
+def event_add_alert(match: str, date: str, minutes_before: int, calendar: str | None = None,
+                    mode: str = "background") -> dict:
+    """Add an on-screen alert minutes_before minutes before the event titled match on date starts (0 = at the start)."""
+    _mode("event_add_alert", mode, ("background",))
+    if not isinstance(minutes_before, int) or isinstance(minutes_before, bool) or not 0 <= minutes_before <= 40320:
+        raise ValueError("minutes_before must be a whole number from 0 to 40320 (four weeks)")
+    _ready_for(mode)
+    event = _one(match, date, calendar)
+    before = _more("details", uid=event["uid"])["alerts"]
+    if minutes_before in before:
+        raise AlreadyExists(f"the event already has an alert {minutes_before} minutes before")
+    _more("alert", uid=event["uid"], minutes=minutes_before)
+    done = _wait_for("the alert being saved",
+                     lambda: (lambda m: m if sorted(m["alerts"]) == sorted(before + [minutes_before]) else None)(
+                         _more("details", uid=event["uid"])), SAVE_TIMEOUT)
+    return _checked("event_add_alert", mode, {**_shape(event, "uid," + DEFAULT_FIELDS), "alerts": sorted(done["alerts"])})
