@@ -19,6 +19,10 @@ install, no model, no keys.
 | Preview | [`preview/`](preview/) | `import preview` |
 | Keka | [`keka/`](keka/) | `import keka` |
 | Obsidian | [`obsidian/`](obsidian/) | `import obsidian` |
+| Automator | [`automator/`](automator/) | `import automator` |
+| VS Code | [`vscode/`](vscode/) | `import vscode` |
+| Xcode | [`xcode/`](xcode/) | `import xcode` |
+| OBS Studio | [`obs/`](obs/) | `import obs` |
 
 An agent writes a short program with keyword arguments, like this:
 
@@ -37,7 +41,7 @@ doesn't clash with Python's own `calendar` module, so import it `as calendar`.
 
 ## Catalog
 
-`notes/catalog.json`, `calendar/catalog.json`, `gmail/catalog.json`, `finder/catalog.json`, `safari/catalog.json`, `chrome/catalog.json`, `reminders/catalog.json`, `contacts/catalog.json`, `textedit/catalog.json`, `preview/catalog.json`, `keka/catalog.json` and `obsidian/catalog.json` describe every verified command, so an agent can find and call
+`notes/catalog.json`, `calendar/catalog.json`, `gmail/catalog.json`, `finder/catalog.json`, `safari/catalog.json`, `chrome/catalog.json`, `reminders/catalog.json`, `contacts/catalog.json`, `textedit/catalog.json`, `preview/catalog.json`, `keka/catalog.json`, `obsidian/catalog.json`, `automator/catalog.json`, `vscode/catalog.json`, `xcode/catalog.json` and `obs/catalog.json` describe every verified command, so an agent can find and call
 one without reading the code. Each file gives the app, its import line, the versions it was verified on, and one
 entry per command: description, arguments, verified and default modes, example requests, effects, whether it is
 destructive, precondition, postcondition, returned fields and errors.
@@ -186,6 +190,7 @@ Each app's catalog gives the versions it was verified on. **Finder, Safari, Chro
 | `file_find` | verified | — |
 | `file_info` | verified | — |
 | `file_list` | verified | — |
+| `file_make_alias` | — | verified |
 | `file_move` | verified | verified |
 | `file_put_back` | — | verified |
 | `file_rename` | verified | verified |
@@ -200,6 +205,7 @@ Each app's catalog gives the versions it was verified on. **Finder, Safari, Chro
 | Function | Background | UI |
 |---|---|---|
 | `link_click` | — | verified |
+| `page_add_to_reading_list` | — | verified |
 | `page_back` | — | verified |
 | `page_forward` | — | verified |
 | `page_go` | — | verified |
@@ -244,6 +250,7 @@ Each app's catalog gives the versions it was verified on. **Finder, Safari, Chro
 | `reminder_get` | verified | — |
 | `reminder_list` | verified | — |
 | `reminder_move` | verified | — |
+| `reminder_reopen` | verified | — |
 | `reminder_search` | verified | — |
 | `reminder_update` | verified | verified |
 
@@ -251,6 +258,7 @@ Each app's catalog gives the versions it was verified on. **Finder, Safari, Chro
 
 | Function | Background | UI |
 |---|---|---|
+| `contact_add_address` | verified | — |
 | `contact_add_email` | verified | — |
 | `contact_add_phone` | verified | — |
 | `contact_create` | verified | verified |
@@ -263,6 +271,7 @@ Each app's catalog gives the versions it was verified on. **Finder, Safari, Chro
 | `contact_remove_email` | verified | — |
 | `contact_remove_phone` | verified | — |
 | `contact_search` | verified | — |
+| `contact_set_birthday` | verified | — |
 | `contact_set_job_title` | verified | — |
 | `contact_set_phone` | verified | — |
 | `contact_update` | verified | verified |
@@ -281,6 +290,7 @@ Each app's catalog gives the versions it was verified on. **Finder, Safari, Chro
 | `document_close` | verified | verified |
 | `document_copy_to_new` | verified | verified |
 | `document_create` | verified | verified |
+| `document_export_pdf` | — | verified |
 | `document_list` | verified | verified |
 | `document_open` | verified | verified |
 | `document_read` | verified | verified |
@@ -298,12 +308,16 @@ Each app's catalog gives the versions it was verified on. **Finder, Safari, Chro
 | `document_open` | — | verified |
 | `image_flip` | — | verified |
 | `image_rotate` | — | verified |
+| `pdf_append_file` | — | verified |
+| `pdf_delete_page` | — | verified |
+| `pdf_move_page` | — | verified |
 
 **Keka** ([README](keka/README.md)):
 
 | Function | Background | UI |
 |---|---|---|
 | `archive_create` | — | verified |
+| `archive_extract` | — | verified |
 | `archive_format` | — | verified |
 | `archive_set_format` | — | verified |
 
@@ -314,3 +328,37 @@ Each app's catalog gives the versions it was verified on. **Finder, Safari, Chro
 | `note_create` | — | verified |
 | `vault_create` | — | verified |
 | `vault_list` | — | verified |
+
+**Automator** ([README](automator/README.md)):
+
+| Function | Background | UI |
+|---|---|---|
+| `workflow_actions` | — | verified |
+| `workflow_add_action` | — | verified |
+| `workflow_new` | — | verified |
+| `workflow_save` | — | verified |
+
+**VS Code** ([README](vscode/README.md)):
+
+| Function | Background | UI |
+|---|---|---|
+| `file_new` | — | verified |
+| `file_open` | — | verified |
+| `folder_open` | — | verified |
+
+**Xcode** ([README](xcode/README.md)):
+
+| Function | Background | UI |
+|---|---|---|
+| `project_build` | — | verified |
+| `project_new` | — | verified |
+| `project_open` | — | verified |
+
+**OBS Studio** ([README](obs/README.md)):
+
+| Function | Background | UI |
+|---|---|---|
+| `recording_start` | — | verified |
+| `recording_stop` | — | verified |
+| `scene_add` | — | verified |
+| `source_add` | — | verified |
