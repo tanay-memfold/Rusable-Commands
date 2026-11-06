@@ -125,8 +125,9 @@ parts: FREQ (DAILY, WEEKLY, MONTHLY, YEARLY), INTERVAL, COUNT or UNTIL, BYDAY, B
 Adds an on-screen alert `minutes_before` minutes before the start (0 to 40320). `AlreadyExists` if one is already set for that
 time. **Removing alerts isn't supported**: every delete of an alert through Calendar's scripting failed.
 
-Left out: exporting a calendar as `.ics`. On a fresh macOS 15.6.1 VM Calendar first shows a What's New screen that leads into
-location use, which the tests don't click through, and the Export menu offered only Export Event… and Calendar Archive….
+Left out: exporting a calendar as `.ics`. With a calendar selected, File > Export > Export… opens a normal save sheet, and it worked
+by hand, but in the test VMs Go to Folder in that sheet didn't close after the path was entered (with Return pressed again, and with
+the path confirmed through Accessibility), so the file couldn't be put in a chosen folder.
 
 These were read back from Calendar.sqlitedb (its repeat and alarm tables), not through Calendar, and every other event in the
 database was compared before and after.

@@ -39,10 +39,13 @@ links to another is just text with a link in it.
 
 ## Left out
 
-- **Setting the light or dark theme** (MacArena's "switch to light" task): Settings > Appearance > Base color scheme worked in a manual
-  try (typing the choice's name into the focused pop-up), but in the final runs Settings sometimes stayed unreadable to
-  Accessibility, with Obsidian closed and with it open, even after two fixes.
-- **Installing and turning on community plugins** (MacArena's Excalidraw task): it needs turning off restricted mode and browsing
+- **Setting the light or dark theme** (MacArena's "switch to light" task): Settings > Appearance > Base color scheme worked by hand
+  (8 of 8, typing the choice's name into the focused pop-up), but in fresh test VMs Settings stayed unreadable to Accessibility,
+  last night and again today after two more fixes.
+- **Installing and turning on community plugins** (MacArena's Excalidraw task): Settings > Community plugins > Turn on community
+  plugins > Browse > Install > Enable worked by hand (Advanced Tables and Kanban), but in fresh test VMs Obsidian's Settings stayed
+  unreadable to Accessibility, even after two fixes (asking Obsidian again for Accessibility, and making the vault's window main
+  before Cmd-,).
   the plugin store, and wasn't attempted for time.
 - Community themes, Sync, notes in subfolders, and opening an existing folder as a vault.
 
