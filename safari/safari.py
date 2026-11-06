@@ -34,6 +34,12 @@ VERIFIED: dict = {
             "app": "18.6 (20621.3.11.11.3)"
         }
     },
+    "page_add_to_reading_list": {
+        "ui": {
+            "macos": "15.6.1 (24G90)",
+            "app": "18.6 (20621.3.11.11.3)"
+        }
+    },
     "page_back": {
         "ui": {
             "macos": "15.6.1 (24G90)",
@@ -738,3 +744,15 @@ def _steady_size(full: str):
         seen.append(os.path.getsize(full))
         return seen[-1] if len(seen) >= 3 and seen[-1] == seen[-2] == seen[-3] else None
     return test
+
+
+def page_add_to_reading_list(mode: str = "ui") -> dict:
+    """Add the current page to Safari's Reading List (Bookmarks > Add to Reading List). Returns the page."""
+    _mode("page_add_to_reading_list", mode)
+    _ready()
+    page = _settle()
+    if not _has_menu_item("Bookmarks", "Add to Reading List"):
+        raise NotFound("Safari has no Add to Reading List for this page")
+    _menu("Bookmarks", "Add to Reading List")
+    time.sleep(0.5)
+    return _checked("page_add_to_reading_list", mode, {**page, "added": True})
