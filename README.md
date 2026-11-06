@@ -13,6 +13,12 @@ install, no model, no keys.
 | Finder | [`finder/`](finder/) | `import finder` |
 | Safari | [`safari/`](safari/) | `import safari` |
 | Google Chrome | [`chrome/`](chrome/) | `import chrome` |
+| Reminders | [`reminders/`](reminders/) | `import reminders` |
+| Contacts | [`contacts/`](contacts/) | `import contacts` |
+| TextEdit | [`textedit/`](textedit/) | `import textedit` |
+| Preview | [`preview/`](preview/) | `import preview` |
+| Keka | [`keka/`](keka/) | `import keka` |
+| Obsidian | [`obsidian/`](obsidian/) | `import obsidian` |
 
 An agent writes a short program with keyword arguments, like this:
 
@@ -31,7 +37,7 @@ doesn't clash with Python's own `calendar` module, so import it `as calendar`.
 
 ## Catalog
 
-`notes/catalog.json`, `calendar/catalog.json`, `gmail/catalog.json`, `finder/catalog.json`, `safari/catalog.json` and `chrome/catalog.json` describe every verified command, so an agent can find and call
+`notes/catalog.json`, `calendar/catalog.json`, `gmail/catalog.json`, `finder/catalog.json`, `safari/catalog.json`, `chrome/catalog.json`, `reminders/catalog.json`, `contacts/catalog.json`, `textedit/catalog.json`, `preview/catalog.json`, `keka/catalog.json` and `obsidian/catalog.json` describe every verified command, so an agent can find and call
 one without reading the code. Each file gives the app, its import line, the versions it was verified on, and one
 entry per command: description, arguments, verified and default modes, example requests, effects, whether it is
 destructive, precondition, postcondition, returned fields and errors.
@@ -114,7 +120,7 @@ are enabled. Each folder's README lists the cases and start states, and what was
 
 ## Verified
 
-Each app's catalog gives the versions it was verified on. **Finder, Safari and Chrome were verified on macOS 15.6.1 only**, not macOS 26. **Safari and Chrome are UI mode only**, including for reads, and were verified against a local test server only, not real websites.
+Each app's catalog gives the versions it was verified on. **Finder, Safari, Chrome, Reminders, Contacts, TextEdit, Preview, Keka and Obsidian were verified on macOS 15.6.1 only**, not macOS 26. Notes and Calendar were verified on macOS 26.6.2, except Notes' `note_attach_image` and Calendar's `event_details`, `event_set_repeat` and `event_add_alert`, which were verified on macOS 15.6.1 only. **Preview, Keka and Obsidian are UI mode only.** **Safari and Chrome are UI mode only**, including for reads, and were verified against a local test server only, not real websites.
 
 **Notes** ([README](notes/README.md)):
 
@@ -126,6 +132,7 @@ Each app's catalog gives the versions it was verified on. **Finder, Safari and C
 | `folder_list` | verified | — |
 | `folder_rename` | — | verified |
 | `note_append` | verified | verified |
+| `note_attach_image` | verified | — |
 | `note_create` | verified | verified |
 | `note_delete` | — | verified |
 | `note_get` | verified | — |
@@ -143,11 +150,14 @@ Each app's catalog gives the versions it was verified on. **Finder, Safari and C
 | `calendar_create` | verified | verified |
 | `calendar_delete` | verified | verified |
 | `calendar_list` | verified | — |
+| `event_add_alert` | verified | — |
 | `event_create` | verified | — |
 | `event_delete` | verified | verified |
+| `event_details` | verified | — |
 | `event_get` | verified | — |
 | `event_list` | verified | — |
 | `event_search` | verified | — |
+| `event_set_repeat` | verified | — |
 | `event_update` | verified | — |
 
 **Gmail** ([README](gmail/README.md)):
@@ -168,15 +178,21 @@ Each app's catalog gives the versions it was verified on. **Finder, Safari and C
 
 | Function | Background | UI |
 |---|---|---|
+| `file_add_tag` | — | verified |
+| `file_compress` | — | verified |
 | `file_copy` | verified | verified |
+| `file_duplicate` | — | verified |
+| `file_extract` | — | verified |
 | `file_find` | verified | — |
 | `file_info` | verified | — |
 | `file_list` | verified | — |
 | `file_move` | verified | verified |
+| `file_put_back` | — | verified |
 | `file_rename` | verified | verified |
 | `file_reveal` | — | verified |
 | `file_trash` | verified | verified |
 | `folder_create` | verified | verified |
+| `folder_new_with_selection` | — | verified |
 | `folder_open` | — | verified |
 
 **Safari** ([README](safari/README.md)):
@@ -190,6 +206,7 @@ Each app's catalog gives the versions it was verified on. **Finder, Safari and C
 | `page_info` | — | verified |
 | `page_links` | — | verified |
 | `page_reload` | — | verified |
+| `page_save_pdf` | — | verified |
 | `page_text` | — | verified |
 | `tab_activate` | — | verified |
 | `tab_close` | — | verified |
@@ -212,3 +229,88 @@ Each app's catalog gives the versions it was verified on. **Finder, Safari and C
 | `tab_close` | — | verified |
 | `tab_list` | — | verified |
 | `tab_open` | — | verified |
+
+**Reminders** ([README](reminders/README.md)):
+
+| Function | Background | UI |
+|---|---|---|
+| `list_create` | verified | verified |
+| `list_delete` | verified | verified |
+| `list_list` | verified | — |
+| `list_rename` | verified | verified |
+| `reminder_complete` | verified | verified |
+| `reminder_create` | verified | verified |
+| `reminder_delete` | verified | verified |
+| `reminder_get` | verified | — |
+| `reminder_list` | verified | — |
+| `reminder_move` | verified | — |
+| `reminder_search` | verified | — |
+| `reminder_update` | verified | verified |
+
+**Contacts** ([README](contacts/README.md)):
+
+| Function | Background | UI |
+|---|---|---|
+| `contact_add_email` | verified | — |
+| `contact_add_phone` | verified | — |
+| `contact_create` | verified | verified |
+| `contact_delete` | verified | verified |
+| `contact_details` | verified | — |
+| `contact_export_vcard` | verified | — |
+| `contact_get` | verified | — |
+| `contact_list` | verified | — |
+| `contact_merge` | — | verified |
+| `contact_remove_email` | verified | — |
+| `contact_remove_phone` | verified | — |
+| `contact_search` | verified | — |
+| `contact_set_job_title` | verified | — |
+| `contact_set_phone` | verified | — |
+| `contact_update` | verified | verified |
+| `group_add` | verified | — |
+| `group_create` | verified | verified |
+| `group_delete` | verified | verified |
+| `group_list` | verified | — |
+| `group_remove` | verified | — |
+| `group_rename` | verified | verified |
+
+**TextEdit** ([README](textedit/README.md)):
+
+| Function | Background | UI |
+|---|---|---|
+| `document_append` | verified | verified |
+| `document_close` | verified | verified |
+| `document_copy_to_new` | verified | verified |
+| `document_create` | verified | verified |
+| `document_list` | verified | verified |
+| `document_open` | verified | verified |
+| `document_read` | verified | verified |
+| `document_replace_text` | verified | verified |
+| `document_save` | verified | verified |
+| `document_save_as` | verified | verified |
+
+**Preview** ([README](preview/README.md)):
+
+| Function | Background | UI |
+|---|---|---|
+| `document_close` | — | verified |
+| `document_export` | — | verified |
+| `document_list` | — | verified |
+| `document_open` | — | verified |
+| `image_flip` | — | verified |
+| `image_rotate` | — | verified |
+
+**Keka** ([README](keka/README.md)):
+
+| Function | Background | UI |
+|---|---|---|
+| `archive_create` | — | verified |
+| `archive_format` | — | verified |
+| `archive_set_format` | — | verified |
+
+**Obsidian** ([README](obsidian/README.md)):
+
+| Function | Background | UI |
+|---|---|---|
+| `note_create` | — | verified |
+| `vault_create` | — | verified |
+| `vault_list` | — | verified |
