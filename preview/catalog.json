@@ -465,6 +465,264 @@
         "Only small test images were used.",
         "Format options such as JPEG quality are left as Preview sets them."
       ]
+    },
+    {
+      "name": "pdf_delete_page",
+      "description": "Deletes one page of a PDF with Edit > Delete and saves it.",
+      "args": [
+        {
+          "name": "path",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "An absolute path, or one starting with ~, to a .pdf."
+        },
+        {
+          "name": "page",
+          "type": "int",
+          "required": true,
+          "default": null,
+          "meaning": "The page to delete, counting from 1."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": Preview has no scripting for this."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Delete page 3 of this PDF",
+        "Remove the blank second page",
+        "Take out the last page of the report"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "The program has Accessibility, and Automation for System Events.",
+      "postcondition": "The PDF has every other page, in order.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name",
+          "path",
+          "pages"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "the document has a dialog open, a dialog with typed text is showing, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "nothing is at the path; nothing is changed"
+        },
+        {
+          "name": "OutsideAllowedRoot",
+          "when": "PREVIEW_ALLOWED_ROOT is set and a path is outside it; nothing is done"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\": there is no background mode"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 with Preview 11.0 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only touches what PREVIEW_ALLOWED_ROOT allows if it is set; if it isn't set, any image or PDF you can reach is accepted.",
+        "It depends on English names and was tested only in English.",
+        "The page is selected with the arrow keys in the thumbnail sidebar and checked by the window title, because the thumbnails can't be selected through Accessibility.",
+        "Only small PDFs were tested."
+      ]
+    },
+    {
+      "name": "pdf_move_page",
+      "description": "Moves one page of a PDF to another position with Cut and Paste, and saves it.",
+      "args": [
+        {
+          "name": "path",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "An absolute path, or one starting with ~, to a .pdf."
+        },
+        {
+          "name": "page",
+          "type": "int",
+          "required": true,
+          "default": null,
+          "meaning": "The page to move, counting from 1."
+        },
+        {
+          "name": "to",
+          "type": "int",
+          "required": true,
+          "default": null,
+          "meaning": "Its new position, from 1 to one less than the number of pages."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": Preview has no scripting for this."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Move page 4 to the front",
+        "Put the last page second",
+        "Reorder the PDF so page 3 comes first"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "The program has Accessibility, and Automation for System Events.",
+      "postcondition": "The page is at its new position and the others keep their order.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name",
+          "path",
+          "pages",
+          "page",
+          "to"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "the document has a dialog open, a dialog with typed text is showing, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "nothing is at the path; nothing is changed"
+        },
+        {
+          "name": "OutsideAllowedRoot",
+          "when": "PREVIEW_ALLOWED_ROOT is set and a path is outside it; nothing is done"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\": there is no background mode"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 with Preview 11.0 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only touches what PREVIEW_ALLOWED_ROOT allows if it is set; if it isn't set, any image or PDF you can reach is accepted.",
+        "It depends on English names and was tested only in English.",
+        "Moving a page to the very end isn't supported, because Paste goes before the selected page; move the pages after it instead.",
+        "Only small PDFs were tested."
+      ]
+    },
+    {
+      "name": "pdf_append_file",
+      "description": "Adds every page of another PDF to the end of a PDF with Edit > Insert > Page from File…, and saves it.",
+      "args": [
+        {
+          "name": "path",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "An absolute path, or one starting with ~, to a .pdf."
+        },
+        {
+          "name": "add",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The PDF whose pages are added; it stays as it is."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": Preview has no scripting for this."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Combine these two PDFs",
+        "Add the appendix PDF to the end of the report",
+        "Merge scan2.pdf into scan1.pdf"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "The program has Accessibility, and Automation for System Events.",
+      "postcondition": "The PDF ends with the other PDF's pages, in order.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name",
+          "path",
+          "pages",
+          "from"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "the document has a dialog open, a dialog with typed text is showing, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "nothing is at the path; nothing is changed"
+        },
+        {
+          "name": "OutsideAllowedRoot",
+          "when": "PREVIEW_ALLOWED_ROOT is set and a path is outside it; nothing is done"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\": there is no background mode"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 with Preview 11.0 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only touches what PREVIEW_ALLOWED_ROOT allows if it is set; if it isn't set, any image or PDF you can reach is accepted.",
+        "It depends on English names and was tested only in English.",
+        "Only small PDFs were tested."
+      ]
     }
   ]
 }

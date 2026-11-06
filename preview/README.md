@@ -52,14 +52,24 @@ The documents shown in Preview's windows. A document in a background tab isn't l
 ### document_export(path, to, format, mode="ui") → {name, path, from, format}
 **File > Export…** with the Format pop-up set to PNG, JPEG, HEIC, TIFF or PDF, saving a new file at `to`. The original stays.
 
+### pdf_delete_page(path, page, mode="ui") → {name, path, pages}
+Selects the page and uses **Edit > Delete**, then saves.
+
+### pdf_move_page(path, page, to, mode="ui") → {name, path, pages, page, to}
+**Edit > Cut** the page, select the page now at `to`, **Edit > Paste** (which goes before it), then save. Moving a page to the very
+end isn't supported; move the pages after it instead.
+
+### pdf_append_file(path, add, mode="ui") → {name, path, pages, from}
+Selects the last page and uses **Edit > Insert > Page from File…** with the other PDF, then saves. This combines two PDFs.
+
+Pages are selected in the thumbnail sidebar with the arrow keys, and the selection is checked by the window title ("Page 2 of 3"),
+because the thumbnails can't be selected through Accessibility. Cut and Paste go through the clipboard, which is restored afterwards.
+
 ## Left out
 
 - **Adjust Color (exposure and the rest)** and **Adjust Size**: their sliders and fields have no accessible names or labels, so they
   can't be set by name.
 - **Crop**: it needs a rectangle dragged on the image.
-- **Deleting a PDF page** and **adding another PDF's pages**: after two fixes, a page thumbnail still couldn't be selected through
-  Accessibility (the thumbnails are a collection list; setting its selected item didn't take).
-- **Reordering PDF pages**: it needs dragging thumbnails.
 
 ## How it was verified
 
@@ -73,8 +83,7 @@ Accessibility, which isn't independent of Preview.
 
 Export needed two fixes for timing: Preview's Export dialog fills in its controls after it appears, and Go to Folder ignored the
 keystroke until the dialog had focus. Earlier runs failed 1 of 25 and 3 of 36 export cases this way; every export case was rerun
-on the final code and passed. Open, list, close, rotate and flip ran on code that differs from the final code only in the export
-helpers.
+on the final code and passed. Every case, including the page commands, was rerun on the final code.
 
 | Function | Mode | Verified | Cases | Start states |
 |---|---|---|---|---|
@@ -84,8 +93,11 @@ helpers.
 | `document_open` | ui | yes | 8 | app closed, app hidden, minimized, app open, another app in front |
 | `image_flip` | ui | yes | 22 | app closed, app hidden, minimized, app open, another app in front |
 | `image_rotate` | ui | yes | 24 | app closed, app hidden, minimized, app open, another app in front |
+| `pdf_append_file` | ui | yes | 8 | app closed, app hidden, minimized, app open, another app in front |
+| `pdf_delete_page` | ui | yes | 18 | app closed, app hidden, minimized, app open, another app in front |
+| `pdf_move_page` | ui | yes | 18 | app closed, app hidden, minimized, app open, another app in front |
 
-Verified on macOS 15.6.1 (24G90), preview 11.0 (1069.7.1), 2026-11-05, in fresh VM clones.
+Verified on macOS 15.6.1 (24G90), preview 11.0 (1069.7.1), 2026-11-06, in fresh VM clones.
 
 ## Permissions
 

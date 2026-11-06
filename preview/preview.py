@@ -62,6 +62,24 @@ VERIFIED: dict = {
             "macos": "15.6.1 (24G90)",
             "app": "11.0 (1069.7.1)"
         }
+    },
+    "pdf_append_file": {
+        "ui": {
+            "macos": "15.6.1 (24G90)",
+            "app": "11.0 (1069.7.1)"
+        }
+    },
+    "pdf_delete_page": {
+        "ui": {
+            "macos": "15.6.1 (24G90)",
+            "app": "11.0 (1069.7.1)"
+        }
+    },
+    "pdf_move_page": {
+        "ui": {
+            "macos": "15.6.1 (24G90)",
+            "app": "11.0 (1069.7.1)"
+        }
     }
 }
 UNSUPPORTED: dict = {}
@@ -596,9 +614,10 @@ def _choose_format(panel, label: str) -> None:
 def _go_to_folder(panel):
     """Open Go to Folder in the dialog, asking again once if it didn't open."""
     # The keystroke is ignored until the dialog has focus, so its name field is focused first.
-    box = _wait_for("the name field", lambda: _by_id(panel, "saveAsNameTextField"))
-    _AS.AXUIElementSetAttributeValue(box, _cf("AXFocused"), _TRUE)
-    _wait_for("the name field to have focus", lambda: _string(_attr(_app(), "AXFocusedUIElement"), "AXIdentifier") == "saveAsNameTextField")
+    box = _by_id(panel, "saveAsNameTextField")  # a Save dialog has one; an Open dialog doesn't
+    if box is not None:
+        _AS.AXUIElementSetAttributeValue(box, _cf("AXFocused"), _TRUE)
+        _wait_for("the name field to have focus", lambda: _string(_attr(_app(), "AXFocusedUIElement"), "AXIdentifier") == "saveAsNameTextField")
     for attempt in range(2):
         _key(KEY_G, "{command down, shift down}")
         try:
@@ -648,3 +667,134 @@ def document_export(path: str, to: str, format: str, mode: str = "ui") -> dict:
     seen = []
     _wait_for("the export to settle", lambda: seen.append(_stamp(target)) or (len(seen) >= 3 and len(set(seen[-3:])) == 1), SAVE_TIMEOUT)
     return _checked("document_export", mode, {**_item(target), "from": full, "format": format})
+
+
+# PDF pages --------------------------------------------------------------------------------------------------------
+
+UP, DOWN_ARROW = 126, 125
+
+
+def _page_count(window) -> tuple:
+    """(current page, number of pages) from the window title, such as "file.pdf – Page 2 of 3"."""
+    title = _string(window, "AXTitle")
+    if " – Page " not in title:
+        return (1, 1)
+    numbers = title.rsplit(" – Page ", 1)[1].split(" of ")
+    return int(numbers[0]), int(numbers[1])
+
+
+def _thumbs(window):
+    """The sidebar's list of page thumbnails, showing thumbnails first if the sidebar shows something else."""
+    def found():
+        return next((e for e in _walk(window) if _role(e) == "AXList" and _string(e, "AXSubrole") == "AXCollectionList"
+                     and any(_string(c, "AXSubrole") == "AXSectionList" for c in _children(e))), None)
+    try:
+        return _wait_for("the page thumbnails", found, 3)
+    except UIError:
+        _menu("View", "Thumbnails")
+        return _wait_for("the page thumbnails", found)
+
+
+def _select_page(window, page: int) -> int:
+    """Select one page's thumbnail with the arrow keys, checked by the window title. Returns the number of pages."""
+    pages = _page_count(window)[1]
+    if not isinstance(page, int) or isinstance(page, bool) or not 1 <= page <= pages:
+        raise ValueError(f"page must be a whole number from 1 to {pages}")
+    thumbs = _thumbs(window)
+    _AS.AXUIElementSetAttributeValue(thumbs, _cf("AXFocused"), _TRUE)
+    _wait_for("the thumbnails to have focus", lambda: _string(_attr(_app(), "AXFocusedUIElement"), "AXSubrole") == "AXCollectionList")
+    for _ in range(pages + 1):
+        if _page_count(window)[0] == 1 and _has_enabled("Edit", "Delete"):
+            break
+        _key(UP)
+        time.sleep(0.15)
+    for k in range(2, page + 1):
+        _key(DOWN_ARROW)
+        _wait_for(f"page {k}", lambda k=k: _page_count(window)[0] == k)
+    _wait_for(f"page {page} to be selected", lambda: _page_count(window)[0] == page and _has_enabled("Edit", "Delete"))
+    return pages
+
+
+def _has_enabled(title: str, item: str) -> bool:
+    return _system_events(f'return enabled of menu item "{item}" of menu "{title}" of menu bar item "{title}" of menu bar 1') == "true"
+
+
+def pdf_delete_page(path: str, page: int, mode: str = "ui") -> dict:
+    """Delete one page (counting from 1) of a PDF with Edit > Delete, and save it."""
+    _mode("pdf_delete_page", mode)
+    full = _kind(_existing(path), (".pdf",))
+    before = _stamp(full)
+    window = _opened(full)
+    pages = _select_page(window, page)
+    if pages < 2:
+        raise ValueError("a PDF's only page can't be deleted")
+    _menu("Edit", "Delete")
+    _wait_for("the page to go", lambda: _page_count(window)[1] == pages - 1)
+    _save(window, full, before)
+    return _checked("pdf_delete_page", mode, {**_item(full), "pages": pages - 1})
+
+
+def pdf_move_page(path: str, page: int, to: int, mode: str = "ui") -> dict:
+    """Move one page of a PDF so it becomes page to (both counted from 1), with Cut and then Paste before the page now at to,
+    and save it. Moving a page to the very end isn't supported, because Paste goes before the selected page."""
+    _mode("pdf_move_page", mode)
+    full = _kind(_existing(path), (".pdf",))
+    for name, value in (("page", page), ("to", to)):
+        if not isinstance(value, int) or isinstance(value, bool) or value < 1:
+            raise ValueError(f"{name} must be a page number from 1")
+    if to == page:
+        raise ValueError("the page is already there")
+    before = _stamp(full)
+    window = _opened(full)
+    pages = _page_count(window)[1]
+    if page > pages or to >= pages:
+        raise ValueError(f"page must be from 1 to {pages}, and to from 1 to {pages - 1} (not the end)")
+    _select_page(window, page)
+    saved = _jxa(CLIPBOARD, "save")
+    try:
+        _menu("Edit", "Cut")
+        _wait_for("the page to be cut", lambda: _page_count(window)[1] == pages - 1)
+        _select_page(window, to)
+        _wait_for("Paste to be available", lambda: _has_enabled("Edit", "Paste"))
+        _menu("Edit", "Paste")
+        _wait_for("the page to be pasted", lambda: _page_count(window)[1] == pages, SAVE_TIMEOUT)
+    finally:
+        done = subprocess.run(["osascript", "-l", "JavaScript", "-e", CLIPBOARD, "restore"], input=saved, capture_output=True, text=True)
+        if done.returncode:
+            raise UIError(done.stderr.strip())
+    _save(window, full, before)
+    return _checked("pdf_move_page", mode, {**_item(full), "pages": pages, "page": page, "to": to})
+
+
+def pdf_append_file(path: str, add: str, mode: str = "ui") -> dict:
+    """Add every page of the PDF at add to the end of the PDF at path (Edit > Insert > Page from File…), and save it."""
+    _mode("pdf_append_file", mode)
+    full = _kind(_existing(path), (".pdf",))
+    extra = _kind(_existing(add), (".pdf",))
+    if _same(full, extra):
+        raise ValueError("add must be another file")
+    before = _stamp(full)
+    window = _opened(full)
+    pages = _page_count(window)[1]
+    _select_page(window, pages)
+    _system_events('click menu item "Page from File…" of menu 1 of menu item "Insert" of menu "Edit" of menu bar item "Edit" of menu bar 1')
+    panel = _wait_for("the Insert dialog", lambda: _sheet(window) or next(
+        (w for w in _windows() if _string(w, "AXSubrole") == "AXDialog" and not _is_document(w)), None))
+    try:
+        go = _go_to_folder(panel)
+        field = _wait_for("the folder field", lambda: _by_id(go, "PathTextField"))
+        _key(KEY_A, "command down")
+        _paste_text(extra, lambda: unicodedata.normalize("NFC", _string(field, "AXValue")) == unicodedata.normalize("NFC", extra))
+        _key(RETURN)
+        _wait_for("Go to Folder to close", lambda: _by_id(panel, "GoToWindow") is None)
+        button = _wait_for("the Open button", lambda: next((e for e in _walk(panel) if _role(e) == "AXButton" and
+                                                           _string(e, "AXTitle") in ("Open", "Insert") and _attr(e, "AXEnabled") == _TRUE.value), None))
+        _press(button)
+    except Exception:
+        cancel = _find(panel, "AXButton", "Cancel")
+        if cancel is not None:
+            _press(cancel)
+        raise
+    _wait_for("the pages to be added", lambda: _page_count(window)[1] > pages, SAVE_TIMEOUT)
+    _save(window, full, before)
+    return _checked("pdf_append_file", mode, {**_item(full), "pages": _page_count(window)[1], "from": extra})
