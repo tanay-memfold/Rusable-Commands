@@ -1,0 +1,470 @@
+{
+  "app": "Preview",
+  "import": "import preview",
+  "macos_version": "15.6.1 (24G90)",
+  "app_version": "11.0 (1069.7.1)",
+  "commands": [
+    {
+      "name": "document_open",
+      "description": "Opens an image or PDF in Preview, or brings it to the front if it's open.",
+      "args": [
+        {
+          "name": "path",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "An absolute path, or one starting with ~, to an image (.png, .jpg, .jpeg, .heic, .tif, .tiff, .gif, .bmp) or a PDF."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": Preview has no scripting for this."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Open this photo in Preview",
+        "Show me the PDF",
+        "Open the scan"
+      ],
+      "effects": "idempotent",
+      "destructive": false,
+      "precondition": "The program has Accessibility, and Automation for System Events.",
+      "postcondition": "The document is in front in Preview; the file is unchanged.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name",
+          "path"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "the document has a dialog open, a dialog with typed text is showing, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "nothing is at the path; nothing is changed"
+        },
+        {
+          "name": "OutsideAllowedRoot",
+          "when": "PREVIEW_ALLOWED_ROOT is set and a path is outside it; nothing is done"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\": there is no background mode"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 with Preview 11.0 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only touches what PREVIEW_ALLOWED_ROOT allows if it is set; if it isn't set, any image or PDF you can reach is accepted.",
+        "It depends on English names and was tested only in English.",
+        "Preview may open it as a tab of another window; the tab is chosen by its file name."
+      ]
+    },
+    {
+      "name": "document_list",
+      "description": "Lists the documents shown in Preview's windows.",
+      "args": [
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": Preview has no scripting for this."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "What's open in Preview?",
+        "List my open images",
+        "Which PDFs are open?"
+      ],
+      "effects": "read_only",
+      "destructive": false,
+      "precondition": "The program has Accessibility, and Automation for System Events.",
+      "postcondition": "Nothing is changed.",
+      "returns": {
+        "type": "list",
+        "fields": [
+          "name",
+          "path"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\": there is no background mode"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 with Preview 11.0 only, so it isn't known to work on macOS 26 or any other version.",
+        "It depends on English names and was tested only in English.",
+        "A document in a background tab isn't listed, because only each window's front tab is a window to Accessibility."
+      ]
+    },
+    {
+      "name": "document_close",
+      "description": "Closes a document's window with File > Close Window; Preview keeps its changes.",
+      "args": [
+        {
+          "name": "path",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "An absolute path, or one starting with ~, to an image (.png, .jpg, .jpeg, .heic, .tif, .tiff, .gif, .bmp) or a PDF."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": Preview has no scripting for this."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Close the photo",
+        "Close this PDF in Preview",
+        "I'm done with the image, close it"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "The program has Accessibility, and Automation for System Events.",
+      "postcondition": "The window is gone.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name",
+          "path",
+          "closed"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "the document has a dialog open, a dialog with typed text is showing, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "the document isn't shown in a Preview window; nothing is changed"
+        },
+        {
+          "name": "OutsideAllowedRoot",
+          "when": "PREVIEW_ALLOWED_ROOT is set and a path is outside it; nothing is done"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\": there is no background mode"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 with Preview 11.0 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only touches what PREVIEW_ALLOWED_ROOT allows if it is set; if it isn't set, any image or PDF you can reach is accepted.",
+        "It depends on English names and was tested only in English.",
+        "A document in a background tab can't be closed, because it isn't found."
+      ]
+    },
+    {
+      "name": "image_rotate",
+      "description": "Rotates an image a quarter turn with Tools > Rotate Left or Rotate Right, and saves it.",
+      "args": [
+        {
+          "name": "path",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "An absolute path, or one starting with ~, to an image (.png, .jpg, .jpeg, .heic, .tif, .tiff, .gif, .bmp)."
+        },
+        {
+          "name": "direction",
+          "type": "str",
+          "required": false,
+          "default": "right",
+          "meaning": "\"left\" or \"right\"."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": Preview has no scripting for this."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Rotate this photo to the right",
+        "Turn the image 90 degrees left",
+        "Fix the sideways picture"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "The program has Accessibility, and Automation for System Events.",
+      "postcondition": "The file is rotated and saved in place.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name",
+          "path"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "the document has a dialog open, a dialog with typed text is showing, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "nothing is at the path; nothing is changed"
+        },
+        {
+          "name": "OutsideAllowedRoot",
+          "when": "PREVIEW_ALLOWED_ROOT is set and a path is outside it; nothing is done"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\": there is no background mode"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 with Preview 11.0 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only touches what PREVIEW_ALLOWED_ROOT allows if it is set; if it isn't set, any image or PDF you can reach is accepted.",
+        "It depends on English names and was tested only in English.",
+        "Only small test images were used.",
+        "The file is changed in place; JPEG is re-encoded."
+      ]
+    },
+    {
+      "name": "image_flip",
+      "description": "Flips an image with Tools > Flip Horizontal or Flip Vertical, and saves it.",
+      "args": [
+        {
+          "name": "path",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "An absolute path, or one starting with ~, to an image (.png, .jpg, .jpeg, .heic, .tif, .tiff, .gif, .bmp)."
+        },
+        {
+          "name": "axis",
+          "type": "str",
+          "required": false,
+          "default": "horizontal",
+          "meaning": "\"horizontal\" or \"vertical\"."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": Preview has no scripting for this."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Mirror this image",
+        "Flip the photo upside down",
+        "Flip the picture horizontally"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "The program has Accessibility, and Automation for System Events.",
+      "postcondition": "The file is flipped and saved in place.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name",
+          "path"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "the document has a dialog open, a dialog with typed text is showing, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "nothing is at the path; nothing is changed"
+        },
+        {
+          "name": "OutsideAllowedRoot",
+          "when": "PREVIEW_ALLOWED_ROOT is set and a path is outside it; nothing is done"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\": there is no background mode"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 with Preview 11.0 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only touches what PREVIEW_ALLOWED_ROOT allows if it is set; if it isn't set, any image or PDF you can reach is accepted.",
+        "It depends on English names and was tested only in English.",
+        "Only small test images were used.",
+        "The file is changed in place; JPEG is re-encoded."
+      ]
+    },
+    {
+      "name": "document_export",
+      "description": "Saves a copy of an image or PDF in another format with File > Export….",
+      "args": [
+        {
+          "name": "path",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "An absolute path, or one starting with ~, to an image (.png, .jpg, .jpeg, .heic, .tif, .tiff, .gif, .bmp) or a PDF."
+        },
+        {
+          "name": "to",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The new file's path, which must not exist, with a suffix that fits the format."
+        },
+        {
+          "name": "format",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "\"png\", \"jpeg\", \"heic\", \"tiff\" or \"pdf\"."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": Preview has no scripting for this."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Save this image as a JPEG",
+        "Convert the PNG to PDF",
+        "Export the photo as HEIC to my Desktop"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "The program has Accessibility, and Automation for System Events.",
+      "postcondition": "The new file is in that format; the original is unchanged.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name",
+          "path",
+          "from",
+          "format"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "the document has a dialog open, a dialog with typed text is showing, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "nothing is at the path; nothing is changed"
+        },
+        {
+          "name": "AlreadyExists",
+          "when": "the new path is taken; nothing is overwritten"
+        },
+        {
+          "name": "OutsideAllowedRoot",
+          "when": "PREVIEW_ALLOWED_ROOT is set and a path is outside it; nothing is done"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\": there is no background mode"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 with Preview 11.0 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only touches what PREVIEW_ALLOWED_ROOT allows if it is set; if it isn't set, any image or PDF you can reach is accepted.",
+        "It depends on English names and was tested only in English.",
+        "Only small test images were used.",
+        "Format options such as JPEG quality are left as Preview sets them."
+      ]
+    }
+  ]
+}
