@@ -1,0 +1,1737 @@
+{
+  "app": "Contacts",
+  "import": "import contacts",
+  "macos_version": "15.6.1 (24G90)",
+  "app_version": "14.0 (2695.500.71)",
+  "commands": [
+    {
+      "name": "contact_create",
+      "description": "Adds a card with at least a first name, last name or company.",
+      "args": [
+        {
+          "name": "first",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "The first name."
+        },
+        {
+          "name": "last",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "The last name."
+        },
+        {
+          "name": "company",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "The company."
+        },
+        {
+          "name": "email",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "An email address."
+        },
+        {
+          "name": "phone",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "A phone number."
+        },
+        {
+          "name": "note",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "The note; it may have line breaks."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "\"ui\" or \"background\"; use one of this command's modes."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui",
+          "background"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Add Sam Rao to my contacts",
+        "Save this number as Priya",
+        "Create a contact for Quartz & Co"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "The program has access to Contacts and Automation permission for Contacts. For ui mode, it also has Accessibility, and Automation for System Events.",
+      "postcondition": "One new card exists with these values.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "id",
+          "name",
+          "first",
+          "last",
+          "company",
+          "emails",
+          "phones",
+          "note",
+          "groups"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "a card or list name is being edited, a dialog holds typed text, or another app came to the front; nothing is changed"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only tested with no account signed in to Contacts.",
+        "UI mode depends on English names and was tested only in English.",
+        "Only one email and one phone can be given, and addresses, birthdays and photos aren't supported.",
+        "Contacts may show a phone number formatted differently from how it was typed."
+      ]
+    },
+    {
+      "name": "contact_list",
+      "description": "Lists every card, or the cards in one list, by name.",
+      "args": [
+        {
+          "name": "group",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "Only the cards in the list with this name."
+        },
+        {
+          "name": "limit",
+          "type": "int",
+          "required": false,
+          "default": 100,
+          "meaning": "The most cards to return."
+        },
+        {
+          "name": "fields",
+          "type": "str | list | None",
+          "required": false,
+          "default": null,
+          "meaning": "Fields to return, as a comma-separated string or a list; adds id if asked."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "background",
+          "meaning": "Must be \"background\": this command has no verified ui mode."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "background"
+        ],
+        "default": "background"
+      },
+      "example_requests": [
+        "Who's in my contacts?",
+        "List everyone in the Team list",
+        "Show my contacts"
+      ],
+      "effects": "read_only",
+      "destructive": false,
+      "precondition": "The program has access to Contacts and Automation permission for Contacts.",
+      "postcondition": "Nothing is changed.",
+      "returns": {
+        "type": "list",
+        "fields": [
+          "name",
+          "first",
+          "last",
+          "company",
+          "emails",
+          "phones",
+          "note",
+          "groups"
+        ],
+        "optional_fields": [
+          "id"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "NotFound",
+          "when": "no card or list has that name; nothing is changed"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one matches; nothing is changed"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"ui\": this command has no verified ui mode"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only tested with no account signed in to Contacts."
+      ]
+    },
+    {
+      "name": "contact_search",
+      "description": "Finds cards whose name, company, email, phone or note contain some text, ignoring case.",
+      "args": [
+        {
+          "name": "query",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The text to look for."
+        },
+        {
+          "name": "limit",
+          "type": "int",
+          "required": false,
+          "default": 100,
+          "meaning": "The most cards to return."
+        },
+        {
+          "name": "fields",
+          "type": "str | list | None",
+          "required": false,
+          "default": null,
+          "meaning": "Fields to return, as a comma-separated string or a list; adds id if asked."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "background",
+          "meaning": "Must be \"background\": this command has no verified ui mode."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "background"
+        ],
+        "default": "background"
+      },
+      "example_requests": [
+        "Find Sam's email",
+        "Who works at Quartz?",
+        "Search my contacts for 0100"
+      ],
+      "effects": "read_only",
+      "destructive": false,
+      "precondition": "The program has access to Contacts and Automation permission for Contacts.",
+      "postcondition": "Nothing is changed.",
+      "returns": {
+        "type": "list",
+        "fields": [
+          "name",
+          "first",
+          "last",
+          "company",
+          "emails",
+          "phones",
+          "note",
+          "groups"
+        ],
+        "optional_fields": [
+          "id"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"ui\": this command has no verified ui mode"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only tested with no account signed in to Contacts.",
+        "A phone search matches the number as Contacts stores it."
+      ]
+    },
+    {
+      "name": "contact_get",
+      "description": "Returns the one card with this exact name.",
+      "args": [
+        {
+          "name": "match",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The card's exact name as Contacts shows it."
+        },
+        {
+          "name": "fields",
+          "type": "str | list | None",
+          "required": false,
+          "default": null,
+          "meaning": "Fields to return, as a comma-separated string or a list; adds id if asked."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "background",
+          "meaning": "Must be \"background\": this command has no verified ui mode."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "background"
+        ],
+        "default": "background"
+      },
+      "example_requests": [
+        "What's Sam Rao's number?",
+        "Show me Priya's card",
+        "What's the note on the dentist?"
+      ],
+      "effects": "read_only",
+      "destructive": false,
+      "precondition": "The program has access to Contacts and Automation permission for Contacts.",
+      "postcondition": "Nothing is changed.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name",
+          "first",
+          "last",
+          "company",
+          "emails",
+          "phones",
+          "note",
+          "groups"
+        ],
+        "optional_fields": [
+          "id"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "NotFound",
+          "when": "no card or list has that name; nothing is changed"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one matches; nothing is changed"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"ui\": this command has no verified ui mode"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only tested with no account signed in to Contacts."
+      ]
+    },
+    {
+      "name": "contact_update",
+      "description": "Changes a card's values, and only the values given.",
+      "args": [
+        {
+          "name": "match",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The card's exact name as Contacts shows it."
+        },
+        {
+          "name": "first",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "The first name."
+        },
+        {
+          "name": "last",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "The last name."
+        },
+        {
+          "name": "company",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "The company."
+        },
+        {
+          "name": "email",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "An email address."
+        },
+        {
+          "name": "phone",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "A phone number."
+        },
+        {
+          "name": "note",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "The note; it may have line breaks."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "\"ui\" or \"background\"; use one of this command's modes."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui",
+          "background"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Change Sam's email",
+        "Update Priya's company to Harbor",
+        "Add a note to the dentist's card"
+      ],
+      "effects": "idempotent",
+      "destructive": false,
+      "precondition": "The program has access to Contacts and Automation permission for Contacts. For ui mode, it also has Accessibility, and Automation for System Events.",
+      "postcondition": "The card has the new values and the rest are unchanged.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "id",
+          "name",
+          "first",
+          "last",
+          "company",
+          "emails",
+          "phones",
+          "note",
+          "groups"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "a card or list name is being edited, a dialog holds typed text, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "no card or list has that name; nothing is changed"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one matches; nothing is changed"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only tested with no account signed in to Contacts.",
+        "UI mode depends on English names and was tested only in English.",
+        "An email or phone replaces the first one, or adds one if there are none, and others can't be reached."
+      ]
+    },
+    {
+      "name": "contact_delete",
+      "description": "Deletes a card.",
+      "args": [
+        {
+          "name": "match",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The card's exact name as Contacts shows it."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "\"ui\" or \"background\"; use one of this command's modes."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui",
+          "background"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Delete Sam Rao from my contacts",
+        "Remove the old dentist card",
+        "Get rid of Priya's card"
+      ],
+      "effects": "non_idempotent",
+      "destructive": true,
+      "precondition": "The program has access to Contacts and Automation permission for Contacts. For ui mode, it also has Accessibility, and Automation for System Events.",
+      "postcondition": "The card is gone.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "id",
+          "name",
+          "first",
+          "last",
+          "company",
+          "emails",
+          "phones",
+          "note",
+          "groups",
+          "deleted"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "a card or list name is being edited, a dialog holds typed text, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "no card or list has that name; nothing is changed"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one matches; nothing is changed"
+        }
+      ],
+      "confirm": "Delete the contact <match>?",
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only tested with no account signed in to Contacts.",
+        "UI mode depends on English names and was tested only in English."
+      ]
+    },
+    {
+      "name": "group_create",
+      "description": "Makes a new empty list of contacts.",
+      "args": [
+        {
+          "name": "name",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "One non-empty line, not already taken."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "\"ui\" or \"background\"; use one of this command's modes."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui",
+          "background"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Make a contact list called Team",
+        "Create a Family group",
+        "Add a new list for clients"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "The program has access to Contacts and Automation permission for Contacts. For ui mode, it also has Accessibility, and Automation for System Events.",
+      "postcondition": "The list exists and is empty.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name",
+          "count"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "a card or list name is being edited, a dialog holds typed text, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "AlreadyExists",
+          "when": "a list with that name already exists; nothing is changed"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only tested with no account signed in to Contacts.",
+        "UI mode depends on English names and was tested only in English."
+      ]
+    },
+    {
+      "name": "group_list",
+      "description": "Lists every list of contacts with how many cards it holds.",
+      "args": [
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "background",
+          "meaning": "Must be \"background\": this command has no verified ui mode."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "background"
+        ],
+        "default": "background"
+      },
+      "example_requests": [
+        "What contact lists do I have?",
+        "List my groups",
+        "How many people are in each list?"
+      ],
+      "effects": "read_only",
+      "destructive": false,
+      "precondition": "The program has access to Contacts and Automation permission for Contacts.",
+      "postcondition": "Nothing is changed.",
+      "returns": {
+        "type": "list",
+        "fields": [
+          "name",
+          "count"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"ui\": this command has no verified ui mode"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only tested with no account signed in to Contacts.",
+        "Smart lists were not tested."
+      ]
+    },
+    {
+      "name": "group_rename",
+      "description": "Renames a list, and its cards stay in it.",
+      "args": [
+        {
+          "name": "name",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The list's exact name."
+        },
+        {
+          "name": "to",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The new name, one non-empty line, not already taken."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "\"ui\" or \"background\"; use one of this command's modes."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui",
+          "background"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Rename the Team list to Crew",
+        "Call my Family group Home",
+        "Change this list's name"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "The program has access to Contacts and Automation permission for Contacts. For ui mode, it also has Accessibility, and Automation for System Events.",
+      "postcondition": "The list has the new name and the same cards.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name",
+          "count"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "a card or list name is being edited, a dialog holds typed text, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "no card or list has that name; nothing is changed"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one matches; nothing is changed"
+        },
+        {
+          "name": "AlreadyExists",
+          "when": "a list with that name already exists; nothing is changed"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only tested with no account signed in to Contacts.",
+        "UI mode depends on English names and was tested only in English."
+      ]
+    },
+    {
+      "name": "group_delete",
+      "description": "Deletes a list, and its cards stay in Contacts.",
+      "args": [
+        {
+          "name": "name",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The list's exact name."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "\"ui\" or \"background\"; use one of this command's modes."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui",
+          "background"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Delete the Team list",
+        "Remove my old group",
+        "Get rid of the Clients list"
+      ],
+      "effects": "non_idempotent",
+      "destructive": true,
+      "precondition": "The program has access to Contacts and Automation permission for Contacts. For ui mode, it also has Accessibility, and Automation for System Events.",
+      "postcondition": "The list is gone and its cards still exist.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name",
+          "count",
+          "deleted"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "a card or list name is being edited, a dialog holds typed text, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "no card or list has that name; nothing is changed"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one matches; nothing is changed"
+        }
+      ],
+      "confirm": "Delete the list <name>?",
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only tested with no account signed in to Contacts.",
+        "UI mode depends on English names and was tested only in English."
+      ]
+    },
+    {
+      "name": "group_add",
+      "description": "Adds a card to a list.",
+      "args": [
+        {
+          "name": "match",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The card's exact name as Contacts shows it."
+        },
+        {
+          "name": "group",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The list's exact name."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "background",
+          "meaning": "Must be \"background\": this command has no verified ui mode."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "background"
+        ],
+        "default": "background"
+      },
+      "example_requests": [
+        "Add Sam to the Team list",
+        "Put Priya in my Family group",
+        "Include this contact in Clients"
+      ],
+      "effects": "idempotent",
+      "destructive": false,
+      "precondition": "The program has access to Contacts and Automation permission for Contacts.",
+      "postcondition": "The card is in the list.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "id",
+          "name",
+          "first",
+          "last",
+          "company",
+          "emails",
+          "phones",
+          "note",
+          "groups"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "NotFound",
+          "when": "no card or list has that name; nothing is changed"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one matches; nothing is changed"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"ui\": this command has no verified ui mode"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only tested with no account signed in to Contacts.",
+        "There is no ui mode, because adding to a list on screen means dragging a card."
+      ]
+    },
+    {
+      "name": "group_remove",
+      "description": "Takes a card out of a list, and the card stays in Contacts.",
+      "args": [
+        {
+          "name": "match",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The card's exact name as Contacts shows it."
+        },
+        {
+          "name": "group",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The list's exact name."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "background",
+          "meaning": "Must be \"background\": this command has no verified ui mode."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "background"
+        ],
+        "default": "background"
+      },
+      "example_requests": [
+        "Take Sam out of the Team list",
+        "Remove Priya from Family",
+        "Drop this contact from Clients"
+      ],
+      "effects": "idempotent",
+      "destructive": false,
+      "precondition": "The program has access to Contacts and Automation permission for Contacts.",
+      "postcondition": "The card is no longer in the list.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "id",
+          "name",
+          "first",
+          "last",
+          "company",
+          "emails",
+          "phones",
+          "note",
+          "groups"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "NotFound",
+          "when": "no card or list has that name; nothing is changed"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one matches; nothing is changed"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"ui\": this command has no verified ui mode"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only tested with no account signed in to Contacts.",
+        "There is no ui mode, because it pairs with group_add."
+      ]
+    },
+    {
+      "name": "contact_details",
+      "description": "The job title, and every phone number and email with its label, of one card.",
+      "args": [
+        {
+          "name": "match",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The card's exact name as Contacts shows it."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "background",
+          "meaning": "Must be \"background\": this command has no verified ui mode."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "background"
+        ],
+        "default": "background"
+      },
+      "example_requests": [
+        "What's Sam's job title?",
+        "Show me all of Priya's numbers",
+        "Which emails does this contact have?"
+      ],
+      "effects": "read_only",
+      "destructive": false,
+      "precondition": "The program has access to Contacts and Automation permission for Contacts.",
+      "postcondition": "Nothing is changed.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "id",
+          "name",
+          "job_title",
+          "phones",
+          "emails"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "NotFound",
+          "when": "no card or list has that name; nothing is changed"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one matches; nothing is changed"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"ui\": this command has no verified ui mode"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only tested with no account signed in to Contacts.",
+        "Phones and emails come back in the order Contacts keeps them."
+      ]
+    },
+    {
+      "name": "contact_set_job_title",
+      "description": "Sets or clears a card's job title.",
+      "args": [
+        {
+          "name": "match",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The card's exact name as Contacts shows it."
+        },
+        {
+          "name": "job_title",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The new job title; empty clears it."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "background",
+          "meaning": "Must be \"background\": this command has no verified ui mode."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "background"
+        ],
+        "default": "background"
+      },
+      "example_requests": [
+        "Set Sam's job title to Product Lead",
+        "Change Priya's title to CTO",
+        "Clear this contact's job title"
+      ],
+      "effects": "idempotent",
+      "destructive": false,
+      "precondition": "The program has access to Contacts and Automation permission for Contacts.",
+      "postcondition": "The card has that job title, and nothing else on it changed.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "id",
+          "name",
+          "job_title",
+          "phones",
+          "emails"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "NotFound",
+          "when": "no card or list has that name; nothing is changed"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one matches; nothing is changed"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"ui\": this command has no verified ui mode"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only tested with no account signed in to Contacts."
+      ]
+    },
+    {
+      "name": "contact_add_phone",
+      "description": "Adds a phone number with a label, keeping the numbers already there.",
+      "args": [
+        {
+          "name": "match",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The card's exact name as Contacts shows it."
+        },
+        {
+          "name": "number",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The number as it should be stored."
+        },
+        {
+          "name": "label",
+          "type": "str",
+          "required": false,
+          "default": "mobile",
+          "meaning": "The label as Contacts stores it, such as mobile, home or work."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "background",
+          "meaning": "Must be \"background\": this command has no verified ui mode."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "background"
+        ],
+        "default": "background"
+      },
+      "example_requests": [
+        "Add a home number 555 0100 for Sam",
+        "Give Priya a work phone",
+        "Add this mobile number to the contact"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "The program has access to Contacts and Automation permission for Contacts.",
+      "postcondition": "The card has the number under the label, and its other numbers stay.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "id",
+          "name",
+          "job_title",
+          "phones",
+          "emails"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "NotFound",
+          "when": "no card or list has that name; nothing is changed"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one matches; nothing is changed"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"ui\": this command has no verified ui mode"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only tested with no account signed in to Contacts.",
+        "The number isn't checked or formatted."
+      ]
+    },
+    {
+      "name": "contact_set_phone",
+      "description": "Changes the number under one label.",
+      "args": [
+        {
+          "name": "match",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The card's exact name as Contacts shows it."
+        },
+        {
+          "name": "label",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The label as Contacts stores it, such as mobile, home or work."
+        },
+        {
+          "name": "number",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The new number."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "background",
+          "meaning": "Must be \"background\": this command has no verified ui mode."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "background"
+        ],
+        "default": "background"
+      },
+      "example_requests": [
+        "Change Sam's home number to 555 0101",
+        "Update Priya's mobile",
+        "Fix this contact's work phone"
+      ],
+      "effects": "idempotent",
+      "destructive": false,
+      "precondition": "The program has access to Contacts and Automation permission for Contacts.",
+      "postcondition": "Every number under the label is the new one; numbers under other labels stay.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "id",
+          "name",
+          "job_title",
+          "phones",
+          "emails"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "NotFound",
+          "when": "no such card, or it has no number with that label; nothing is changed"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one matches; nothing is changed"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"ui\": this command has no verified ui mode"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only tested with no account signed in to Contacts.",
+        "If several numbers share the label, all of them are changed."
+      ]
+    },
+    {
+      "name": "contact_remove_phone",
+      "description": "Removes the numbers under one label.",
+      "args": [
+        {
+          "name": "match",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The card's exact name as Contacts shows it."
+        },
+        {
+          "name": "label",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The label as Contacts stores it, such as mobile, home or work."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "background",
+          "meaning": "Must be \"background\": this command has no verified ui mode."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "background"
+        ],
+        "default": "background"
+      },
+      "example_requests": [
+        "Remove Sam's mobile number",
+        "Delete Priya's work phone",
+        "Take off this contact's home number"
+      ],
+      "effects": "idempotent",
+      "destructive": false,
+      "precondition": "The program has access to Contacts and Automation permission for Contacts.",
+      "postcondition": "No number has the label; the others stay.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "id",
+          "name",
+          "job_title",
+          "phones",
+          "emails"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "NotFound",
+          "when": "no such card, or it has no number with that label; nothing is changed"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one matches; nothing is changed"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"ui\": this command has no verified ui mode"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only tested with no account signed in to Contacts."
+      ]
+    },
+    {
+      "name": "contact_add_email",
+      "description": "Adds an email address with a label, keeping the ones already there.",
+      "args": [
+        {
+          "name": "match",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The card's exact name as Contacts shows it."
+        },
+        {
+          "name": "address",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The email address."
+        },
+        {
+          "name": "label",
+          "type": "str",
+          "required": false,
+          "default": "work",
+          "meaning": "The label as Contacts stores it, such as mobile, home or work."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "background",
+          "meaning": "Must be \"background\": this command has no verified ui mode."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "background"
+        ],
+        "default": "background"
+      },
+      "example_requests": [
+        "Add sam@example.com as Sam's home email",
+        "Give Priya a work email",
+        "Add this address to the contact"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "The program has access to Contacts and Automation permission for Contacts.",
+      "postcondition": "The card has the address under the label, and its other addresses stay.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "id",
+          "name",
+          "job_title",
+          "phones",
+          "emails"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "NotFound",
+          "when": "no card or list has that name; nothing is changed"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one matches; nothing is changed"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"ui\": this command has no verified ui mode"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only tested with no account signed in to Contacts.",
+        "The address isn't checked."
+      ]
+    },
+    {
+      "name": "contact_remove_email",
+      "description": "Removes the email addresses under one label.",
+      "args": [
+        {
+          "name": "match",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The card's exact name as Contacts shows it."
+        },
+        {
+          "name": "label",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The label as Contacts stores it, such as mobile, home or work."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "background",
+          "meaning": "Must be \"background\": this command has no verified ui mode."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "background"
+        ],
+        "default": "background"
+      },
+      "example_requests": [
+        "Remove Sam's home email",
+        "Delete Priya's work address",
+        "Take off this contact's other email"
+      ],
+      "effects": "idempotent",
+      "destructive": false,
+      "precondition": "The program has access to Contacts and Automation permission for Contacts.",
+      "postcondition": "No address has the label; the others stay.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "id",
+          "name",
+          "job_title",
+          "phones",
+          "emails"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "NotFound",
+          "when": "no such card, or it has no email with that label; nothing is changed"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one matches; nothing is changed"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"ui\": this command has no verified ui mode"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only tested with no account signed in to Contacts."
+      ]
+    },
+    {
+      "name": "contact_export_vcard",
+      "description": "Writes one card, or every card, to a new .vcf file.",
+      "args": [
+        {
+          "name": "path",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "A new path ending in .vcf, in a folder that exists."
+        },
+        {
+          "name": "match",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "The card's exact name; leave it out for every card."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "background",
+          "meaning": "Must be \"background\": this command has no verified ui mode."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "background"
+        ],
+        "default": "background"
+      },
+      "example_requests": [
+        "Export Sam's contact card",
+        "Save all my contacts as a vCard file",
+        "Make a .vcf of this contact"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "The program has access to Contacts and Automation permission for Contacts.",
+      "postcondition": "The file holds one vCard per card; nothing else changes.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "path",
+          "count"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "NotFound",
+          "when": "no card or list has that name; nothing is changed"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one matches; nothing is changed"
+        },
+        {
+          "name": "AlreadyExists",
+          "when": "the file exists; nothing is overwritten"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"ui\": this command has no verified ui mode"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only tested with no account signed in to Contacts.",
+        "The vCards are Contacts' own; photos and other fields come as Contacts writes them.",
+        "There is no allowed-folder check on the path."
+      ]
+    },
+    {
+      "name": "contact_merge",
+      "description": "Merges every card with exactly this name into one (Card > Merge Selected Cards).",
+      "args": [
+        {
+          "name": "match",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The card's exact name as Contacts shows it."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": this command has no background mode."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Merge the duplicate Sam cards",
+        "Combine these two contacts for Priya",
+        "Clean up the duplicate card"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "The program has access to Contacts and Automation permission for Contacts. For ui mode, it also has Accessibility, and Automation for System Events.",
+      "postcondition": "One card has the name, with the numbers and emails of all of them.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "id",
+          "name",
+          "first",
+          "last",
+          "company",
+          "emails",
+          "phones",
+          "note",
+          "groups"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "a card or list name is being edited, a dialog holds typed text, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "no card or list has that name; nothing is changed"
+        },
+        {
+          "name": "ValueError",
+          "when": "only one card has the name; nothing is changed"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\": Contacts' scripting has no merge"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only tested with no account signed in to Contacts.",
+        "UI mode depends on English names and was tested only in English.",
+        "Which card's name, company and note win is Contacts' own choice; the test checked that both cards' emails and phones were kept and the company of either was."
+      ]
+    }
+  ]
+}
