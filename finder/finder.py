@@ -21,6 +21,7 @@ import plistlib
 import shutil
 import subprocess
 import time
+import unicodedata
 import warnings
 
 APP = "Finder"
@@ -31,11 +32,35 @@ DEFAULT_FIELDS = "name,path,kind,size,modified_date"
 ROOT_ENV = "FINDER_ALLOWED_ROOT"
 
 VERIFIED: dict = {
+    "file_add_tag": {
+        "ui": {
+            "macos": "15.6.1 (24G90)",
+            "app": "15.5 (1732.6.4)"
+        }
+    },
+    "file_compress": {
+        "ui": {
+            "macos": "15.6.1 (24G90)",
+            "app": "15.5 (1732.6.4)"
+        }
+    },
     "file_copy": {
         "background": {
             "macos": "15.6.1 (24G90)",
             "app": "15.5 (1732.6.4)"
         },
+        "ui": {
+            "macos": "15.6.1 (24G90)",
+            "app": "15.5 (1732.6.4)"
+        }
+    },
+    "file_duplicate": {
+        "ui": {
+            "macos": "15.6.1 (24G90)",
+            "app": "15.5 (1732.6.4)"
+        }
+    },
+    "file_extract": {
         "ui": {
             "macos": "15.6.1 (24G90)",
             "app": "15.5 (1732.6.4)"
@@ -64,6 +89,12 @@ VERIFIED: dict = {
             "macos": "15.6.1 (24G90)",
             "app": "15.5 (1732.6.4)"
         },
+        "ui": {
+            "macos": "15.6.1 (24G90)",
+            "app": "15.5 (1732.6.4)"
+        }
+    },
+    "file_put_back": {
         "ui": {
             "macos": "15.6.1 (24G90)",
             "app": "15.5 (1732.6.4)"
@@ -100,6 +131,12 @@ VERIFIED: dict = {
             "macos": "15.6.1 (24G90)",
             "app": "15.5 (1732.6.4)"
         },
+        "ui": {
+            "macos": "15.6.1 (24G90)",
+            "app": "15.5 (1732.6.4)"
+        }
+    },
+    "folder_new_with_selection": {
         "ui": {
             "macos": "15.6.1 (24G90)",
             "app": "15.5 (1732.6.4)"
@@ -577,6 +614,19 @@ MENU_ITEM_ALT = """      repeat with i in menu items of menu (item 1 of argv) of
       end repeat"""
 
 
+class _ClipboardKept:
+    """Copy and Paste of files go through the clipboard; what was on it is put back afterwards, through standard input."""
+
+    def __enter__(self):
+        self.saved = _jxa(CLIPBOARD, "save")
+
+    def __exit__(self, *exc):
+        done = subprocess.run(["osascript", "-l", "JavaScript", "-e", CLIPBOARD, "restore"], input=self.saved,
+                              capture_output=True, text=True)
+        if done.returncode and exc[0] is None:
+            raise UIError(done.stderr.strip())
+
+
 def _go(folder: str) -> None:
     """Show folder in the front Finder window, in list view."""
     _until("Go to Folder… in the Go menu", MENU_ITEM, "Go", "Go to Folder…")
@@ -678,10 +728,12 @@ def file_copy(path: str, to_folder: str, mode: str = "ui") -> dict:
         _background("duplicate", path=full, to=target)
     else:
         _ready()
-        _select(full)
-        _until("Copy in the Edit menu", MENU_ITEM_ALT, "Edit", f"Copy “{os.path.basename(full)}”")
-        _go(target)
-        _until("Paste Item in the Edit menu", MENU_ITEM_ALT, "Edit", "Paste Item")
+        with _ClipboardKept():
+            _select(full)
+            _until("Copy in the Edit menu", MENU_ITEM_ALT, "Edit", f"Copy “{os.path.basename(full)}”")
+            _go(target)
+            _until("Paste Item in the Edit menu", MENU_ITEM_ALT, "Edit", "Paste Item")
+            _wait_exists(copy)
         _done()
     _wait_exists(copy)
     return _checked("file_copy", mode, _shape(_info(copy), None))
@@ -698,10 +750,12 @@ def file_move(path: str, to_folder: str, mode: str = "ui") -> dict:
         _background("move", path=full, to=target)
     else:
         _ready()
-        _select(full)
-        _until("Copy in the Edit menu", MENU_ITEM_ALT, "Edit", f"Copy “{os.path.basename(full)}”")
-        _go(target)
-        _keys("cmd+opt+9")
+        with _ClipboardKept():
+            _select(full)
+            _until("Copy in the Edit menu", MENU_ITEM_ALT, "Edit", f"Copy “{os.path.basename(full)}”")
+            _go(target)
+            _keys("cmd+opt+9")
+            _wait_exists(moved)
         _done()
     _wait_exists(moved)
     _wait_exists(full, False)
@@ -761,3 +815,255 @@ def folder_open(path: str, mode: str = "ui") -> dict:
     _go(full)
     _done()
     return _checked("folder_open", mode, {**_shape(_info(full), None), "opened": True})
+
+
+# More commands (UI only) ------------------------------------------------------------------------------------------
+# These use Finder's own menus. Finder has no scripting or file API that is the same action, so there is no background mode.
+
+SELECT_ITEMS = """on run argv
+  tell application "Finder"
+    set f to (POSIX file (item 1 of argv)) as alias
+    set picked to {}
+    repeat with i from 2 to count of argv
+      set end of picked to item (item i of argv) of folder f
+    end repeat
+    select picked
+  end tell
+  return "ok"
+end run"""
+
+SELECTED_NAMES = """tell application "Finder"
+  set names to {}
+  repeat with x in (selection as list)
+    set end of names to (name of x)
+  end repeat
+end tell
+set AppleScript's text item delimiters to linefeed
+return names as text"""
+
+TAG_FIELD = """      repeat with x in windows
+        if name of x is (item 1 of argv) then
+          repeat with a in ({x} & scroll areas of x & scroll areas of scroll area 1 of x)
+            repeat with f in text fields of a
+              try
+                if value of attribute "AXDescription" of f is "tag editor" then
+                  set focused of f to true
+                  if focused of f then return "ok"
+                end if
+              end try
+            end repeat
+          end repeat
+        end if
+      end repeat"""
+
+CLOSE_INFO = """      repeat with x in windows
+        if name of x is (item 1 of argv) then
+          click (first button of x whose subrole is "AXCloseButton")
+          return "no"
+        end if
+      end repeat
+      return "ok\""""
+
+TRASH_DIR = os.path.expanduser("~/.Trash")
+
+
+def _same_folder(paths: list) -> tuple:
+    if not paths:
+        raise ValueError("give at least one path")
+    full = [_existing(p) for p in paths]
+    if len(set(full)) != len(full):
+        raise ValueError("a path is given twice")
+    folders = {os.path.dirname(p) for p in full}
+    if len(folders) != 1:
+        raise ValueError("all the items must be in the same folder")
+    return full, folders.pop()
+
+
+def _select_many(full: list) -> None:
+    _go(os.path.dirname(full[0]))
+    names = [os.path.basename(p) for p in full]
+    if len(names) == 1:
+        _until(f"the row {names[0]!r}", ROW, names[0])
+        return
+    # Finder's own select, by name, because setting rows selected through Accessibility selects only one.
+    _osascript(SELECT_ITEMS, os.path.dirname(full[0]), *names)
+    want = sorted(unicodedata.normalize("NFC", n) for n in names)
+    _wait_for(f"the items {names!r} to be selected", lambda: sorted(
+        unicodedata.normalize("NFC", n) for n in _osascript(SELECTED_NAMES).split("\n") if n) == want)
+
+
+def _new_items(folder: str, before: set, count: int = 1, timeout: float = SAVE_TIMEOUT) -> list:
+    def made():
+        now = set(os.listdir(folder)) - before
+        return sorted(now) if len(now) >= count and not any(n.startswith(".") or n.endswith(".download") for n in now) else None
+    return _wait_for("the new item to appear", made, timeout)
+
+
+def _steady(full: str) -> None:
+    seen = []
+
+    def test():
+        size = sum(os.path.getsize(os.path.join(b, f)) for b, _, fs in os.walk(full) for f in fs) if os.path.isdir(full) \
+            else os.path.getsize(full)
+        seen.append(size)
+        return len(seen) >= 3 and seen[-1] == seen[-2] == seen[-3]
+    _wait_for("the item to finish writing", test, SAVE_TIMEOUT)
+
+
+def file_compress(paths: list, mode: str = "ui") -> dict:
+    """Make a .zip of one or more items in the same folder with File > Compress. One item gives "name.zip"; several give
+    "Archive.zip". The items themselves stay."""
+    _mode("file_compress", mode, ("ui",))
+    full, folder = _same_folder(paths)
+    target = os.path.join(folder, (os.path.basename(full[0]) if len(full) == 1 else "Archive") + ".zip")
+    _free(target)
+    before = set(os.listdir(folder))
+    _ready()
+    _select_many(full)
+    item = f"Compress “{os.path.basename(full[0])}”" if len(full) == 1 else f"Compress {len(full)} Items"
+    _until(f"{item} in the File menu", MENU_ITEM_ALT, "File", item)
+    _wait_exists(target)
+    _steady(target)
+    _new_items(folder, before)
+    _done()
+    return _checked("file_compress", mode, _shape(_info(target), None))
+
+
+def file_extract(path: str, mode: str = "ui") -> dict:
+    """Open a .zip with File > Open, so Archive Utility expands it next to itself. Returns the new item(s); the .zip stays."""
+    _mode("file_extract", mode, ("ui",))
+    full = _existing(path)
+    if not full.lower().endswith(".zip"):
+        raise ValueError("path must be a .zip")
+    folder = os.path.dirname(full)
+    before = set(os.listdir(folder))
+    _ready()
+    _select(full)
+    _until("Open in the File menu", MENU_ITEM, "File", "Open")
+    made = _new_items(folder, before, timeout=SAVE_TIMEOUT * 2)
+    for name in made:
+        _steady(os.path.join(folder, name))
+    _ready()
+    _done()
+    return _checked("file_extract", mode, {"zip": full, "items": [_shape(_info(os.path.join(folder, n)), None) for n in made]})
+
+
+def file_duplicate(path: str, mode: str = "ui") -> dict:
+    """Duplicate the item at path in its own folder with File > Duplicate ("name copy"). Returns the copy."""
+    _mode("file_duplicate", mode, ("ui",))
+    full = _existing(path)
+    folder = os.path.dirname(full)
+    before = set(os.listdir(folder))
+    _ready()
+    _select(full)
+    _until("Duplicate in the File menu", MENU_ITEM, "File", "Duplicate")
+    made = _new_items(folder, before)
+    if len(made) != 1:
+        raise UIError(f"expected one copy, found {made}")
+    copy = os.path.join(folder, made[0])
+    _steady(copy)
+    _done()
+    return _checked("file_duplicate", mode, _shape(_info(copy), None))
+
+
+def file_put_back(name: str, mode: str = "ui") -> dict:
+    """Put the item named name in the Trash back where it came from (File > Put Back). Returns it at its old place."""
+    _mode("file_put_back", mode, ("ui",))
+    if not name or "/" in name:
+        raise ValueError("name must be the item's name in the Trash, without /")
+    trashed = os.path.join(TRASH_DIR, name)
+    if not os.path.lexists(trashed):
+        raise NotFound(f"nothing named {name!r} in the Trash")
+    _ready()
+    # Go to Folder won't show ~/.Trash, so Finder's own scripting opens the Trash window.
+    _osascript('tell application "Finder" to open trash')
+    _until("the Trash in the window", SHOWING, "Trash")
+    _until("as List in the View menu", AS_LIST)
+    _until(f"the row {name!r}", ROW, name)
+    _until("Put Back in the File menu", MENU_ITEM, "File", "Put Back")
+    _wait_exists(trashed, False)
+    _done()
+    return _checked("file_put_back", mode, {"name": name, "put_back": True})
+
+
+def file_add_tag(path: str, tag: str, mode: str = "ui") -> dict:
+    """Add the tag (a name such as "Red" or "Project X") to the item at path, in its Get Info window. Returns its tags."""
+    _mode("file_add_tag", mode, ("ui",))
+    if not tag.strip() or "\n" in tag or "," in tag:
+        raise ValueError("tag must be one non-empty line without commas")
+    full = _existing(path)
+    if tag in _tags(full):
+        raise AlreadyExists(f"{full} already has the tag {tag!r}")
+    _ready()
+    _select(full)
+    info = f"{os.path.basename(full)} Info"
+    _until("Get Info in the File menu", MENU_ITEM, "File", "Get Info")
+    try:
+        _until("the Info window's tag field", TAG_FIELD, info)
+        saved = _jxa(CLIPBOARD, "save")
+        try:
+            _jxa(CLIPBOARD, "text", tag)
+            _keys(PASTE, RETURN)
+            _wait_for("the tag to be saved", lambda: tag in _tags(full), SAVE_TIMEOUT)
+        finally:
+            done = subprocess.run(["osascript", "-l", "JavaScript", "-e", CLIPBOARD, "restore"], input=saved,
+                                  capture_output=True, text=True)
+            if done.returncode:
+                raise UIError(done.stderr.strip())
+    finally:
+        _until("the Info window to close", CLOSE_INFO, info)
+    _done()
+    return _checked("file_add_tag", mode, {**_shape(_info(full), None), "tags": _tags(full)})
+
+
+def _tags(full: str) -> list:
+    """The item's tag names, from its extended attribute (colour numbers after a line break are dropped)."""
+    try:
+        raw = subprocess.run(["xattr", "-px", "com.apple.metadata:_kMDItemUserTags", full], capture_output=True, text=True)
+        if raw.returncode:
+            return []
+        return [t.split("\n")[0] for t in plistlib.loads(bytes.fromhex("".join(raw.stdout.split())))]
+    except (ValueError, plistlib.InvalidFileException):
+        return []
+
+
+def folder_new_with_selection(paths: list, name: str, mode: str = "ui") -> dict:
+    """Move items in the same folder into a new folder there named name, with File > New Folder with Selection."""
+    _mode("folder_new_with_selection", mode, ("ui",))
+    if not name or name in (".", "..") or "/" in name or "\n" in name:
+        raise ValueError("name must be a single name without / or line breaks")
+    full, folder = _same_folder(paths)
+    if len(full) < 2:
+        raise ValueError("give at least two items")
+    target = os.path.join(folder, name)
+    _free(target)
+    before = set(os.listdir(folder))
+    _ready()
+    _select_many(full)
+    item = f"New Folder with Selection ({len(full)} Items)"
+    _until(f"{item} in the File menu", MENU_ITEM_ALT, "File", item)
+    names = {os.path.basename(p) for p in full}
+
+    def made():
+        new = [n for n in set(os.listdir(folder)) - before if os.path.isdir(os.path.join(folder, n))
+               and names <= set(os.listdir(os.path.join(folder, n)))]
+        return new[0] if len(new) == 1 else None
+    made_name = _wait_for("the new folder with the items", made, SAVE_TIMEOUT)
+    try:
+        editing = _wait_for("the new folder's name field", lambda: _ui(EDITING) == "ok", 3)
+    except UIError:
+        editing = False
+    if editing:
+        _paste(name)
+        _keys(RETURN)
+    else:
+        # Finder didn't leave the new name ready to type, so the folder is renamed like any other item.
+        _ready()
+        _select(os.path.join(folder, made_name))
+        _rename_selected(name)
+    _wait_exists(target)
+    _wait_for("the items to move", lambda: all(os.path.lexists(os.path.join(target, os.path.basename(p))) and
+                                               not os.path.lexists(p) for p in full), SAVE_TIMEOUT)
+    _done()
+    return _checked("folder_new_with_selection", mode, {**_shape(_info(target), None),
+                                                        "items": sorted(os.listdir(target))})

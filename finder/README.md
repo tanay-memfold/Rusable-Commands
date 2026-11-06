@@ -94,6 +94,33 @@ Shows it selected in a Finder window.
 
 ### folder_open(path, mode="ui") → item, with `"opened": true`
 
+### More commands (UI only)
+
+These use Finder's own menus. Finder has no scripting or file API that is the same action, so they have no background mode.
+Items given together must be in the same folder; several are selected with Finder's own `select`, by name.
+
+### file_compress(paths, mode="ui") → the .zip
+**File > Compress**. One item gives `name.zip`, several give `Archive.zip`, next to them. The items stay.
+
+### file_extract(path, mode="ui") → {zip, items}
+Opens a `.zip` (**File > Open**), so Archive Utility expands it next to itself. The `.zip` stays.
+
+### file_duplicate(path, mode="ui") → the copy
+**File > Duplicate**: a copy in the same folder, named by Finder (such as `name copy.txt`).
+
+### file_put_back(name, mode="ui") → {name, "put_back": true}
+**File > Put Back** for the item with that name in the Trash. Finder's own scripting opens the Trash window, because Go to Folder
+won't show it. Only items trashed through Finder were tested.
+
+### file_add_tag(path, tag, mode="ui") → item, with `tags`
+Adds a tag in the item's **Get Info** window (macOS 15.6.1's File menu has no Tags… item). Other tags stay.
+
+### folder_new_with_selection(paths, name, mode="ui") → the new folder, with `items`
+**File > New Folder with Selection**, then names the folder (when Finder doesn't leave the new name ready to type, it renames the
+folder like any other item). At least two items.
+
+Left out: Create PDF from several files. macOS 15.6.1's File menu has no Quick Actions submenu, so it couldn't be reached by name.
+
 ## How it was verified
 
 In fresh copies of one VM, with made-up files including emoji, accents and quotes, all inside one test folder. Every path was
@@ -102,25 +129,35 @@ compared by content before and after. The top level of the home folder was compa
 outside the test folder changed. `file_reveal` and `folder_open` change nothing on disk, so what they show was read from
 Finder's window through Accessibility, which isn't independent of Finder.
 
+For the newer commands, zips were read with Python's `zipfile`, and tags with the file's
+`NSURLTagNamesKey`, all separate from Finder. Every case set a small clipboard first and checked it came back, and some ran with a very
+large clipboard (about 3.5 MB, text and other data) that had to come back exactly.
+
 | Function | Mode | Verified | Cases | Start states |
 |---|---|---|---|---|
+| `file_add_tag` | ui | yes | 23 | a confirmation dialog open, app closed, app hidden, minimized, another app in front, another folder/list/view showing, search field with text, another item selected, two windows open, half-typed text in another item |
+| `file_compress` | ui | yes | 24 | a confirmation dialog open, app closed, app hidden, minimized, another app in front, another folder/list/view showing, search field with text, another item selected, two windows open, half-typed text in another item |
 | `file_copy` | background | yes | 25 | a confirmation dialog open, app closed, app hidden, minimized, another app in front, another folder/list/view showing, search field with text, another item selected, two windows open |
 | `file_copy` | ui | yes | 26 | a confirmation dialog open, app closed, app hidden, minimized, another app in front, another folder/list/view showing, search field with text, another item selected, two windows open, half-typed text in another item |
+| `file_duplicate` | ui | yes | 13 | a confirmation dialog open, app closed, app hidden, minimized, another app in front, another folder/list/view showing, search field with text, another item selected, two windows open, half-typed text in another item |
+| `file_extract` | ui | yes | 12 | a confirmation dialog open, app closed, app hidden, minimized, another app in front, another folder/list/view showing, search field with text, another item selected, two windows open |
 | `file_find` | background | yes | 21 | a confirmation dialog open, app closed, app hidden, minimized, another app in front, another folder/list/view showing, search field with text, another item selected, two windows open |
 | `file_info` | background | yes | 13 | a confirmation dialog open, app closed, app hidden, minimized, another app in front, another folder/list/view showing, search field with text, another item selected, two windows open |
 | `file_list` | background | yes | 13 | a confirmation dialog open, app closed, app hidden, minimized, another app in front, another folder/list/view showing, search field with text, another item selected, two windows open |
 | `file_move` | background | yes | 16 | a confirmation dialog open, app closed, app hidden, minimized, another app in front, another folder/list/view showing, search field with text, another item selected, two windows open |
 | `file_move` | ui | yes | 17 | a confirmation dialog open, app closed, app hidden, minimized, another app in front, another folder/list/view showing, search field with text, another item selected, two windows open, half-typed text in another item |
+| `file_put_back` | ui | yes | 11 | a confirmation dialog open, app closed, app hidden, minimized, another app in front, another folder/list/view showing, search field with text, another item selected, two windows open |
 | `file_rename` | background | yes | 17 | a confirmation dialog open, app closed, app hidden, minimized, another app in front, another folder/list/view showing, search field with text, another item selected, two windows open |
-| `file_rename` | ui | yes | 18 | a confirmation dialog open, app closed, app hidden, minimized, another app in front, another folder/list/view showing, search field with text, another item selected, two windows open, half-typed text in another item |
+| `file_rename` | ui | yes | 19 | a confirmation dialog open, app closed, app hidden, minimized, another app in front, another folder/list/view showing, search field with text, another item selected, two windows open, half-typed text in another item |
 | `file_reveal` | ui | yes | 11 | a confirmation dialog open, app closed, app hidden, minimized, another app in front, another folder/list/view showing, search field with text, another item selected, two windows open, half-typed text in another item |
 | `file_trash` | background | yes | 15 | a confirmation dialog open, app closed, app hidden, minimized, another app in front, another folder/list/view showing, search field with text, another item selected, two windows open |
 | `file_trash` | ui | yes | 16 | a confirmation dialog open, app closed, app hidden, minimized, another app in front, another folder/list/view showing, search field with text, another item selected, two windows open, half-typed text in another item |
 | `folder_create` | background | yes | 16 | a confirmation dialog open, app closed, app hidden, minimized, another app in front, another folder/list/view showing, search field with text, another item selected, two windows open |
-| `folder_create` | ui | yes | 17 | a confirmation dialog open, app closed, app hidden, minimized, another app in front, another folder/list/view showing, search field with text, another item selected, two windows open, half-typed text in another item |
+| `folder_create` | ui | yes | 18 | a confirmation dialog open, app closed, app hidden, minimized, another app in front, another folder/list/view showing, search field with text, another item selected, two windows open, half-typed text in another item |
+| `folder_new_with_selection` | ui | yes | 13 | a confirmation dialog open, app closed, app hidden, minimized, another app in front, another folder/list/view showing, search field with text, another item selected, two windows open, half-typed text in another item |
 | `folder_open` | ui | yes | 11 | a confirmation dialog open, app closed, app hidden, minimized, another app in front, another folder/list/view showing, search field with text, another item selected, two windows open, half-typed text in another item |
 
-Verified on macOS 15.6.1 (24G90), finder 15.5 (1732.6.4), 2026-11-04, in fresh VM clones.
+Verified on macOS 15.6.1 (24G90), finder 15.5 (1732.6.4), 2026-11-05, in fresh VM clones.
 
 ## Permissions
 

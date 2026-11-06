@@ -836,6 +836,488 @@
         "UI mode depends on English names and was tested only in English.",
         "What it shows was read back through Finder's window, which isn't independent of Finder."
       ]
+    },
+    {
+      "name": "file_compress",
+      "description": "Makes a .zip of one or more items in the same folder with File > Compress; the items stay.",
+      "args": [
+        {
+          "name": "paths",
+          "type": "list",
+          "required": true,
+          "default": null,
+          "meaning": "Absolute paths (or starting with ~) of items in the same folder."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": Finder has no scripting or file API that is the same action."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Zip up this folder",
+        "Compress these three files",
+        "Make a zip of the report"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "For ui mode, the program has Accessibility, and Automation for System Events.",
+      "postcondition": "One item gives name.zip and several give Archive.zip, next to them.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name",
+          "path",
+          "kind",
+          "size",
+          "modified_date"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "a name is being edited, a dialog holds text, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "nothing exists at the path, or the folder is missing; nothing is changed"
+        },
+        {
+          "name": "AlreadyExists",
+          "when": "the new path is taken; nothing is overwritten"
+        },
+        {
+          "name": "OutsideAllowedRoot",
+          "when": "FINDER_ALLOWED_ROOT is set and a path is outside it; nothing is done"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\": there is no background mode for this command"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only touches what FINDER_ALLOWED_ROOT allows if it is set; if it isn't set, any path you can reach is accepted.",
+        "UI mode depends on English names and was tested only in English.",
+        "Names are those Finder gives; Archive.zip already there raises AlreadyExists.",
+        "Zip names are written by Archive Utility in UTF-8 without the zip's UTF-8 flag."
+      ]
+    },
+    {
+      "name": "file_extract",
+      "description": "Opens a .zip so Archive Utility expands it next to itself; the .zip stays.",
+      "args": [
+        {
+          "name": "path",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "An absolute path, or one starting with ~."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": Finder has no scripting or file API that is the same action."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Unzip this file",
+        "Extract the archive",
+        "Open up the zip I downloaded"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "For ui mode, the program has Accessibility, and Automation for System Events.",
+      "postcondition": "The zip's contents are next to it.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "zip",
+          "items"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "a name is being edited, a dialog holds text, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "nothing exists at the path, or the folder is missing; nothing is changed"
+        },
+        {
+          "name": "OutsideAllowedRoot",
+          "when": "FINDER_ALLOWED_ROOT is set and a path is outside it; nothing is done"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\": there is no background mode for this command"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only touches what FINDER_ALLOWED_ROOT allows if it is set; if it isn't set, any path you can reach is accepted.",
+        "UI mode depends on English names and was tested only in English.",
+        "Only .zip files were tested; where Archive Utility puts a clashing name is its own choice."
+      ]
+    },
+    {
+      "name": "file_duplicate",
+      "description": "Duplicates an item in its own folder with File > Duplicate.",
+      "args": [
+        {
+          "name": "path",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "An absolute path, or one starting with ~."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": Finder has no scripting or file API that is the same action."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Duplicate this file",
+        "Make a copy of the folder here",
+        "Copy this document in place"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "For ui mode, the program has Accessibility, and Automation for System Events.",
+      "postcondition": "A copy named by Finder, such as \"name copy\", is next to it.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name",
+          "path",
+          "kind",
+          "size",
+          "modified_date"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "a name is being edited, a dialog holds text, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "nothing exists at the path, or the folder is missing; nothing is changed"
+        },
+        {
+          "name": "OutsideAllowedRoot",
+          "when": "FINDER_ALLOWED_ROOT is set and a path is outside it; nothing is done"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\": there is no background mode for this command"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only touches what FINDER_ALLOWED_ROOT allows if it is set; if it isn't set, any path you can reach is accepted.",
+        "UI mode depends on English names and was tested only in English."
+      ]
+    },
+    {
+      "name": "file_put_back",
+      "description": "Puts an item in the Trash back where it came from with File > Put Back.",
+      "args": [
+        {
+          "name": "name",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The item's name in the Trash."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": Finder has no scripting or file API that is the same action."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Restore the file I deleted",
+        "Put back the report from the Trash",
+        "Undo deleting this folder"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "For ui mode, the program has Accessibility, and Automation for System Events.",
+      "postcondition": "The item is back at its old place and not in the Trash.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name",
+          "put_back"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "a name is being edited, a dialog holds text, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "nothing exists at the path, or the folder is missing; nothing is changed"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\": there is no background mode for this command"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "UI mode depends on English names and was tested only in English.",
+        "Finder's own scripting opens the Trash window, because Go to Folder won't show it.",
+        "Only items trashed through Finder were tested; Finder needs to know where they came from.",
+        "There is no allowed-folder check on where it goes back to."
+      ]
+    },
+    {
+      "name": "file_add_tag",
+      "description": "Adds a tag to an item in its Get Info window.",
+      "args": [
+        {
+          "name": "path",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "An absolute path, or one starting with ~."
+        },
+        {
+          "name": "tag",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The tag name, such as Red or Project X; one line, no commas."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": Finder has no scripting or file API that is the same action."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Tag this file Red",
+        "Add the tag Invoices to these documents",
+        "Label the folder Project X"
+      ],
+      "effects": "idempotent",
+      "destructive": false,
+      "precondition": "For ui mode, the program has Accessibility, and Automation for System Events.",
+      "postcondition": "The item has the tag, and its other tags stay.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name",
+          "path",
+          "kind",
+          "size",
+          "modified_date",
+          "tags"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "a name is being edited, a dialog holds text, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "nothing exists at the path, or the folder is missing; nothing is changed"
+        },
+        {
+          "name": "AlreadyExists",
+          "when": "the new path is taken; nothing is overwritten"
+        },
+        {
+          "name": "OutsideAllowedRoot",
+          "when": "FINDER_ALLOWED_ROOT is set and a path is outside it; nothing is done"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\": there is no background mode for this command"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only touches what FINDER_ALLOWED_ROOT allows if it is set; if it isn't set, any path you can reach is accepted.",
+        "UI mode depends on English names and was tested only in English.",
+        "macOS 15.6.1's File menu has no Tags… item, so this uses Get Info.",
+        "A new tag name is created by Finder with no colour."
+      ]
+    },
+    {
+      "name": "folder_new_with_selection",
+      "description": "Moves items in the same folder into a new folder there with File > New Folder with Selection.",
+      "args": [
+        {
+          "name": "paths",
+          "type": "list",
+          "required": true,
+          "default": null,
+          "meaning": "Absolute paths (or starting with ~) of items in the same folder."
+        },
+        {
+          "name": "name",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The new folder's name; one name without / or line breaks."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": Finder has no scripting or file API that is the same action."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Put these files in a new folder called Receipts",
+        "Group the selected photos into a folder",
+        "Make a folder with these three documents"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "For ui mode, the program has Accessibility, and Automation for System Events.",
+      "postcondition": "The new folder holds the items and they are gone from where they were.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name",
+          "path",
+          "kind",
+          "size",
+          "modified_date",
+          "items"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "a name is being edited, a dialog holds text, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "nothing exists at the path, or the folder is missing; nothing is changed"
+        },
+        {
+          "name": "AlreadyExists",
+          "when": "the new path is taken; nothing is overwritten"
+        },
+        {
+          "name": "OutsideAllowedRoot",
+          "when": "FINDER_ALLOWED_ROOT is set and a path is outside it; nothing is done"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\": there is no background mode for this command"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only touches what FINDER_ALLOWED_ROOT allows if it is set; if it isn't set, any path you can reach is accepted.",
+        "UI mode depends on English names and was tested only in English.",
+        "It needs at least two items."
+      ]
     }
   ]
 }
