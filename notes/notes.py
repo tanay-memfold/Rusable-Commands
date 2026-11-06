@@ -69,6 +69,12 @@ VERIFIED: dict = {
             "app": "4.13 (3146.141.6)"
         }
     },
+    "note_attach_image": {
+        "background": {
+            "macos": "15.6.1 (24G90)",
+            "app": "4.12.7 (2998.63)"
+        }
+    },
     "note_create": {
         "background": {
             "macos": "26.6.2 (25G83)",
@@ -946,3 +952,61 @@ def _ready_for(mode: str) -> None:
         _ready()
     else:
         _launch_hidden()
+
+
+# Attachments ------------------------------------------------------------------------------------------------------
+# Added later and verified separately, on macOS 15.6.1 only (see VERIFIED). It uses its own scripts, so the code above
+# is unchanged.
+
+IMAGE_TYPES = (".png", ".jpg", ".jpeg", ".gif", ".heic", ".tiff", ".tif")
+
+ATTACH = """on run argv
+  tell application "Notes"
+    set n to note id (item 1 of argv)
+    make new attachment at end of attachments of n with data (POSIX file (item 2 of argv))
+  end tell
+  return "true"
+end run"""
+
+ATTACHMENTS = """function run(argv) {
+  const n = Application("Notes").notes.byId(argv[0]);
+  return JSON.stringify(n.attachments().map(x => ({name: x.name(), id: x.id()})));
+}"""
+
+
+def _attachments(note_id: str) -> list:
+    """What Notes' scripting lists as the note's attachments (with Notes open it can list one image twice)."""
+    return json.loads(_jxa(ATTACHMENTS, note_id))
+
+
+def note_attach_image(match: str, path: str, folder: str | None = None, mode: str = "background") -> dict:
+    """Add the image file at path to the end of the note titled match. The file itself is left as it is."""
+    import os
+    _mode("note_attach_image", mode, ("background",))
+    full = os.path.realpath(os.path.expanduser(path))
+    if not os.path.isabs(os.path.expanduser(path)):
+        raise ValueError("path must be absolute or start with ~")
+    if not full.lower().endswith(IMAGE_TYPES):
+        raise ValueError(f"path must be an image: {', '.join(IMAGE_TYPES)}")
+    if not os.path.isfile(full):
+        raise NotFound(f"no file at {full}")
+    _ready_for(mode)
+    note_id = _one(match, folder)
+    before = _attachments(note_id)
+    _osascript(ATTACH, note_id, full)
+    # Notes gives the note a new id once the attachment is in, so it is found again by title.
+    box = {}
+
+    def attached():
+        try:
+            box["id"] = _one(match, folder)
+        except NotFound:
+            return None
+        now = _attachments(box["id"])
+        # With Notes open, its scripting can list one image twice, so any new entry with the file's name counts.
+        added = [x for x in now if x["id"] not in {b["id"] for b in before} and x["name"] == os.path.basename(full)]
+        return added or None
+    _wait_for("the image to be attached", attached, TIMEOUT * 3)
+    info = _data("info", ids=[box["id"]])[0]
+    return _checked("note_attach_image", mode, {"title": info["title"], "folder": info["folder"],
+                                                "attached": os.path.basename(full)})

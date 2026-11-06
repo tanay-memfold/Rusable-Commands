@@ -167,6 +167,26 @@ Deletes the folder. Its notes go to Recently Deleted.
 UI steps: select the folder row, focus the sidebar, then **Edit** › **Delete Folder**, and click **Delete** in
 the confirmation.
 
+## Images (added later, macOS 15.6.1 only)
+
+Verified on macOS 15.6.1 with Notes 4.12.7, unlike the commands above (macOS 26.6.2). It uses its own script, added after the code
+above, which is unchanged. Background mode only.
+
+### note_attach_image(match, path, folder=None, mode="background") → {title, folder, attached}
+Adds the image at `path` (.png, .jpg, .jpeg, .gif, .heic, .tiff or .tif) to the end of the note titled `match`. The file is left as
+it is.
+
+- On the test VM, the first attachment made Notes upgrade its local store, which gave notes new ids; the note is found again by title.
+- With Notes open, Notes' scripting can list one image twice, so the command doesn't return a count. What was stored was checked in
+  NoteStore.sqlite: one attachment of the right type, and Notes' stored copy of the image had the same hash as the file.
+- Only small images were tested. There is no UI mode.
+
+Commands added later, verified separately:
+
+| Function | Mode | Verified | Cases | macOS | App |
+|---|---|---|---|---|---|
+| `note_attach_image` | background | yes | 30 | 15.6.1 (24G90) | 4.12.7 (2998.63) |
+
 ## Verification
 
 | Function | Mode | Verified | Cases | Start states |

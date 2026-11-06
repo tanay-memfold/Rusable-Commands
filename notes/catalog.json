@@ -1165,6 +1165,92 @@
           "when": "a screen element never appeared in time, Notes' scripting failed, or the change was not seen in time"
         }
       ]
+    },
+    {
+      "name": "note_attach_image",
+      "description": "Adds an image file to the end of a note; the file itself is left as it is.",
+      "args": [
+        {
+          "name": "match",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The note's exact title."
+        },
+        {
+          "name": "path",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "An absolute path (or starting with ~) to a .png, .jpg, .jpeg, .gif, .heic, .tiff or .tif file."
+        },
+        {
+          "name": "folder",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "Only look in the folder with this name."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "background",
+          "meaning": "Must be \"background\": this command has no verified ui mode."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "background"
+        ],
+        "default": "background"
+      },
+      "example_requests": [
+        "Add this photo to my Trip note",
+        "Attach the screenshot to the Bug notes",
+        "Put the diagram image in the Ideas note"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "Exactly one note has that title, within folder if given. It has Automation permission for Notes.",
+      "postcondition": "The note ends with the image, and its text is unchanged.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "title",
+          "folder",
+          "attached"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "the path isn't absolute or isn't an image type, or mode is not \"ui\" or \"background\""
+        },
+        {
+          "name": "NotFound",
+          "when": "no note has that title, or no file is at the path; nothing is changed"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one note matches; nothing is changed"
+        },
+        {
+          "name": "UIError",
+          "when": "Notes' scripting failed, or the attachment wasn't seen in time"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"ui\": this command has no ui mode"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, unlike this app's other commands (macOS 26.6.2), so it isn't known to work on macOS 26 or any other version.",
+        "The first attachment on the test VM made Notes upgrade its local store, which changes note ids.",
+        "With Notes open, its scripting can list one image twice; what was stored was checked in Notes' database.",
+        "Only small images were tested."
+      ],
+      "verified_on": "15.6.1"
     }
   ]
 }
