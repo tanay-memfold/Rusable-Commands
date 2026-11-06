@@ -1,0 +1,278 @@
+{
+  "app": "Automator",
+  "import": "import automator",
+  "macos_version": "15.6.1 (24G90)",
+  "app_version": "2.10 (528)",
+  "commands": [
+    {
+      "name": "workflow_new",
+      "description": "Starts a new, empty workflow window: File > New, then Workflow in Automator's type chooser.",
+      "args": [
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": Automator's scripting didn't answer in testing."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Make a new Automator workflow",
+        "Start a workflow in Automator",
+        "Open a blank workflow"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "The program has Accessibility, and Automation for System Events.",
+      "postcondition": "An empty workflow window is in front.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name",
+          "actions"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "the workflow has a dialog open, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\": Automator's scripting didn't answer in testing"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 with Automator 2.10 only, so it isn't known to work on macOS 26 or any other version.",
+        "It depends on English names and was tested only in English.",
+        "Only the Workflow type was tested; Quick Action, Application and the other types weren't."
+      ]
+    },
+    {
+      "name": "workflow_add_action",
+      "description": "Adds a library action by its exact name to the end of the workflow in front.",
+      "args": [
+        {
+          "name": "name",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The action's exact name in Automator's library, such as Scale Images."
+        },
+        {
+          "name": "copy_first",
+          "type": "bool",
+          "required": false,
+          "default": false,
+          "meaning": "For actions that change files, whether to accept Automator's offer to add Copy Finder Items first."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": Automator's scripting didn't answer in testing."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Add Scale Images to the workflow",
+        "Put a Change Type of Images step in",
+        "Add Get Specified Finder Items"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "The program has Accessibility, and Automation for System Events.",
+      "postcondition": "The workflow ends with the action (and Copy Finder Items before it if copy_first was accepted).",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "workflow",
+          "actions"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "the workflow has a dialog open, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "no action has that name, or no workflow window is in front"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\": Automator's scripting didn't answer in testing"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 with Automator 2.10 only, so it isn't known to work on macOS 26 or any other version.",
+        "It depends on English names and was tested only in English.",
+        "The action's options and input files aren't set; they keep Automator's defaults."
+      ]
+    },
+    {
+      "name": "workflow_actions",
+      "description": "Lists the actions of the workflow in front, in order.",
+      "args": [
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": Automator's scripting didn't answer in testing."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "What's in this workflow?",
+        "List the workflow's steps",
+        "Which actions does it have?"
+      ],
+      "effects": "read_only",
+      "destructive": false,
+      "precondition": "The program has Accessibility, and Automation for System Events.",
+      "postcondition": "Nothing is changed.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "workflow",
+          "actions"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "NotFound",
+          "when": "no workflow window is in front"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\": Automator's scripting didn't answer in testing"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 with Automator 2.10 only, so it isn't known to work on macOS 26 or any other version.",
+        "It depends on English names and was tested only in English.",
+        "It was read from the workflow window through Accessibility, which isn't independent of Automator."
+      ]
+    },
+    {
+      "name": "workflow_save",
+      "description": "Saves the workflow in front as a new .workflow file (File > Save…).",
+      "args": [
+        {
+          "name": "path",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "A new absolute path (or starting with ~) ending in .workflow."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": Automator's scripting didn't answer in testing."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Save this workflow to my Documents",
+        "Save the workflow as resize.workflow",
+        "Keep this Automator workflow"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "The program has Accessibility, and Automation for System Events.",
+      "postcondition": "The .workflow file holds the workflow's actions.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name",
+          "path",
+          "actions"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "the workflow has a dialog open, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "no workflow window is in front"
+        },
+        {
+          "name": "AlreadyExists",
+          "when": "the path is taken; nothing is overwritten"
+        },
+        {
+          "name": "OutsideAllowedRoot",
+          "when": "AUTOMATOR_ALLOWED_ROOT is set and the path is outside it; nothing is done"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\": Automator's scripting didn't answer in testing"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 with Automator 2.10 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only touches what AUTOMATOR_ALLOWED_ROOT allows if it is set.",
+        "It depends on English names and was tested only in English."
+      ]
+    }
+  ]
+}
