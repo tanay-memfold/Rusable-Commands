@@ -94,6 +94,10 @@ shows any alert, the call cancels it and raises `UIError`.
 Moves the reminder to the list `to_list`. Its title, notes, due date and priority stay. Background only: on screen this means
 dragging, and these commands use no screen positions.
 
+### reminder_reopen(match, list=None, mode="background") → reminder
+Marks a completed reminder as not completed again. `ValueError` if it isn't completed. Flagging isn't offered: Reminders' scripting
+ignores writes to a reminder's flag, and there's no Flag menu item.
+
 ### list_create(name, mode="ui") → {name, open}
 
 ### list_list(mode="background") → [{name, open}]
@@ -110,8 +114,7 @@ In fresh copies of one VM, with made-up data including emoji, accents, quotes an
 Reminders' own database, not through scripting or the library, and every other reminder and list was compared before and
 after. That nothing changes on NotFound, Ambiguous, AlreadyExists and StateBlocked was read back the same way.
 
-Every case was rerun on the final code. One small change came after that run: `list_delete` in UI mode now waits for the sidebar to
-catch up with the list on screen. All of its UI cases were then rerun, along with the error, blocked and large-clipboard cases.
+Every case ran on the final code of its commands. The commands added on day 3 sit in their own section at the end of the file and were tested on their own; the code above them is unchanged.
 
 Each UI command that changes something was also run with a very large clipboard (about 3.5 MB, text and other data): the change had to land and the clipboard had to come back exactly, read back with `pbpaste` and separate code.
 
@@ -137,11 +140,12 @@ should), and `reminder_move` started from closed (Reminders came to the front). 
 | `reminder_get` | background | yes | 13 | a confirmation dialog open, app closed, app hidden, app still launching, minimized, the sidebar hidden, no window open, app open, another app in front, another folder/list/view showing, a popover open, search field with text, another item selected |
 | `reminder_list` | background | yes | 26 | a confirmation dialog open, app closed, app hidden, app still launching, minimized, the sidebar hidden, no window open, app open, another app in front, another folder/list/view showing, a popover open, search field with text, another item selected |
 | `reminder_move` | background | yes | 12 | app closed, app hidden, minimized, app open, another app in front, another folder/list/view showing, search field with text, another item selected |
+| `reminder_reopen` | background | yes | 11 | app closed, app hidden, app open, another app in front |
 | `reminder_search` | background | yes | 13 | a confirmation dialog open, app closed, app hidden, app still launching, minimized, the sidebar hidden, no window open, app open, another app in front, another folder/list/view showing, a popover open, search field with text, another item selected |
 | `reminder_update` | background | yes | 28 | a confirmation dialog open, app closed, app hidden, app still launching, minimized, the sidebar hidden, no window open, app open, another app in front, another folder/list/view showing, a popover open, search field with text, another item selected |
 | `reminder_update` | ui | yes | 18 | a confirmation dialog open, app closed, app hidden, app still launching, minimized, the sidebar hidden, no window open, app open, another app in front, another folder/list/view showing, a popover open, search field with text, another item selected, half-typed text in another item |
 
-Verified on macOS 15.6.1 (24G90), reminders 7.0 (3740), 2026-11-05, in fresh VM clones.
+Verified on macOS 15.6.1 (24G90), reminders 7.0 (3740), 2026-11-06, in fresh VM clones.
 
 ## Permissions
 

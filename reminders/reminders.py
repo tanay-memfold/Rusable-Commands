@@ -115,6 +115,12 @@ VERIFIED: dict = {
             "app": "7.0 (3740)"
         }
     },
+    "reminder_reopen": {
+        "background": {
+            "macos": "15.6.1 (24G90)",
+            "app": "7.0 (3740)"
+        }
+    },
     "reminder_search": {
         "background": {
             "macos": "15.6.1 (24G90)",
@@ -994,3 +1000,35 @@ def reminder_move(match: str, to_list: str, list: str | None = None, mode: str =
         return now[0] if len(now) == 1 and not [r for r in _data("find", title=match, list=item["list"])
                                                 if item["list"] != to_list and r["id"] == item["id"]] else None
     return _checked("reminder_move", mode, _wait_for("the reminder to move", moved, SAVE_TIMEOUT))
+
+
+# Reopen ----------------------------------------------------------------------------------------------------------
+# Added later with their own script, so the code above is unchanged.
+
+MORE = r"""
+function run(argv) {
+  const Rem = Application("Reminders"), a = JSON.parse(argv[1]);
+  for (const l of Rem.lists()) {
+    const found = l.reminders.whose({id: a.id})();
+    if (!found.length) continue;
+    const r = found[0];
+    if (argv[0] === "reopen") r.completed = false;
+    return JSON.stringify({flagged: r.flagged(), completed: r.completed()});
+  }
+  throw new Error("no reminder " + a.id);
+}"""
+
+
+def _more(op: str, **args):
+    return json.loads(_jxa(MORE, op, json.dumps(args)))
+
+
+def reminder_reopen(match: str, list: str | None = None, mode: str = "background") -> dict:
+    """Mark the completed reminder titled match as not completed again."""
+    _mode("reminder_reopen", mode, ("background",))
+    _ready_for(mode)
+    item = _one(match, list)
+    if not item["completed"]:
+        raise ValueError(f"{match!r} isn't completed")
+    _more("reopen", id=item["id"])
+    return _checked("reminder_reopen", mode, _shape(_saved(item["id"], lambda r: not r["completed"]), "id," + DEFAULT_FIELDS))

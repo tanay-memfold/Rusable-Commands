@@ -949,6 +949,91 @@
       ]
     },
     {
+      "name": "reminder_reopen",
+      "description": "Marks a completed reminder as not completed again.",
+      "args": [
+        {
+          "name": "match",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The reminder's exact title."
+        },
+        {
+          "name": "list",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "Only look in the list with this name."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "background",
+          "meaning": "Must be \"background\": this command has no verified ui mode."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "background"
+        ],
+        "default": "background"
+      },
+      "example_requests": [
+        "Reopen the dentist reminder",
+        "Mark 'Buy milk' as not done",
+        "Undo completing this task"
+      ],
+      "effects": "idempotent",
+      "destructive": false,
+      "precondition": "The program has access to Reminders and Automation permission for Reminders.",
+      "postcondition": "The reminder is not completed; nothing else on it changed.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "id",
+          "title",
+          "notes",
+          "list",
+          "due",
+          "priority",
+          "completed"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "NotFound",
+          "when": "no reminder has that title, or no list has that name; nothing is changed"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one matches; nothing is changed"
+        },
+        {
+          "name": "ValueError",
+          "when": "the reminder isn't completed; nothing is changed"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"ui\": this command has no verified ui mode"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only the local account was tested, with no iCloud or other account signed in to Reminders.",
+        "Flagging isn't supported: Reminders' scripting ignores writes to flagged."
+      ]
+    },
+    {
       "name": "list_delete",
       "description": "Deletes a list and every reminder in it.",
       "args": [
