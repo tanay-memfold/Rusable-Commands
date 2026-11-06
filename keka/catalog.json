@@ -1,0 +1,210 @@
+{
+  "app": "Keka",
+  "import": "import keka",
+  "macos_version": "15.6.1 (24G90)",
+  "app_version": "1.6.0 (5638)",
+  "commands": [
+    {
+      "name": "archive_set_format",
+      "description": "Chooses the format Keka makes archives in, with the Format pop-up in Keka's window.",
+      "args": [
+        {
+          "name": "format",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "zip, tar, 7z, gzip, bzip2, xz, dmg or iso."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": Keka's scripting hung in testing."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Make Keka use TAR",
+        "Switch Keka to 7z",
+        "Set the archive format to ZIP"
+      ],
+      "effects": "idempotent",
+      "destructive": false,
+      "precondition": "The program has Accessibility, and Automation for System Events.",
+      "postcondition": "Keka makes archives in that format until it's changed.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "format"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "Keka shows a dialog with typed text, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\": Keka's scripting hung in testing"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 with Keka 1.6.0 only, so it isn't known to work on macOS 26 or any other version.",
+        "It depends on English names and was tested only in English.",
+        "It needs Keka's main window (the one with the Format pop-up); if it was closed, the command raises UIError.",
+        "Only zip, tar and 7z were chosen in testing, and only zip and tar archives were made."
+      ]
+    },
+    {
+      "name": "archive_format",
+      "description": "Returns the format Keka makes archives in, read from its window.",
+      "args": [
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": Keka's scripting hung in testing."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Which format is Keka using?",
+        "Is Keka set to ZIP?",
+        "What archive type will Keka make?"
+      ],
+      "effects": "read_only",
+      "destructive": false,
+      "precondition": "The program has Accessibility, and Automation for System Events.",
+      "postcondition": "Nothing is changed.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "format"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\": Keka's scripting hung in testing"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 with Keka 1.6.0 only, so it isn't known to work on macOS 26 or any other version.",
+        "It depends on English names and was tested only in English.",
+        "It needs Keka's main window (the one with the Format pop-up); if it was closed, the command raises UIError."
+      ]
+    },
+    {
+      "name": "archive_create",
+      "description": "Makes an archive of items in the same folder in Keka's current format, saved next to them.",
+      "args": [
+        {
+          "name": "paths",
+          "type": "list",
+          "required": true,
+          "default": null,
+          "meaning": "Absolute paths (or starting with ~) of items in the same folder."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": Keka's scripting hung in testing."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Zip these two files with Keka",
+        "Make a TAR of this folder",
+        "Archive the reports with Keka"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "The program has Accessibility, and Automation for System Events.",
+      "postcondition": "A new archive next to the items holds them; the items stay.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name",
+          "path",
+          "format",
+          "from"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "Keka shows a dialog with typed text, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "nothing is at a path; nothing is made"
+        },
+        {
+          "name": "AlreadyExists",
+          "when": "Keka proposes a name that's taken; nothing is made"
+        },
+        {
+          "name": "OutsideAllowedRoot",
+          "when": "KEKA_ALLOWED_ROOT is set and a path is outside it; nothing is done"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\", or Keka is closed or hidden; nothing is done"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 with Keka 1.6.0 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only touches what KEKA_ALLOWED_ROOT allows if it is set; if it isn't set, any item you can reach is accepted.",
+        "It depends on English names and was tested only in English.",
+        "It needs Keka's main window (the one with the Format pop-up); if it was closed, the command raises UIError.",
+        "It raises NotSupported while Keka is closed or hidden, because items handed to it then were dropped in testing; open Keka first.",
+        "The items are opened with Keka, which asks where to save because it has no access to the folder; the dialog is filled in by name.",
+        "The archive's name is Keka's own: the item's name for one item, Archive for several, numbered if taken.",
+        "Compression level, passwords and splitting are left as Keka has them; TAR is made uncompressed."
+      ]
+    }
+  ]
+}
