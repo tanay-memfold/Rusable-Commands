@@ -103,6 +103,9 @@ Copies all of a document's text into a new document and saves it at `to`, which 
 Select All, Copy, New and Paste, the clipboard is restored afterwards, and both documents stay open. In background mode the text is
 read and written through scripting, and the new document is closed. An empty document raises `ValueError`.
 
+### document_export_pdf(path, to, mode="ui") → {name, path, from}
+**File > Export as PDF…** to a new path; the document is unchanged and stays open. UI only.
+
 ### document_save(path, mode="ui") → {name, path, saved}
 Writes the open document to its file, and waits until the file holds its text.
 
@@ -119,7 +122,8 @@ was checked to be inside it first. Results were read back from the files with pl
 TextEdit. Every other test file was compared by content before and after, and the top level of the home folder by name and modified
 time. Windows and the front app were read through Accessibility and System Events, which isn't independent of TextEdit.
 
-Changes made by `document_replace_text` and `document_append` were written with a plain ⌘S from the test before reading the file.
+`document_export_pdf` was added on day 3 at the end of the file and tested on its own (the PDF's text read back with PDFKit); the
+code above it is unchanged. Changes made by `document_replace_text` and `document_append` were written with a plain ⌘S from the test before reading the file.
 `document_list` and `document_read` of unsaved text are compared with what TextEdit's window shows. Each command was also run with a
 very large clipboard (about 3.5 MB, text and other data), and the clipboard had to come back exactly, read back with `pbpaste` and
 separate code. Every other case checked that a small clipboard came back.
@@ -134,6 +138,7 @@ separate code. Every other case checked that a small clipboard came back.
 | `document_copy_to_new` | ui | yes | 19 | unsaved changes in another document, the find bar open, app hidden, minimized, app open, another app in front, another document in front |
 | `document_create` | background | yes | 47 | app closed, unsaved changes in another document, the find bar open, app hidden, app still launching, minimized, no window open, app open, an Open dialog showing, another app in front, another document in front, a dialog on another document, another item selected |
 | `document_create` | ui | yes | 47 | app closed, unsaved changes in another document, the find bar open, app hidden, app still launching, minimized, no window open, app open, an Open dialog showing, another app in front, another document in front, a dialog on another document, another item selected |
+| `document_export_pdf` | ui | yes | 18 | app closed, the find bar open, app hidden, minimized, app open, another app in front, another document in front |
 | `document_list` | background | yes | 13 | app closed, unsaved changes in another document, the find bar open, app hidden, app still launching, minimized, no window open, app open, an Open dialog showing, another app in front, another document in front, a dialog on another document, another item selected |
 | `document_list` | ui | yes | 14 | app closed, unsaved changes in another document, the find bar open, app hidden, app still launching, minimized, no window open, app open, an Open dialog showing, another app in front, another document in front, a dialog on another document, another item selected |
 | `document_open` | background | yes | 42 | app closed, unsaved changes in another document, the find bar open, app hidden, app still launching, minimized, no window open, app open, an Open dialog showing, another app in front, another document in front, a dialog on another document, another item selected |
@@ -147,7 +152,7 @@ separate code. Every other case checked that a small clipboard came back.
 | `document_save_as` | background | yes | 38 | unsaved changes in another document, the find bar open, app hidden, minimized, app open, an Open dialog showing, another app in front, another document in front, a dialog on another document, another item selected |
 | `document_save_as` | ui | yes | 39 | unsaved changes in another document, the find bar open, app hidden, minimized, app open, an Open dialog showing, another app in front, another document in front, a dialog on another document, another item selected, half-typed text in another item |
 
-Verified on macOS 15.6.1 (24G90), textedit 1.20 (409), 2026-11-05, in fresh VM clones.
+Verified on macOS 15.6.1 (24G90), textedit 1.20 (409), 2026-11-06, in fresh VM clones.
 
 ## Permissions
 

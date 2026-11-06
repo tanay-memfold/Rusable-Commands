@@ -72,6 +72,12 @@ VERIFIED: dict = {
             "app": "1.20 (409)"
         }
     },
+    "document_export_pdf": {
+        "ui": {
+            "macos": "15.6.1 (24G90)",
+            "app": "1.20 (409)"
+        }
+    },
     "document_list": {
         "background": {
             "macos": "15.6.1 (24G90)",
@@ -926,3 +932,37 @@ def document_close(path: str, mode: str = "ui") -> dict:
     _wait_for("the document to close", gone)
     _wait_for("the file to match the document", lambda: _matches_disk(full, text), SAVE_TIMEOUT)
     return _checked("document_close", mode, {**_item(full), "closed": True})
+
+
+def document_export_pdf(path: str, to: str, mode: str = "ui") -> dict:
+    """Save a PDF of a .txt or .rtf document at to (File > Export as PDF…), opening it if needed. The document is unchanged."""
+    _mode("document_export_pdf", mode)
+    if mode != "ui":
+        raise NotSupported("document_export_pdf has no background mode: TextEdit's scripting has no PDF export")
+    full = _existing(path)
+    target = os.path.abspath(os.path.expanduser(to))
+    if not target.lower().endswith(".pdf"):
+        raise ValueError("to must end in .pdf")
+    root = os.environ.get(ROOT_ENV)
+    if root:
+        allowed, real = os.path.realpath(os.path.expanduser(root)), os.path.realpath(os.path.dirname(target))
+        if real != allowed and not real.startswith(allowed + os.sep):
+            raise OutsideAllowedRoot(f"{target} is outside {ROOT_ENV}; nothing was done")
+    if os.path.lexists(target):
+        raise AlreadyExists(f"{target} already exists; nothing is overwritten")
+    if not os.path.isdir(os.path.dirname(target)):
+        raise NotFound(f"the folder {os.path.dirname(target)} doesn't exist")
+    window = _opened(full)
+    _raise(window)
+    _menu("File", "Export as PDF…")
+    try:
+        _fill_save_panel(window, target)
+    except Exception:
+        sheet = _sheet(window)
+        if sheet is not None and _find(sheet, "AXButton", "Cancel") is not None:
+            _press(_find(sheet, "AXButton", "Cancel"))
+        raise
+    _wait_for("the PDF to be written", lambda: os.path.isfile(target) and os.path.getsize(target) > 0, SAVE_TIMEOUT)
+    seen = []
+    _wait_for("the PDF to finish", lambda: seen.append(os.path.getsize(target)) or (len(seen) >= 3 and len(set(seen[-3:])) == 1), SAVE_TIMEOUT)
+    return _checked("document_export_pdf", mode, {"name": os.path.basename(target), "path": target, "from": full})

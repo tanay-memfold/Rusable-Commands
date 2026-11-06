@@ -576,6 +576,94 @@
       ]
     },
     {
+      "name": "document_export_pdf",
+      "description": "Saves a PDF of a .txt or .rtf document at a new path with File > Export as PDF….",
+      "args": [
+        {
+          "name": "path",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "An absolute path, or one starting with ~, ending in .txt or .rtf."
+        },
+        {
+          "name": "to",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The new PDF's path, which must not exist."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": TextEdit's scripting has no PDF export."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Export notes.txt as a PDF",
+        "Make a PDF of this document",
+        "Save the report as PDF on my Desktop"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "For ui mode, the program has Accessibility, and Automation for System Events. For background mode, it has Automation for TextEdit.",
+      "postcondition": "The PDF holds the document's text; the document is unchanged and stays open.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name",
+          "path",
+          "from"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, a change wasn't seen in time, or TextEdit didn't answer"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "the document has a dialog open, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "no file at the path; nothing is changed"
+        },
+        {
+          "name": "AlreadyExists",
+          "when": "the new path is taken; nothing is overwritten"
+        },
+        {
+          "name": "OutsideAllowedRoot",
+          "when": "TEXTEDIT_ALLOWED_ROOT is set and a path is outside it; nothing is done"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\""
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only touches what TEXTEDIT_ALLOWED_ROOT allows if it is set; if it isn't set, any .txt or .rtf file you can reach is accepted.",
+        "UI mode depends on English names and was tested only in English.",
+        "In the test VM, text typed with the keyboard (not pasted) stalled TextEdit's scripting for at least 47 seconds, so background mode can raise UIError after about 30 seconds.",
+        "Only .txt and .rtf were tested; large documents, other encodings and \\r\\n line breaks weren't.",
+        "Page layout is TextEdit's own; styles in an .rtf file weren't checked."
+      ]
+    },
+    {
       "name": "document_save",
       "description": "Writes an open document to its file, and waits until the file holds its text.",
       "args": [
