@@ -35,13 +35,17 @@ The format currently chosen in Keka's window.
 An archive of items in the same folder, in the current format, saved next to them under Keka's own name (the item's name for one
 item, `Archive` for several). The items stay. A TAR is uncompressed.
 
+### archive_extract(path, mode="ui") → {archive, items}
+Opens the archive with Keka. When Keka asks where to extract ("Choose a folder to extract this file"), the archive's own folder is
+chosen and **Extract** pressed; once that folder has been chosen, Keka doesn't ask again. The archive stays. An archive with several
+items comes out in a new folder named after it (Keka's own choice); `items` then lists that folder. Needs Keka open and not
+hidden, like `archive_create`.
+
 ## Left out
 
-- **`archive_create` with Keka closed or hidden**: items handed to a closed or hidden Keka were dropped in testing (the save dialog
+- **`archive_create` and `archive_extract` with Keka closed or hidden**: items handed to a closed or hidden Keka were dropped in testing (the save dialog
   never came), even after two fixes. In those states it raises `NotSupported` and does nothing. Open Keka first.
 
-- **Extracting**: Keka opened an Open dialog asking for a folder it could use, which would give Keka access to that folder. The
-  tests didn't do that. Finder's `file_extract` expands zips with Archive Utility instead.
 - **Keka's scripting** (`compress`, `extract`): it hung for two minutes without doing anything while Keka had no access to the
   folder, so there's no background mode.
 - Passwords, splitting and compression levels are left as Keka has them.
@@ -58,6 +62,7 @@ in Keka's window was read through Accessibility, which isn't independent of Keka
 | Function | Mode | Verified | Cases | Start states |
 |---|---|---|---|---|
 | `archive_create` | ui | yes | 21 | app closed, app hidden, minimized, app open, another app in front |
+| `archive_extract` | ui | yes | 14 | app closed, app hidden, minimized, app open, another app in front |
 | `archive_format` | ui | yes | 5 | app closed, app hidden, minimized, app open, another app in front |
 | `archive_set_format` | ui | yes | 16 | app closed, app hidden, minimized, app open, another app in front |
 

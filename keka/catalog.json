@@ -205,6 +205,82 @@
         "The archive's name is Keka's own: the item's name for one item, Archive for several, numbered if taken.",
         "Compression level, passwords and splitting are left as Keka has them; TAR is made uncompressed."
       ]
+    },
+    {
+      "name": "archive_extract",
+      "description": "Expands an archive next to itself: it is opened with Keka, and Keka's folder dialog is answered with the archive's own folder.",
+      "args": [
+        {
+          "name": "path",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "An absolute path (or starting with ~) to a .zip, .tar, .7z, .gz, .tgz, .bz2, .xz or .rar."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": Keka's scripting hung in testing."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Unzip this file with Keka",
+        "Extract the TAR archive",
+        "Open up this 7z"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "The program has Accessibility, and Automation for System Events.",
+      "postcondition": "The archive's items are next to it; the archive stays.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "archive",
+          "items"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "Keka shows a dialog with typed text, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "nothing is at the path; nothing is done"
+        },
+        {
+          "name": "OutsideAllowedRoot",
+          "when": "KEKA_ALLOWED_ROOT is set and the path is outside it; nothing is done"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\", or Keka is closed or hidden; nothing is done"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 with Keka 1.6.0 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only touches what KEKA_ALLOWED_ROOT allows if it is set; if it isn't set, any item you can reach is accepted.",
+        "It depends on English names and was tested only in English.",
+        "It raises NotSupported while Keka is closed or hidden, like archive_create; open Keka first.",
+        "Keka asks for a folder to extract to only when it has none it may use there; the archive's own folder is chosen.",
+        "Only zip and TAR were tested; where Keka puts a clashing name is its own choice."
+      ]
     }
   ]
 }

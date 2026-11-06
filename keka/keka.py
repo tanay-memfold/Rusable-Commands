@@ -33,6 +33,12 @@ VERIFIED: dict = {
             "app": "1.6.0 (5638)"
         }
     },
+    "archive_extract": {
+        "ui": {
+            "macos": "15.6.1 (24G90)",
+            "app": "1.6.0 (5638)"
+        }
+    },
     "archive_format": {
         "ui": {
             "macos": "15.6.1 (24G90)",
@@ -481,7 +487,7 @@ def archive_format(mode: str = "ui") -> dict:
 
 def _new_items(folder: str, before: set, test, timeout: float) -> list:
     def made():
-        now = sorted(n for n in set(os.listdir(folder)) - before if not n.startswith(".") and test(n))
+        now = sorted(n for n in set(os.listdir(folder)) - before if not n.startswith(".") and test(n) and not n.endswith((".download", ".partial", ".kextraction")))
         return now or None
     found = _wait_for("Keka's result", made, timeout)
     seen = []
@@ -491,6 +497,8 @@ def _new_items(folder: str, before: set, test, timeout: float) -> list:
 
 
 def _stamp(path: str):
+    if not os.path.lexists(path):
+        return None  # Keka's temporary files come and go
     if os.path.isdir(path):
         return sorted((os.path.relpath(os.path.join(b, f), path), os.path.getsize(os.path.join(b, f))) for b, _, fs in os.walk(path) for f in fs)
     return os.path.getsize(path)
@@ -547,3 +555,51 @@ def archive_create(paths: list, mode: str = "ui") -> dict:
         raise UIError(f"expected {name}, found {made}")
     name = made[0]
     return _checked("archive_create", mode, {"name": name, "path": os.path.join(folder, name), "format": fmt, "from": full})
+
+
+ARCHIVES = (".zip", ".tar", ".7z", ".gz", ".tgz", ".bz2", ".xz", ".rar")
+
+
+def _panel_or_new(folder: str, before: set) -> bool:
+    return any(_string(w, "AXIdentifier") == "open-panel" for w in _windows()) or \
+        any(not n.startswith(".") and not n.endswith(".kextraction") for n in set(os.listdir(folder)) - before)
+
+
+def archive_extract(path: str, mode: str = "ui") -> dict:
+    """Expand an archive next to itself: it is opened with Keka, which asks where to extract, and the archive's own folder is
+    chosen. Returns the new item(s); the archive stays."""
+    _mode("archive_extract", mode)
+    full = _existing(path)
+    if not full.lower().endswith(ARCHIVES):
+        raise ValueError(f"path must be an archive: {', '.join(ARCHIVES)}")
+    if not _running() or _attr(_app(), "AXHidden") == _TRUE.value:
+        raise NotSupported("archive_extract needs Keka open and not hidden, like archive_create; open Keka first; nothing was done")
+    folder = os.path.dirname(full)
+    _forward()
+    _clear_transient()
+    before = set(os.listdir(folder))
+    subprocess.run(["open", "-a", APP, full], check=True, capture_output=True)
+    # Keka asks where to extract unless that folder was already chosen in this dialog before.
+    _wait_for("Keka's extract dialog or the result", lambda: _panel_or_new(folder, before), SAVE_TIMEOUT * 2)
+    panel = next((w for w in _windows() if _string(w, "AXIdentifier") == "open-panel"), None)
+    if panel is None:
+        made = _new_items(folder, before, lambda n: True, SAVE_TIMEOUT * 4)
+        return _checked("archive_extract", mode, {"archive": full, "items": [{"name": n, "path": os.path.join(folder, n)} for n in made]})
+    try:
+        where = _by_id(panel, "where popup")
+        if _string(where, "AXValue") != os.path.basename(folder):
+            _key(KEY_G, "{command down, shift down}")
+            go = _wait_for("Go to Folder", lambda: _by_id(panel, "GoToWindow"))
+            field = _wait_for("the folder field", lambda: _by_id(go, "PathTextField"))
+            _key(KEY_A, "command down")
+            _paste_text(folder, lambda: _string(field, "AXValue") == folder)
+            _key(RETURN)
+            _wait_for("the folder to be chosen", lambda: _string(where, "AXValue") == os.path.basename(folder))
+        _press(_by_id(panel, "OKButton"))
+    except Exception:
+        cancel = _by_id(panel, "CancelButton")
+        if cancel is not None:
+            _press(cancel)
+        raise
+    made = _new_items(folder, before, lambda n: True, SAVE_TIMEOUT * 4)
+    return _checked("archive_extract", mode, {"archive": full, "items": [{"name": n, "path": os.path.join(folder, n)} for n in made]})
