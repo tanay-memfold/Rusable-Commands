@@ -802,6 +802,86 @@
         "There is no background mode, because Safari's scripting needs an Automation permission that wasn't granted.",
         "It depends on English names and was tested only in English."
       ]
+    },
+    {
+      "name": "page_save_pdf",
+      "description": "Saves the current page as a new PDF file with File > Export as PDF….",
+      "args": [
+        {
+          "name": "path",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "An absolute path (or starting with ~) ending in .pdf, in a folder that exists; it must not exist yet."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": this command has no background mode."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Save this page as a PDF",
+        "Export the article to a PDF on my Desktop",
+        "Make a PDF of this web page"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "The program has Accessibility, and Automation for System Events.",
+      "postcondition": "The PDF holds the page, and Safari shows the same page.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "path",
+          "title",
+          "url",
+          "bytes"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or a page didn't finish loading in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "a field holds typed text, a dialog can't be closed safely, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "the folder doesn't exist, or Safari offers no Export as PDF… for the page; nothing is written"
+        },
+        {
+          "name": "AlreadyExists",
+          "when": "the file exists; nothing is overwritten"
+        },
+        {
+          "name": "OutsideAllowedRoot",
+          "when": "SAFARI_ALLOWED_ROOT is set and the path is outside it; nothing is done"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\", or the command wasn't verified"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 with Safari 18.6 against a local test server only, so macOS 26 and real websites aren't covered.",
+        "It depends on English names and was tested only in English.",
+        "Emoji weren't checked in the saved text, because they don't come back when a PDF's text is read.",
+        "Only short test pages were saved."
+      ]
     }
   ]
 }

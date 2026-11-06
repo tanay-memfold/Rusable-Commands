@@ -70,6 +70,12 @@ VERIFIED: dict = {
             "app": "18.6 (20621.3.11.11.3)"
         }
     },
+    "page_save_pdf": {
+        "ui": {
+            "macos": "15.6.1 (24G90)",
+            "app": "18.6 (20621.3.11.11.3)"
+        }
+    },
     "page_text": {
         "ui": {
             "macos": "15.6.1 (24G90)",
@@ -286,7 +292,7 @@ def _focus(element) -> None:
 def _app():
     found = subprocess.run(["pgrep", "-x", APP], capture_output=True, text=True).stdout.split()
     if not found:
-        raise UIError("Contacts isn't running")
+        raise UIError("Safari isn't running")
     return _AS.AXUIElementCreateApplication(int(found[0]))
 
 
@@ -633,3 +639,102 @@ def page_reload(mode: str = "ui") -> dict:
     _mode("page_reload", mode)
     _ready()
     return _checked("page_reload", mode, _toolbar("Reload this page"))
+
+
+# Saving -----------------------------------------------------------------------------------------------------------
+
+SAVE_ROOT_ENV = "SAFARI_ALLOWED_ROOT"
+
+
+class AlreadyExists(SafariError):
+    pass
+
+
+class OutsideAllowedRoot(SafariError):
+    pass
+
+
+def _new_pdf(path: str) -> str:
+    """An absolute .pdf path that doesn't exist yet, in a folder that does, inside SAFARI_ALLOWED_ROOT if that is set."""
+    raw = os.path.expanduser(path)
+    if not os.path.isabs(raw):
+        raise ValueError("path must be absolute or start with ~")
+    if not raw.lower().endswith(".pdf"):
+        raise ValueError("path must end in .pdf")
+    folder = os.path.realpath(os.path.dirname(raw))
+    full = os.path.join(folder, os.path.basename(raw))
+    root = os.environ.get(SAVE_ROOT_ENV)
+    if root:
+        top = os.path.realpath(os.path.expanduser(root))
+        if not (folder == top or folder.startswith(top + os.sep)):
+            raise OutsideAllowedRoot(f"{full} is outside {SAVE_ROOT_ENV} ({top}); nothing was done")
+    if not os.path.isdir(folder):
+        raise NotFound(f"no folder {folder}")
+    if os.path.lexists(full):
+        raise AlreadyExists(f"{full} already exists; nothing was overwritten")
+    return full
+
+
+def _by_id(root, identifier: str):
+    return next((e for e in _walk(root) if _string(e, "AXIdentifier") == identifier), None)
+
+
+def _save_sheet():
+    return next(iter(_sheets()), None)
+
+
+def _keys(code: int, modifiers: str) -> None:
+    if _system_events("return frontmost") != "true":
+        raise StateBlocked("another app came to the front; nothing more was typed")
+    _system_events(f"key code {code} using {{{modifiers}}}")
+
+
+def page_save_pdf(path: str, mode: str = "ui") -> dict:
+    """Save the current page as a PDF at path (File > Export as PDF…). path must end in .pdf and not exist yet."""
+    _mode("page_save_pdf", mode)
+    full = _new_pdf(path)
+    _ready()
+    page = _settle()
+    if not _has_menu_item("File", "Export as PDF…"):
+        raise NotFound("this page can't be exported as a PDF: Safari has no Export as PDF… for it")
+    _menu("File", "Export as PDF…")
+    panel = _wait_for("the Export dialog", _save_sheet)
+    try:
+        folder, name = os.path.split(full)
+        _keys(5, "command down, shift down")
+        go = _wait_for("Go to Folder", lambda: _by_id(panel, "GoToWindow"))
+        field = _wait_for("the folder field", lambda: _by_id(go, "PathTextField"))
+        _AS.AXUIElementSetAttributeValue(field, _cf("AXFocused"), _TRUE)
+        _paste(folder)
+        _key(36)
+        _wait_for("Go to Folder to close", lambda: _by_id(panel, "GoToWindow") is None)
+        where = _by_id(panel, "where popup")
+        _wait_for("the folder to be chosen", lambda: _string(where, "AXValue") == os.path.basename(folder))
+        box = _wait_for("the name field", lambda: _by_id(panel, "saveAsNameTextField"))
+        _AS.AXUIElementSetAttributeValue(box, _cf("AXFocused"), _TRUE)
+        _wait_for("the name field to be focused", lambda: _string(_focused(), "AXIdentifier") == "saveAsNameTextField")
+        _paste(name)
+        save = _find(panel, "AXButton", "Save")
+        if save is None:
+            raise UIError("the Export dialog has no Save button")
+        _press(save)
+    except Exception:
+        # Our own Export dialog is cancelled so Safari is left as it was found.
+        cancel = _find(panel, "AXButton", "Cancel") if _save_sheet() is not None else None
+        if cancel is not None:
+            _press(cancel)
+        raise
+    _wait_for("the Export dialog to close", lambda: _save_sheet() is None)
+    _wait_for("the PDF to be written", lambda: os.path.isfile(full) and os.path.getsize(full) > 0 and
+              open(full, "rb").read(5) == b"%PDF-", SAVE_TIMEOUT * 2)
+    size = _wait_for("the PDF to finish", _steady_size(full), SAVE_TIMEOUT)
+    return _checked("page_save_pdf", mode, {"path": full, "title": page["title"], "url": page["url"], "bytes": size})
+
+
+def _steady_size(full: str):
+    seen = []
+
+    def test():
+        seen.append(os.path.getsize(full))
+        return seen[-1] if len(seen) >= 3 and seen[-1] == seen[-2] == seen[-3] else None
+    return test

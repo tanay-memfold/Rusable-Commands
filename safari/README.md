@@ -87,6 +87,10 @@ Its address is checked first.
 
 ### page_back(mode="ui"), page_forward(mode="ui"), page_reload(mode="ui") → {title, url}
 
+### page_save_pdf(path, mode="ui") → {path, title, url, bytes}
+Saves the current page as a PDF with **File > Export as PDF…**, choosing the folder and name in the dialog by name. `path` must end
+in `.pdf` and not exist. Set `SAFARI_ALLOWED_ROOT` to a folder and the path must be inside it. If a step fails, the dialog is cancelled.
+
 ## How it was verified
 
 In fresh copies of one VM whose Safari had no history, against a small test server on the same machine, using made-up pages. Which pages
@@ -94,22 +98,27 @@ Safari loaded was read from that server's request log, which is separate from Sa
 with separate code, so those aren't independent of Safari. `page_forward` was checked by the window title, because Safari can restore that
 page without asking the server. Safari's history held nothing but the test server's pages afterwards.
 
+Saved PDFs were read back with PDFKit, separately from Safari: the page's heading and accented text had to be in them. Every case set a
+small clipboard first and checked it came back, and some ran with a very large clipboard (about 3.5 MB, text and other data) that had
+to come back exactly.
+
 | Function | Mode | Verified | Cases | Start states |
 |---|---|---|---|---|
 | `link_click` | ui | yes | 15 | app closed, the find bar open, app hidden, app still launching, minimized, no window open, app open, another app in front, another tab showing, two windows open, half-typed text in another item |
 | `page_back` | ui | yes | 12 | app closed, the find bar open, app hidden, app still launching, minimized, no window open, app open, another app in front, another tab showing, two windows open, half-typed text in another item |
 | `page_forward` | ui | yes | 12 | app closed, the find bar open, app hidden, app still launching, minimized, no window open, app open, another app in front, another tab showing, two windows open, half-typed text in another item |
-| `page_go` | ui | yes | 17 | app closed, the find bar open, app hidden, app still launching, minimized, no window open, app open, another app in front, another tab showing, two windows open, half-typed text in another item |
+| `page_go` | ui | yes | 18 | app closed, the find bar open, app hidden, app still launching, minimized, no window open, app open, another app in front, another tab showing, two windows open, half-typed text in another item |
 | `page_info` | ui | yes | 12 | app closed, the find bar open, app hidden, app still launching, minimized, no window open, app open, another app in front, another tab showing, two windows open, half-typed text in another item |
 | `page_links` | ui | yes | 12 | app closed, the find bar open, app hidden, app still launching, minimized, no window open, app open, another app in front, another tab showing, two windows open, half-typed text in another item |
 | `page_reload` | ui | yes | 12 | app closed, the find bar open, app hidden, app still launching, minimized, no window open, app open, another app in front, another tab showing, two windows open, half-typed text in another item |
+| `page_save_pdf` | ui | yes | 29 | app closed, the find bar open, app hidden, app still launching, minimized, no window open, app open, another app in front, another tab showing, two windows open, half-typed text in another item |
 | `page_text` | ui | yes | 12 | app closed, the find bar open, app hidden, app still launching, minimized, no window open, app open, another app in front, another tab showing, two windows open, half-typed text in another item |
 | `tab_activate` | ui | yes | 14 | app closed, the find bar open, app hidden, app still launching, minimized, no window open, app open, another app in front, another tab showing, two windows open, half-typed text in another item |
 | `tab_close` | ui | yes | 14 | app closed, the find bar open, app hidden, app still launching, minimized, no window open, app open, another app in front, another tab showing, two windows open, half-typed text in another item |
 | `tab_list` | ui | yes | 12 | app closed, the find bar open, app hidden, app still launching, minimized, no window open, app open, another app in front, another tab showing, two windows open, half-typed text in another item |
-| `tab_open` | ui | yes | 17 | app closed, the find bar open, app hidden, app still launching, minimized, no window open, app open, another app in front, another tab showing, two windows open, half-typed text in another item |
+| `tab_open` | ui | yes | 18 | app closed, the find bar open, app hidden, app still launching, minimized, no window open, app open, another app in front, another tab showing, two windows open, half-typed text in another item |
 
-Verified on macOS 15.6.1 (24G90), safari 18.6 (20621.3.11.11.3), 2026-11-04, in fresh VM clones.
+Verified on macOS 15.6.1 (24G90), safari 18.6 (20621.3.11.11.3), 2026-11-05, in fresh VM clones.
 
 ## Permissions
 
