@@ -14,7 +14,7 @@ AM = {"name": "Ambiguous", "when": "two shortcuts share the name; nothing was do
 def ns(other): return {"name": "NotSupported", "when": f"mode is \"{other}\""}
 def name_arg(meaning="The shortcut's exact name."): return {"name": "name", "type": "str", "required": True, "default": None, "meaning": meaning}
 def cmd(name, desc, args, mode, req, eff, destructive, post, ret, errs, gaps):
-    extra = {"confirm": "Delete the shortcut <name>? It can't be restored."} if destructive else {}
+    extra = {"confirm": "Delete the shortcut <name> for good (it can't be restored)?"} if destructive else {}
     return {**extra, "name": name, "description": desc, "args": args, "modes": {"verified": [mode], "default": mode}, "example_requests": req, "effects": eff,
             "destructive": destructive, "precondition": PRE_BG if mode == "background" else PRE_UI, "postcondition": post, "returns": ret, "errors": errs, "known_gaps": gaps}
 cmds = [

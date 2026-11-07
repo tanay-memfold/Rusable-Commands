@@ -13,7 +13,7 @@ make from the `.example` files; they are git-ignored.
 |---|---|
 | `libs/kit/` | Shared test kit: Accessibility helpers (`ax.py`), large-clipboard check (`bigclip.py`), case runner (`vkit.py`), `fresh.sh` (fresh VM with the tools installed), `scaffold.py` (start a new app library), `explore_app.py` (dump an app's menus and windows) |
 | `libs/reminders_local/` | The VM driver and runners used by every app: `mvm.sh`, `run_app.sh`, `runner.py`, `fresh.sh`, `watch.sh`, `wait_run.sh`, `batch.sh` |
-| `libs/<app>_local/` | Each app's verifier (`verify_*.py`), its database readers, and `build_catalog.py` |
+| `libs/<app>_local/` | Each app's verifier (`verify_*.py`), its database readers, `build_catalog.py`, and `fresh*.sh` (resets the VM and installs that app's test files; Shortcuts' resets from `golden-shortcuts.utm`) |
 | `libs/verify/` | The first verifiers (Notes, Calendar, Finder) from the macOS 26.6.2 runs |
 | `libs/report.py`, `libs/publish.py`, `libs/check_catalog.py`, `libs/root_readme.py` | Aggregate results, publish a verified library into this repo, check every catalog, rebuild the root README |
 | `mini-relay/` | The relay that lets SSH start and stop the VM (see below) |
