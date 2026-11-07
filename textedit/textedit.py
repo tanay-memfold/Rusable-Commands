@@ -52,6 +52,12 @@ VERIFIED: dict = {
             "app": "1.20 (409)"
         }
     },
+    "document_convert": {
+        "ui": {
+            "macos": "15.6.1 (24G90)",
+            "app": "1.20 (409)"
+        }
+    },
     "document_copy_to_new": {
         "background": {
             "macos": "15.6.1 (24G90)",
@@ -966,3 +972,53 @@ def document_export_pdf(path: str, to: str, mode: str = "ui") -> dict:
     seen = []
     _wait_for("the PDF to finish", lambda: seen.append(os.path.getsize(target)) or (len(seen) >= 3 and len(set(seen[-3:])) == 1), SAVE_TIMEOUT)
     return _checked("document_export_pdf", mode, {"name": os.path.basename(target), "path": target, "from": full})
+
+
+# Convert (overnight, in its own section, tested on its own) --------------------------------------------------------
+# Format > Make Plain Text on a saved rich text document "will replace the saved document file", so the conversion is done on a
+# copy (File > Duplicate) that has no file yet. TextEdit still asks to convert; that question is answered only on the copy's window.
+
+def document_convert(path: str, to: str, mode: str = "ui") -> dict:
+    """Save a .rtf document as a new .txt file (plain text: styles are dropped) or a .txt document as a new .rtf file, through File >
+    Duplicate, Format > Make Plain Text or Make Rich Text, and Save. The original file isn't changed; the new file's window stays open."""
+    _mode("document_convert", mode)
+    if mode != "ui":
+        raise NotSupported("document_convert has no background mode: it works through TextEdit's Format menu")
+    full, target = _existing(path), _new_path(to)
+    kinds = (os.path.splitext(full)[1].lower(), os.path.splitext(target)[1].lower())
+    if kinds not in ((".rtf", ".txt"), (".txt", ".rtf")):
+        raise ValueError("convert a .rtf file to a new .txt file, or a .txt file to a new .rtf file")
+    if _running():
+        _forward()
+        _clear_transient()
+    original = _opened(full)
+    _raise(original)
+    _menu("File", "Duplicate")
+
+    def the_copy():
+        # The copy is the focused window, and unlike the original it has no file yet.
+        window = _attr(_app(), "AXFocusedWindow")
+        return window if window and _string(window, "AXTitle") != _string(original, "AXTitle") and not _doc_path(window) else None
+    copy = _wait_for("the copy's window", the_copy)
+    time.sleep(1.5)  # a menu command sent at once after Duplicate was ignored in testing
+    change = "Make Plain Text" if kinds[1] == ".txt" else "Make Rich Text"
+    _menu("Format", change)
+
+    def converted():
+        sheet = _sheet(copy)
+        if sheet is not None:
+            texts = " ".join(_string(e, "AXValue") for e in _walk(sheet) if _role(e) == "AXStaticText")
+            ok = _find(sheet, "AXButton", "OK")
+            if not texts.startswith("Convert this document to plain text?") or ok is None:
+                raise StateBlocked("TextEdit asked something unexpected about the copy; it was left open")
+            _press(ok)
+            return None
+        return not _has_menu_item("Format", change) or None
+    _wait_for("the copy to change format", converted)
+    if _sheet(original) is not None:
+        raise StateBlocked("a dialog appeared on the original document; it was left as it is")
+    area = _text_area(copy)
+    _key(KEY_S, "command down")
+    _fill_save_panel(copy, target)
+    _saved_at(target, area)
+    return _checked("document_convert", mode, {**_item(target), "from": full})

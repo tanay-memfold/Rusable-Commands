@@ -902,6 +902,95 @@
         "A file changed by another program while it's open wasn't tested.",
         "There is no close without saving."
       ]
+    },
+    {
+      "name": "document_convert",
+      "description": "Saves a .rtf document as a new .txt file (styles dropped) or a .txt document as a new .rtf file, converting a duplicate so the original file isn't changed.",
+      "args": [
+        {
+          "name": "path",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "An absolute path, or one starting with ~, ending in .txt or .rtf."
+        },
+        {
+          "name": "to",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The new path: .txt for a .rtf document, .rtf for a .txt one; it must not exist."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\"."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Convert notes.rtf to plain text",
+        "Save this rich text file as a .txt",
+        "Make a rich text copy of todo.txt"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "For ui mode, the program has Accessibility, and Automation for System Events. For background mode, it has Automation for TextEdit.",
+      "postcondition": "A new file at to holds the document's text in the other format; the original file is unchanged, and both stay open.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name",
+          "path",
+          "from"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, a change wasn't seen in time, or TextEdit didn't answer"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "the document has a dialog open, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "no file at the path; nothing is changed"
+        },
+        {
+          "name": "AlreadyExists",
+          "when": "the new path is taken; nothing is overwritten"
+        },
+        {
+          "name": "OutsideAllowedRoot",
+          "when": "TEXTEDIT_ALLOWED_ROOT is set and a path is outside it; nothing is done"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\""
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only touches what TEXTEDIT_ALLOWED_ROOT allows if it is set; if it isn't set, any .txt or .rtf file you can reach is accepted.",
+        "UI mode depends on English names and was tested only in English.",
+        "In the test VM, text typed with the keyboard (not pasted) stalled TextEdit's scripting for at least 47 seconds, so background mode can raise UIError after about 30 seconds.",
+        "Only .txt and .rtf were tested; large documents, other encodings and \\r\\n line breaks weren't.",
+        "Done on a File > Duplicate copy, because Make Plain Text on a saved document replaces its file; TextEdit's convert question is answered OK only on the copy.",
+        "Added overnight at the end of the file and tested on its own."
+      ]
     }
   ]
 }

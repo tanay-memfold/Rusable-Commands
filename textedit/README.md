@@ -115,12 +115,24 @@ Saves the open document at a new path of the same type. The window then shows th
 ### document_close(path, mode="ui") → {name, path, closed}
 Closes the open document, keeping its changes.
 
+### document_convert(path, to, mode="ui") → {name, path, from}
+Saves a `.rtf` document as a new `.txt` file (plain text; styles are dropped), or a `.txt` document as a new `.rtf` file. On a saved
+rich text document, TextEdit's **Make Plain Text** says it "will replace the saved document file". So the conversion is done on a
+copy: **File > Duplicate**, then **Format > Make Plain Text** (or **Make Rich Text**) on the copy, then Save to `to`. TextEdit's
+"Convert this document to plain text?" question is answered **OK only on the copy's window**, which has no file yet. The original file
+isn't changed; it stays open, and the new file's window stays open too. UI only. Added overnight at the end of the file and tested on
+its own.
+
 ## How it was verified
 
 In fresh copies of one VM, with made-up files including emoji, accents, quotes and line breaks, all inside one test folder. Every path
 was checked to be inside it first. Results were read back from the files with plain file reads, and `textutil` for `.rtf`, never through
 TextEdit. Every other test file was compared by content before and after, and the top level of the home folder by name and modified
 time. Windows and the front app were read through Accessibility and System Events, which isn't independent of TextEdit.
+
+`document_convert` (overnight) was tested in eight start states, both ways, with styled `.rtf` files made by `textutil`. The new
+file's text was read back (plain read for `.txt`, `textutil` for `.rtf`) and every other file, the original included, had to be
+unchanged.
 
 `document_export_pdf` was added on day 3 at the end of the file and tested on its own (the PDF's text read back with PDFKit); the
 code above it is unchanged. Changes made by `document_replace_text` and `document_append` were written with a plain ⌘S from the test before reading the file.
@@ -134,6 +146,7 @@ separate code. Every other case checked that a small clipboard came back.
 | `document_append` | ui | yes | 34 | app closed, unsaved changes in another document, the find bar open, app hidden, app still launching, minimized, no window open, app open, an Open dialog showing, another app in front, another document in front, a dialog on another document, another item selected, half-typed text in another item |
 | `document_close` | background | yes | 26 | unsaved changes in another document, the find bar open, app hidden, minimized, app open, an Open dialog showing, another app in front, another document in front, a dialog on another document, another item selected |
 | `document_close` | ui | yes | 27 | unsaved changes in another document, the find bar open, app hidden, minimized, app open, an Open dialog showing, another app in front, another document in front, a dialog on another document, another item selected, half-typed text in another item |
+| `document_convert` | ui | yes | 21 | app closed, unsaved changes in another document, the find bar open, app hidden, minimized, app open, another app in front, another document in front |
 | `document_copy_to_new` | background | yes | 19 | unsaved changes in another document, the find bar open, app hidden, minimized, app open, another app in front, another document in front |
 | `document_copy_to_new` | ui | yes | 19 | unsaved changes in another document, the find bar open, app hidden, minimized, app open, another app in front, another document in front |
 | `document_create` | background | yes | 47 | app closed, unsaved changes in another document, the find bar open, app hidden, app still launching, minimized, no window open, app open, an Open dialog showing, another app in front, another document in front, a dialog on another document, another item selected |
