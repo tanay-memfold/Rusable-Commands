@@ -90,6 +90,19 @@ Its address is checked first.
 ### page_add_to_reading_list(mode="ui") → {title, url, added}
 **Bookmarks > Add to Reading List** for the current page. Safari writes the list to disk a few seconds later.
 
+### page_save(path, mode="ui") → {path, title, url, bytes, format}
+**File > Save As…** for the current page, with the format chosen by name in the save sheet's menu from the suffix: `.html` (**Page
+Source**), `.webarchive` (**Web Archive**) or `.png` (**PNG**, a picture of the page). The folder and name are chosen as for
+`page_save_pdf`, and the written file is checked by its kind (the page's source holds its title; the Web Archive's main resource
+does; the PNG is a PNG). `path` must be absolute or start with `~`, must not exist, and its folder must; `SAFARI_ALLOWED_ROOT`
+applies. Added overnight at the end of the file and tested on its own.
+
+### page_add_bookmark(title=None, folder="Favorites", mode="ui") → {title, url, bookmark, folder}
+**Bookmarks > Add Bookmark…** for the current page. In the sheet, the folder is chosen by name in its **Add this page to** menu:
+`"Favorites"` or `"Bookmarks"` (the top level; folders of your own weren't tested, so they aren't offered). `title` is pasted into the
+name field (the clipboard is restored); otherwise the page's title is kept. Then **Add**. If a step fails, the sheet is cancelled.
+Added overnight at the end of the file and tested on its own.
+
 ### page_save_pdf(path, mode="ui") → {path, title, url, bytes}
 Saves the current page as a PDF with **File > Export as PDF…**, choosing the folder and name in the dialog by name. `path` must end
 in `.pdf` and not exist. Set `SAFARI_ALLOWED_ROOT` to a folder and the path must be inside it. If a step fails, the dialog is cancelled.
@@ -101,6 +114,9 @@ Safari loaded was read from that server's request log, which is separate from Sa
 with separate code, so those aren't independent of Safari. `page_forward` was checked by the window title, because Safari can restore that
 page without asking the server. Safari's history held nothing but the test server's pages afterwards.
 
+`page_add_bookmark` (overnight) was tested in five start states, with and without a name, in both folders. Each bookmark was read
+back from Safari's Bookmarks.plist (exactly one more, with that folder, name and address).
+
 `page_add_to_reading_list` was added on day 3 at the end of the file and tested on its own (its additions in Safari's Bookmarks.plist
 were read back separately); the code above it is unchanged. Saved PDFs were read back with PDFKit, separately from Safari: the page's heading and accented text had to be in them. Every case set a
 small clipboard first and checked it came back, and some ran with a very large clipboard (about 3.5 MB, text and other data) that had
@@ -109,6 +125,7 @@ to come back exactly.
 | Function | Mode | Verified | Cases | Start states |
 |---|---|---|---|---|
 | `link_click` | ui | yes | 15 | app closed, the find bar open, app hidden, app still launching, minimized, no window open, app open, another app in front, another tab showing, two windows open, half-typed text in another item |
+| `page_add_bookmark` | ui | yes | 13 | the find bar open, app hidden, minimized, app open, another app in front |
 | `page_add_to_reading_list` | ui | yes | 7 | the find bar open, app hidden, minimized, app open, another app in front, half-typed text in another item |
 | `page_back` | ui | yes | 12 | app closed, the find bar open, app hidden, app still launching, minimized, no window open, app open, another app in front, another tab showing, two windows open, half-typed text in another item |
 | `page_forward` | ui | yes | 12 | app closed, the find bar open, app hidden, app still launching, minimized, no window open, app open, another app in front, another tab showing, two windows open, half-typed text in another item |
@@ -116,6 +133,7 @@ to come back exactly.
 | `page_info` | ui | yes | 12 | app closed, the find bar open, app hidden, app still launching, minimized, no window open, app open, another app in front, another tab showing, two windows open, half-typed text in another item |
 | `page_links` | ui | yes | 12 | app closed, the find bar open, app hidden, app still launching, minimized, no window open, app open, another app in front, another tab showing, two windows open, half-typed text in another item |
 | `page_reload` | ui | yes | 12 | app closed, the find bar open, app hidden, app still launching, minimized, no window open, app open, another app in front, another tab showing, two windows open, half-typed text in another item |
+| `page_save` | ui | yes | 20 | the find bar open, app hidden, minimized, app open, another app in front |
 | `page_save_pdf` | ui | yes | 29 | app closed, the find bar open, app hidden, app still launching, minimized, no window open, app open, another app in front, another tab showing, two windows open, half-typed text in another item |
 | `page_text` | ui | yes | 12 | app closed, the find bar open, app hidden, app still launching, minimized, no window open, app open, another app in front, another tab showing, two windows open, half-typed text in another item |
 | `tab_activate` | ui | yes | 14 | app closed, the find bar open, app hidden, app still launching, minimized, no window open, app open, another app in front, another tab showing, two windows open, half-typed text in another item |

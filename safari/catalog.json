@@ -946,6 +946,166 @@
         "It depends on English names and was tested only in English.",
         "Safari writes the Reading List to disk a few seconds after the command returns."
       ]
+    },
+    {
+      "name": "page_add_bookmark",
+      "description": "Bookmarks the current page in Favorites or at the top of Bookmarks with Bookmarks > Add Bookmark…, optionally under a name of your own.",
+      "args": [
+        {
+          "name": "title",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "The bookmark's name; None keeps the page's title."
+        },
+        {
+          "name": "folder",
+          "type": "str",
+          "required": false,
+          "default": "Favorites",
+          "meaning": "\"Favorites\" or \"Bookmarks\" (the top level)."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": this command has no background mode."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Bookmark this page",
+        "Add this site to my Favorites",
+        "Save a bookmark to this page called Recipes"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "The program has Accessibility, and Automation for System Events.",
+      "postcondition": "The page is bookmarked in the folder.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "title",
+          "url",
+          "bookmark",
+          "folder"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "folder isn't \"Favorites\" or \"Bookmarks\", title is empty, or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or a page didn't finish loading in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "a field holds typed text, a dialog can't be closed safely, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\", or the command wasn't verified"
+        },
+        {
+          "name": "NotFound",
+          "when": "Safari has no Add Bookmark… for the page, or its folder menu has no single item by that name; nothing is added"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 with Safari 18.6 against a local test server only, so macOS 26 and real websites aren't covered.",
+        "There is no background mode, because Safari's scripting needs an Automation permission that wasn't granted.",
+        "It depends on English names and was tested only in English.",
+        "Bookmark folders of your own aren't offered: only Favorites and the top level were tested.",
+        "Added overnight at the end of the file and tested on its own."
+      ]
+    },
+    {
+      "name": "page_save",
+      "description": "Saves the current page with File > Save As… as its source (.html), a Web Archive (.webarchive) or a picture (.png), by the path's suffix.",
+      "args": [
+        {
+          "name": "path",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The new file, ending in .html, .htm, .webarchive or .png; absolute or starting with ~."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": this command has no background mode."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Save this page as a web archive",
+        "Save the page's HTML source",
+        "Take a picture of the whole page as a PNG"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "The program has Accessibility, and Automation for System Events.",
+      "postcondition": "The file at path holds the page in that format.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "path",
+          "title",
+          "url",
+          "bytes",
+          "format"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "path doesn't end in .html, .htm, .webarchive or .png, isn't absolute, or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or a page didn't finish loading in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "a field holds typed text, a dialog can't be closed safely, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "the folder doesn't exist, or Safari offers no Export as PDF… for the page; nothing is written"
+        },
+        {
+          "name": "AlreadyExists",
+          "when": "the file exists; nothing is overwritten"
+        },
+        {
+          "name": "OutsideAllowedRoot",
+          "when": "SAFARI_ALLOWED_ROOT is set and the path is outside it; nothing is done"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\", or the command wasn't verified"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 with Safari 18.6 against a local test server only, so macOS 26 and real websites aren't covered.",
+        "It depends on English names and was tested only in English.",
+        "Added overnight at the end of the file and tested on its own."
+      ]
     }
   ]
 }

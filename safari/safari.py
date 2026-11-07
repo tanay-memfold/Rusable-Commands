@@ -34,6 +34,12 @@ VERIFIED: dict = {
             "app": "18.6 (20621.3.11.11.3)"
         }
     },
+    "page_add_bookmark": {
+        "ui": {
+            "macos": "15.6.1 (24G90)",
+            "app": "18.6 (20621.3.11.11.3)"
+        }
+    },
     "page_add_to_reading_list": {
         "ui": {
             "macos": "15.6.1 (24G90)",
@@ -71,6 +77,12 @@ VERIFIED: dict = {
         }
     },
     "page_reload": {
+        "ui": {
+            "macos": "15.6.1 (24G90)",
+            "app": "18.6 (20621.3.11.11.3)"
+        }
+    },
+    "page_save": {
         "ui": {
             "macos": "15.6.1 (24G90)",
             "app": "18.6 (20621.3.11.11.3)"
@@ -756,3 +768,143 @@ def page_add_to_reading_list(mode: str = "ui") -> dict:
     _menu("Bookmarks", "Add to Reading List")
     time.sleep(0.5)
     return _checked("page_add_to_reading_list", mode, {**page, "added": True})
+
+
+# Bookmarks (overnight, in their own section, tested on their own) --------------------------------------------------
+
+def page_add_bookmark(title: str | None = None, folder: str = "Favorites", mode: str = "ui") -> dict:
+    """Bookmark the current page (Bookmarks > Add Bookmark…) in "Favorites" or at the top of "Bookmarks", chosen by name in the sheet's
+    "Add this page to" menu. title replaces the page's title as the bookmark's name."""
+    _mode("page_add_bookmark", mode)
+    if title is not None and (not isinstance(title, str) or not title.strip()):
+        raise ValueError("title must be text, or None for the page's own title")
+    if folder not in ("Favorites", "Bookmarks"):
+        raise ValueError('folder must be "Favorites" or "Bookmarks" (folders of your own weren\'t tested)')
+    _ready()
+    page = _settle()
+    if not _has_menu_item("Bookmarks", "Add Bookmark…"):
+        raise NotFound("Safari has no Add Bookmark… for this page")
+    _menu("Bookmarks", "Add Bookmark…")
+    sheet = _wait_for("the Add Bookmark sheet", lambda: next((s for s in _sheets() if _string(s, "AXIdentifier") == "AddBookmarkSheet"), None))
+    try:
+        where = _wait_for("the Add this page to menu", lambda: _by_id(sheet, "LocationPopUpButton"))
+        if _string(where, "AXValue").strip() != folder:
+            _press(where)
+            try:
+                item = _wait_for(f"{folder!r} in the menu", lambda: (lambda xs: xs[0] if len(xs) == 1 else None)(
+                    [e for e in _walk(where) if _role(e) == "AXMenuItem" and _string(e, "AXTitle").strip() == folder]), 3)
+            except UIError:
+                _key(53)  # close the menu
+                raise NotFound(f"Safari's Add Bookmark menu has no single folder named {folder!r}; nothing was added") from None
+            _press(item)
+            _wait_for(f"the menu to show {folder!r}", lambda: _string(where, "AXValue").strip() == folder)
+        name = _wait_for("the bookmark's name field", lambda: _by_id(sheet, "BookmarkTitleField"))
+        if title is not None:
+            _focus(name)
+            _wait_for("the name field to have the keyboard", lambda: _string(_focused(), "AXIdentifier") == "BookmarkTitleField")
+            _paste(title)
+        named = _string(name, "AXValue")
+        if not named:
+            raise UIError("the bookmark has no name")
+        add = _find(sheet, "AXButton", "Add")
+        if add is None:
+            raise UIError("the Add button wasn't found")
+        _press(add)
+    except Exception:
+        time.sleep(0.3)
+        cancel = _find(sheet, "AXButton", "Cancel")
+        if cancel is not None:
+            _press(cancel)
+        raise
+    _wait_for("the Add Bookmark sheet to close", lambda: not any(_string(s, "AXIdentifier") == "AddBookmarkSheet" for s in _sheets()))
+    return _checked("page_add_bookmark", mode, {**page, "bookmark": named, "folder": folder})
+
+
+# Saving a page (overnight, in its own section, tested on its own) --------------------------------------------------
+# File > Save As… opens a save sheet whose format menu is set by name: Page Source for .html, Web Archive for .webarchive and PNG
+# for .png. The folder and name are chosen as in page_save_pdf, then the written file is checked by its kind.
+
+SAVE_KINDS = {".html": "Page Source", ".htm": "Page Source", ".webarchive": "Web Archive", ".png": "PNG"}
+
+
+def _saved_kind(full: str, suffix: str, title: str) -> bool:
+    try:
+        with open(full, "rb") as handle:
+            data = handle.read()
+    except OSError:
+        return False
+    if suffix == ".png":
+        return data[:8] == b"\x89PNG\r\n\x1a\n"
+    if suffix == ".webarchive":
+        try:
+            archive = plistlib.loads(data)
+        except Exception:
+            return False
+        main = archive.get("WebMainResource", {}) if isinstance(archive, dict) else {}
+        return title in main.get("WebResourceData", b"").decode("utf-8", "replace")
+    return title in data.decode("utf-8", "replace")
+
+
+def page_save(path: str, mode: str = "ui") -> dict:
+    """Save the current page at path with File > Save As…: .html (the page's source), .webarchive (Safari's Web Archive) or .png (a
+    picture of the page). path must be absolute or start with ~, must not exist, and its folder must."""
+    _mode("page_save", mode)
+    raw = os.path.expanduser(path)
+    suffix = os.path.splitext(raw)[1].lower()
+    if suffix not in SAVE_KINDS:
+        raise ValueError("path must end in .html, .htm, .webarchive or .png")
+    if not os.path.isabs(raw):
+        raise ValueError("path must be absolute or start with ~")
+    folder = os.path.realpath(os.path.dirname(raw))
+    full = os.path.join(folder, os.path.basename(raw))
+    root = os.environ.get(SAVE_ROOT_ENV)
+    if root:
+        top = os.path.realpath(os.path.expanduser(root))
+        if not (folder == top or folder.startswith(top + os.sep)):
+            raise OutsideAllowedRoot(f"{full} is outside {SAVE_ROOT_ENV} ({top}); nothing was done")
+    if not os.path.isdir(folder):
+        raise NotFound(f"no folder {folder}")
+    if os.path.lexists(full):
+        raise AlreadyExists(f"{full} already exists; nothing was overwritten")
+    _ready()
+    page = _settle()
+    _menu("File", "Save As…")
+    panel = _wait_for("the save sheet", _save_sheet)
+    try:
+        kind = _wait_for("the format menu", lambda: next((e for e in _walk(panel) if _role(e) == "AXPopUpButton"
+                                                         and _string(e, "AXValue") in ("Page Source", "Web Archive", "PNG")), None))
+        if _string(kind, "AXValue") != SAVE_KINDS[suffix]:
+            _press(kind)
+            item = _wait_for(f"{SAVE_KINDS[suffix]} in the format menu", lambda: next((e for e in _walk(kind) if _role(e) == "AXMenuItem"
+                                                                                    and _string(e, "AXTitle") == SAVE_KINDS[suffix]), None), 3)
+            _press(item)
+            _wait_for("the format to change", lambda: _string(kind, "AXValue") == SAVE_KINDS[suffix])
+        folder, name = os.path.split(full)
+        _keys(5, "command down, shift down")
+        go = _wait_for("Go to Folder", lambda: _by_id(panel, "GoToWindow"))
+        field = _wait_for("the folder field", lambda: _by_id(go, "PathTextField"))
+        _AS.AXUIElementSetAttributeValue(field, _cf("AXFocused"), _TRUE)
+        _paste(folder)
+        _key(36)
+        _wait_for("Go to Folder to close", lambda: _by_id(panel, "GoToWindow") is None)
+        where = _by_id(panel, "where popup")
+        _wait_for("the folder to be chosen", lambda: _string(where, "AXValue") == os.path.basename(folder))
+        box = _wait_for("the name field", lambda: _by_id(panel, "saveAsNameTextField"))
+        _AS.AXUIElementSetAttributeValue(box, _cf("AXFocused"), _TRUE)
+        _wait_for("the name field to be focused", lambda: _string(_focused(), "AXIdentifier") == "saveAsNameTextField")
+        _paste(name)
+        save = _find(panel, "AXButton", "Save")
+        if save is None:
+            raise UIError("the save sheet has no Save button")
+        _press(save)
+    except Exception:
+        cancel = _find(panel, "AXButton", "Cancel") if _save_sheet() is not None else None
+        if cancel is not None:
+            _press(cancel)
+        raise
+    _wait_for("the save sheet to close", lambda: _save_sheet() is None)
+    _wait_for("the file to be written", lambda: os.path.isfile(full) and os.path.getsize(full) > 0, SAVE_TIMEOUT * 2)
+    size = _wait_for("the file to finish", _steady_size(full), SAVE_TIMEOUT)
+    if not _saved_kind(full, suffix, page["title"]):
+        raise UIError(f"{full} was written but isn't a {SAVE_KINDS[suffix]} of the page")
+    return _checked("page_save", mode, {"path": full, "title": page["title"], "url": page["url"], "bytes": size, "format": SAVE_KINDS[suffix]})
