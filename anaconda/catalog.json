@@ -1,0 +1,80 @@
+{
+  "app": "Anaconda Navigator",
+  "import": "import anaconda",
+  "macos_version": "15.6.1 (24G90)",
+  "app_version": "2.6.6",
+  "commands": [
+    {
+      "name": "environment_remove",
+      "description": "Removes a conda environment and everything in it, on Navigator's Environments page (the environment, Remove, Remove); Navigator's dialog must name it first.",
+      "args": [
+        {
+          "name": "name",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The environment's name; not the root environment."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": Navigator has no scripting."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Remove the data_analysis environment",
+        "Delete my old conda env",
+        "Get rid of the test environment"
+      ],
+      "effects": "non_idempotent",
+      "destructive": true,
+      "precondition": "The program has Accessibility, and Automation for System Events.",
+      "postcondition": "The environment's folder is gone.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name",
+          "path",
+          "removed"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, Navigator's dialog didn't name the environment, or the result wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "a Navigator dialog holds typed text or can't be cancelled, or another app came to the front; nothing more was done"
+        },
+        {
+          "name": "NotFound",
+          "when": "no environment has that name; nothing is done"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\""
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 with Anaconda Navigator 2.6.6 only, so it isn't known to work on macOS 26 or any other version.",
+        "It depends on English names and was tested only in English.",
+        "Navigator's environment rows have no names: the environment is searched for by name, its row pressed in the middle of the row's own frame, and the selection checked by name in Navigator's Remove dialog before anything happens.",
+        "On launch, Navigator's offer to update itself gets No, remind me later and its offer to sign in for AI help is closed; nothing is updated or signed in."
+      ],
+      "confirm": "Remove the conda environment <name> and everything installed in it?"
+    }
+  ]
+}
