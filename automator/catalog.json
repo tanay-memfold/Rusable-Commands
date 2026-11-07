@@ -273,6 +273,527 @@
         "Only touches what AUTOMATOR_ALLOWED_ROOT allows if it is set.",
         "It depends on English names and was tested only in English."
       ]
+    },
+    {
+      "name": "action_add_items",
+      "description": "Adds files or folders to Get Specified Finder Items (its Add… button, then each item chosen in the Open dialog).",
+      "args": [
+        {
+          "name": "paths",
+          "type": "list",
+          "required": true,
+          "default": null,
+          "meaning": "Existing files or folders, absolute or starting with ~."
+        },
+        {
+          "name": "action",
+          "type": "str",
+          "required": false,
+          "default": "Get Specified Finder Items",
+          "meaning": "The action to add them to."
+        },
+        {
+          "name": "index",
+          "type": "int",
+          "required": false,
+          "default": 1,
+          "meaning": "Which action of that name, counting from 1, if there are several."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": Automator's scripting didn't answer in testing."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Make the workflow start from my Projects folder",
+        "Add these files to the workflow",
+        "Use the Images folder as the input"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "The program has Accessibility, and Automation for System Events.",
+      "postcondition": "The action lists the items.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "action",
+          "items"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "the workflow has a dialog open, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "no workflow is in front, or it has no such action or option; nothing is changed"
+        },
+        {
+          "name": "OutsideAllowedRoot",
+          "when": "AUTOMATOR_ALLOWED_ROOT is set and a path is outside it"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\": Automator's scripting didn't answer in testing"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 with Automator 2.10 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only touches what AUTOMATOR_ALLOWED_ROOT allows if it is set.",
+        "It depends on English names and was tested only in English.",
+        "Each item is picked by typing its name in the Open dialog.",
+        "Added on day 4 in its own section and tested on its own."
+      ]
+    },
+    {
+      "name": "action_set_folder",
+      "description": "Sets an action's folder pop-up (To: in Copy and Move Finder Items, Where: in New Text File) through Other….",
+      "args": [
+        {
+          "name": "action",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The action's name as the workflow shows it."
+        },
+        {
+          "name": "folder",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "An existing folder."
+        },
+        {
+          "name": "option",
+          "type": "str",
+          "required": false,
+          "default": "To",
+          "meaning": "The pop-up's label: To or Where."
+        },
+        {
+          "name": "index",
+          "type": "int",
+          "required": false,
+          "default": 1,
+          "meaning": "Which action of that name, counting from 1, if there are several."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": Automator's scripting didn't answer in testing."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Copy the files to the Converted folder",
+        "Move them to Archived",
+        "Save the text file in Documents"
+      ],
+      "effects": "idempotent",
+      "destructive": false,
+      "precondition": "The program has Accessibility, and Automation for System Events.",
+      "postcondition": "The action's pop-up points at the folder.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "action",
+          "option",
+          "folder"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "the workflow has a dialog open, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "no workflow is in front, or it has no such action or option; nothing is changed"
+        },
+        {
+          "name": "OutsideAllowedRoot",
+          "when": "AUTOMATOR_ALLOWED_ROOT is set and the folder is outside it"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\": Automator's scripting didn't answer in testing"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 with Automator 2.10 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only touches what AUTOMATOR_ALLOWED_ROOT allows if it is set.",
+        "It depends on English names and was tested only in English.",
+        "Added on day 4 in its own section and tested on its own."
+      ]
+    },
+    {
+      "name": "action_set_option",
+      "description": "Sets one of an action's options by its label: a pop-up (To Type, Encoding, Scale Images' By), a text field (Save as, Scale Images' Size) or a checkbox.",
+      "args": [
+        {
+          "name": "action",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The action's name as the workflow shows it."
+        },
+        {
+          "name": "option",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The option's label as Automator shows it, without its colon."
+        },
+        {
+          "name": "value",
+          "type": "str | int | bool",
+          "required": true,
+          "default": null,
+          "meaning": "The pop-up item's title, the text, or True/False for a checkbox."
+        },
+        {
+          "name": "index",
+          "type": "int",
+          "required": false,
+          "default": 1,
+          "meaning": "Which action of that name, counting from 1, if there are several."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": Automator's scripting didn't answer in testing."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Convert the images to JPEG",
+        "Scale them to 600 pixels",
+        "Call the text file Project_File_List.txt"
+      ],
+      "effects": "idempotent",
+      "destructive": false,
+      "precondition": "The program has Accessibility, and Automation for System Events.",
+      "postcondition": "The option holds the value.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "action",
+          "option",
+          "value"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "the workflow has a dialog open, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "no workflow is in front, or it has no such action or option; nothing is changed"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\": Automator's scripting didn't answer in testing"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 with Automator 2.10 only, so it isn't known to work on macOS 26 or any other version.",
+        "It depends on English names and was tested only in English.",
+        "Scale Images' Size is its longest side: a landscape image gets that width.",
+        "Added on day 4 in its own section and tested on its own."
+      ]
+    },
+    {
+      "name": "action_set_filter",
+      "description": "Sets Filter Finder Items' first rule: attribute, operator, value and unit, by their names.",
+      "args": [
+        {
+          "name": "attribute",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "Name, Kind, Date last opened, Date last modified, Date created, Size, Label or File extension."
+        },
+        {
+          "name": "operator",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "As Automator names it, such as is not in the last."
+        },
+        {
+          "name": "value",
+          "type": "str | int | None",
+          "required": false,
+          "default": null,
+          "meaning": "The number or text the rule compares with."
+        },
+        {
+          "name": "unit",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "days, weeks, months or years for dates."
+        },
+        {
+          "name": "action",
+          "type": "str",
+          "required": false,
+          "default": "Filter Finder Items",
+          "meaning": "The filter action."
+        },
+        {
+          "name": "index",
+          "type": "int",
+          "required": false,
+          "default": 1,
+          "meaning": "Which action of that name, counting from 1, if there are several."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": Automator's scripting didn't answer in testing."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Only files older than 30 days",
+        "Keep just the PNG files",
+        "Filter by date modified"
+      ],
+      "effects": "idempotent",
+      "destructive": false,
+      "precondition": "The program has Accessibility, and Automation for System Events.",
+      "postcondition": "The filter's first rule reads as asked.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "attribute",
+          "operator",
+          "value",
+          "unit"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "the workflow has a dialog open, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "no workflow is in front, or it has no such action or option; nothing is changed"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\": Automator's scripting didn't answer in testing"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 with Automator 2.10 only, so it isn't known to work on macOS 26 or any other version.",
+        "It depends on English names and was tested only in English.",
+        "Only the first rule; All/Any isn't changed.",
+        "Added on day 4 in its own section and tested on its own."
+      ]
+    },
+    {
+      "name": "workflow_open",
+      "description": "Opens a saved .workflow in Automator and brings its window to the front, so the other workflow commands act on it.",
+      "args": [
+        {
+          "name": "path",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The saved .workflow."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": Automator's scripting didn't answer in testing."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Open my resize workflow in Automator",
+        "Open the saved workflow so I can run it",
+        "Show the archive workflow"
+      ],
+      "effects": "idempotent",
+      "destructive": false,
+      "precondition": "The program has Accessibility, and Automation for System Events.",
+      "postcondition": "Automator's front window holds the workflow.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name",
+          "path",
+          "actions"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "the workflow has a dialog open, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "nothing is at path; nothing is opened"
+        },
+        {
+          "name": "OutsideAllowedRoot",
+          "when": "AUTOMATOR_ALLOWED_ROOT is set and the path is outside it"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\": Automator's scripting didn't answer in testing"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 with Automator 2.10 only, so it isn't known to work on macOS 26 or any other version.",
+        "It depends on English names and was tested only in English.",
+        "Added overnight in its own section and tested on its own."
+      ]
+    },
+    {
+      "name": "workflow_run",
+      "description": "Runs the workflow in front (Workflow > Run) and waits until it stops; an action's error is raised with Automator's message.",
+      "args": [
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": Automator's scripting didn't answer in testing."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Run the workflow",
+        "Do it now",
+        "Run the Automator workflow"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "The program has Accessibility, and Automation for System Events.",
+      "postcondition": "The workflow ran to its end.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "ran",
+          "actions"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "an action stopped the workflow with an error (its message is included), or the run didn't end in 5 minutes"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "the workflow has a dialog open, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "Automator isn't running or no workflow is in front; nothing is started"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\": Automator's scripting didn't answer in testing"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 with Automator 2.10 only, so it isn't known to work on macOS 26 or any other version.",
+        "It depends on English names and was tested only in English.",
+        "Your Desktop, Documents, Downloads and Pictures folders are guarded by macOS: running a workflow on them may show macOS's own access prompt, which these commands don't answer (testing used other folders).",
+        "Added on day 4 in its own section and tested on its own."
+      ]
     }
   ]
 }
