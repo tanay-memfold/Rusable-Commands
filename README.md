@@ -26,6 +26,7 @@ install, no model, no keys.
 | Anaconda Navigator | [`anaconda/`](anaconda/) | `import anaconda` |
 | LibreOffice Calc | [`libreoffice/`](libreoffice/) | `import calc` |
 | System Settings | [`settings/`](settings/) | `import system_settings` |
+| Shortcuts | [`shortcuts/`](shortcuts/) | `import shortcuts` |
 
 An agent writes a short program with keyword arguments, like this:
 
@@ -44,7 +45,7 @@ doesn't clash with Python's own `calendar` module, so import it `as calendar`.
 
 ## Catalog
 
-`notes/catalog.json`, `calendar/catalog.json`, `gmail/catalog.json`, `finder/catalog.json`, `safari/catalog.json`, `chrome/catalog.json`, `reminders/catalog.json`, `contacts/catalog.json`, `textedit/catalog.json`, `preview/catalog.json`, `keka/catalog.json`, `obsidian/catalog.json`, `automator/catalog.json`, `vscode/catalog.json`, `xcode/catalog.json`, `obs/catalog.json`, `anaconda/catalog.json`, `libreoffice/catalog.json` and `settings/catalog.json` describe every verified command, so an agent can find and call
+`notes/catalog.json`, `calendar/catalog.json`, `gmail/catalog.json`, `finder/catalog.json`, `safari/catalog.json`, `chrome/catalog.json`, `reminders/catalog.json`, `contacts/catalog.json`, `textedit/catalog.json`, `preview/catalog.json`, `keka/catalog.json`, `obsidian/catalog.json`, `automator/catalog.json`, `vscode/catalog.json`, `xcode/catalog.json`, `obs/catalog.json`, `anaconda/catalog.json`, `libreoffice/catalog.json`, `settings/catalog.json` and `shortcuts/catalog.json` describe every verified command, so an agent can find and call
 one without reading the code. Each file gives the app, its import line, the versions it was verified on, and one
 entry per command: description, arguments, verified and default modes, example requests, effects, whether it is
 destructive, precondition, postcondition, returned fields and errors.
@@ -419,3 +420,13 @@ Each app's catalog gives the versions it was verified on. **Finder, Safari, Chro
 | `login_item_remove` | — | verified |
 | `wallpaper_list` | — | verified |
 | `wallpaper_set` | — | verified |
+
+**Shortcuts** ([README](shortcuts/README.md)):
+
+| Function | Background | UI |
+|---|---|---|
+| `folder_create` | verified | — |
+| `shortcut_delete` | — | verified |
+| `shortcut_list` | verified | — |
+| `shortcut_move` | verified | — |
+| `shortcut_run` | verified | — |
