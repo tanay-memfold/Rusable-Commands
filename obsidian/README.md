@@ -37,19 +37,33 @@ The vaults Obsidian knows, read from its registry file (`obsidian.json`).
 Writes `title.md` in the vault through `obsidian://new`. Wiki links such as `[[Other note]]` are kept as written, so a note that
 links to another is just text with a link in it.
 
+### note_open(vault, note, mode="ui") → {vault, note, path}
+Opens a note in its vault's window with Obsidian's own **obsidian://open** link. `note` is its path inside the vault without `.md`
+(such as `Ideas` or `Projects/Plan`). The vault's window must then name the note in its title. `NotFound` if the vault or note
+doesn't exist. No note file is changed; Obsidian writes its own workspace state in the vault's `.obsidian` folder. Added overnight in
+its own section of the file and tested on its own.
+
+### plugin_install(vault, plugin_id, mode="ui") → {vault, plugin, enabled}
+Installs a community plugin from Obsidian's directory into a vault and turns it on: the vault is opened, the plugin's page is opened
+with Obsidian's own `obsidian://show-plugin?id=…` link, then **Install** and **Enable**, all by name. **A vault in Restricted mode is
+taken out of it first** with Obsidian's own **Turn on community plugins** (named **Exit Restricted mode** in newer versions): that lets
+community plugins run in that vault. It needs the internet. `AlreadyExists` if the plugin is already installed and on; `NotFound` for
+a vault Obsidian doesn't know; `UIError` if the plugin's page never shows (such as an unknown id). Added on day 4 in its own section of
+the file and tested on its own.
+
 ## Left out
 
 - **Setting the light or dark theme** (MacArena's "switch to light" task): Settings > Appearance > Base color scheme worked by hand
   (8 of 8, typing the choice's name into the focused pop-up), but in fresh test VMs Settings stayed unreadable to Accessibility,
-  last night and again today after two more fixes.
-- **Installing and turning on community plugins** (MacArena's Excalidraw task): Settings > Community plugins > Turn on community
-  plugins > Browse > Install > Enable worked by hand (Advanced Tables and Kanban), but in fresh test VMs Obsidian's Settings stayed
-  unreadable to Accessibility, even after two fixes (asking Obsidian again for Accessibility, and making the vault's window main
-  before Cmd-,).
-  the plugin store, and wasn't attempted for time.
+  last night and again on day 3 after two more fixes. On day 4 the command palette's Toggle light/dark mode was tried instead: it
+  switches the window, but the choice isn't saved (the vault's appearance.json stays empty and a restart brings the old theme back),
+  so it was left out too.
 - Community themes, Sync, notes in subfolders, and opening an existing folder as a vault.
 
 ## How it was verified
+
+plugin_install (day 4): twelve common plugins (not MacArena's Excalidraw), each in a new vault, read back from the vault's own
+.obsidian/community-plugins.json and the plugin's manifest; only the vault's .obsidian folder may change.
 
 In fresh copies of one VM, with made-up vault and note names including emoji, accents and quotes, inside one test folder. Results
 were read back from disk, separately from Obsidian: the vault folder and its `.obsidian` settings, Obsidian's registry file, each

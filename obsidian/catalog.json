@@ -235,6 +235,177 @@
         "It opens the note in Obsidian.",
         "Notes in subfolders weren't tested."
       ]
+    },
+    {
+      "name": "note_open",
+      "description": "Opens a note in its vault's Obsidian window with Obsidian's own obsidian://open link.",
+      "args": [
+        {
+          "name": "vault",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The vault's folder, an absolute path or one starting with ~."
+        },
+        {
+          "name": "note",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The note's path inside the vault without .md, such as Ideas or Projects/Plan."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": there is no background mode."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Open my Ideas note in Obsidian",
+        "Show the Project Plan note",
+        "Open Links.md in ResearchVault"
+      ],
+      "effects": "idempotent",
+      "destructive": false,
+      "precondition": "The program has Accessibility, and Automation for System Events. Obsidian is asked to show its window to Accessibility.",
+      "postcondition": "The vault's window shows the note; no note file changes.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "vault",
+          "note",
+          "path"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "another app came to the front; nothing more was done"
+        },
+        {
+          "name": "NotFound",
+          "when": "Obsidian doesn't know a vault at that folder, or the note doesn't exist in it; nothing is changed"
+        },
+        {
+          "name": "OutsideAllowedRoot",
+          "when": "OBSIDIAN_ALLOWED_ROOT is set and a path is outside it; nothing is done"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\": there is no background mode"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 with Obsidian 1.9.14 (whose installed update ran as 1.12.7) only, so it isn't known to work on macOS 26 or any other version.",
+        "Only touches what OBSIDIAN_ALLOWED_ROOT allows if it is set; if it isn't set, any folder you can reach is accepted.",
+        "Obsidian writes its own workspace state in the vault's .obsidian folder.",
+        "Added overnight in its own section and tested on its own."
+      ]
+    },
+    {
+      "name": "plugin_install",
+      "description": "Installs a community plugin from Obsidian's directory into a vault and turns it on (the plugin's page through obsidian://show-plugin, Install, Enable); a vault in Restricted mode is taken out of it first.",
+      "args": [
+        {
+          "name": "vault",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The vault's folder, absolute or starting with ~."
+        },
+        {
+          "name": "plugin_id",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The plugin's id in Obsidian's community directory, such as obsidian-excalidraw-plugin."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": there is no background mode."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Install the Excalidraw plugin in my vault",
+        "Add the Kanban plugin",
+        "Turn on the Dataview plugin in ResearchVault"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "The program has Accessibility, and Automation for System Events. Obsidian is asked to show its window to Accessibility.",
+      "postcondition": "The plugin is installed and listed as on in the vault's community-plugins.json.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "vault",
+          "plugin",
+          "enabled"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "another app came to the front; nothing more was done"
+        },
+        {
+          "name": "NotFound",
+          "when": "Obsidian doesn't know a vault at that folder; nothing is changed"
+        },
+        {
+          "name": "AlreadyExists",
+          "when": "the plugin is already installed and on; nothing is changed"
+        },
+        {
+          "name": "OutsideAllowedRoot",
+          "when": "OBSIDIAN_ALLOWED_ROOT is set and a path is outside it; nothing is done"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\": there is no background mode"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 with Obsidian 1.9.14 (whose installed update ran as 1.12.7) only, so it isn't known to work on macOS 26 or any other version.",
+        "Only touches what OBSIDIAN_ALLOWED_ROOT allows if it is set; if it isn't set, any folder you can reach is accepted.",
+        "It depends on English names and was tested only in English.",
+        "It needs the internet.",
+        "It turns off the vault's Restricted mode (Obsidian's Turn on community plugins) if it's on, which lets community plugins run in that vault.",
+        "Obsidian updates its own app code while it runs, so the version a vault shows can change.",
+        "Added on day 4 in its own section and tested on its own."
+      ]
     }
   ]
 }

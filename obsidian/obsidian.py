@@ -33,6 +33,18 @@ VERIFIED: dict = {
             "app": "1.9.14 (0.14.8)"
         }
     },
+    "note_open": {
+        "ui": {
+            "macos": "15.6.1 (24G90)",
+            "app": "1.9.14 (0.14.8)"
+        }
+    },
+    "plugin_install": {
+        "ui": {
+            "macos": "15.6.1 (24G90)",
+            "app": "1.9.14 (0.14.8)"
+        }
+    },
     "vault_create": {
         "ui": {
             "macos": "15.6.1 (24G90)",
@@ -518,3 +530,94 @@ def note_create(vault: str, title: str, text: str = "", mode: str = "ui") -> dic
     _wait_for("the note to be written", lambda: os.path.isfile(note) and open(note, encoding="utf-8").read() == text, SAVE_TIMEOUT)
     return _checked("note_create", mode, {"vault": full, "title": title, "path": note})
 
+
+
+# Community plugins (day 4, in its own section, tested on its own) ------------------------------------------------
+# A plugin's page is opened with Obsidian's own obsidian://show-plugin link. A vault in Restricted mode (community plugins off)
+# first gets Obsidian's own Turn on community plugins (Exit Restricted mode in newer versions), which this command presses.
+
+
+def _vault_windows(name: str) -> list:
+    want = unicodedata.normalize("NFC", f" - {name} - Obsidian")
+    return [w for w in _windows() if want in unicodedata.normalize("NFC", _string(w, "AXTitle"))]
+
+
+def _named_button(windows, title: str):
+    return next((e for w in windows for e in _walk(w) if _role(e) == "AXButton" and _string(e, "AXTitle") == title), None)
+
+
+def _enabled_plugins(full: str) -> list:
+    try:
+        with open(os.path.join(full, ".obsidian", "community-plugins.json"), encoding="utf-8") as handle:
+            return list(json.load(handle))
+    except (OSError, ValueError):
+        return []
+
+
+def plugin_install(vault: str, plugin_id: str, mode: str = "ui") -> dict:
+    """Install a community plugin from Obsidian's directory into a vault and enable it: the plugin's page (obsidian://show-plugin),
+    Install, Enable. A vault in Restricted mode is taken out of it first (Obsidian's Exit Restricted mode). Needs the internet."""
+    _mode("plugin_install", mode)
+    if not plugin_id or any(c in plugin_id for c in " /\\?&#"):
+        raise ValueError("plugin_id must be a community plugin's id, such as obsidian-excalidraw-plugin")
+    full = _path(vault)
+    if full not in _vaults():
+        raise NotFound(f"Obsidian doesn't know a vault at {full}")
+    if plugin_id in _enabled_plugins(full) and os.path.isdir(os.path.join(full, ".obsidian", "plugins", plugin_id)):
+        raise AlreadyExists(f"{plugin_id} is already installed and enabled in {full}")
+    name = os.path.basename(full)
+    _start()
+    subprocess.run(["open", "obsidian://open?" + urllib.parse.urlencode({"vault": name}, quote_via=urllib.parse.quote)], check=True)
+    _wait_for(f"the {name} window", lambda: _vault_windows(name), TIMEOUT * 2)
+    link = "obsidian://show-plugin?" + urllib.parse.urlencode({"id": plugin_id}, quote_via=urllib.parse.quote)
+    subprocess.run(["open", link], check=True)
+    _accessible()
+
+    def page_or_restricted():
+        # A window Obsidian opens after the Accessibility request can stay unreadable; it is asked again every 3 s.
+        if time.monotonic() - _ASKED[0] > 3:
+            _accessible()
+            _ASKED[0] = time.monotonic()
+        windows = _vault_windows(name)
+        return (_named_button(windows, "Exit Restricted mode") or _named_button(windows, "Turn on community plugins")
+                or _named_button(windows, "Install") or _named_button(windows, "Enable"))
+    first = _wait_for(f"{plugin_id}'s page", page_or_restricted, TIMEOUT * 3)
+    if _string(first, "AXTitle") in ("Exit Restricted mode", "Turn on community plugins"):
+        label = _string(first, "AXTitle")
+        _press(first)
+        _wait_for("Restricted mode to end", lambda: _named_button(_vault_windows(name), label) is None, TIMEOUT * 2)
+        subprocess.run(["open", link], check=True)
+    install = _wait_for(f"{plugin_id}'s Install button", lambda: (page_or_restricted(), _named_button(_vault_windows(name), "Install")
+                                                                     or _named_button(_vault_windows(name), "Enable"))[1], TIMEOUT * 3)
+    if _string(install, "AXTitle") == "Install":
+        _press(install)
+    enable = _wait_for(f"{plugin_id} to be installed", lambda: _named_button(_vault_windows(name), "Enable"), SAVE_TIMEOUT * 6, 1)
+    _press(enable)
+    _wait_for(f"{plugin_id} to be enabled", lambda: plugin_id in _enabled_plugins(full), SAVE_TIMEOUT * 2)
+    _key(53)  # Escape closes the plugin's page
+    return _checked("plugin_install", mode, {"vault": full, "plugin": plugin_id, "enabled": True})
+
+
+# Open a note (overnight, in its own section, tested on its own) ---------------------------------------------------
+# The note is opened with Obsidian's own obsidian://open link; the vault's window must then name the note in its title.
+
+def note_open(vault: str, note: str, mode: str = "ui") -> dict:
+    """Open a note in Obsidian, in its vault's window, through Obsidian's own obsidian://open link. note is the note's path inside
+    the vault without .md, such as "Ideas" or "Projects/Plan". vault is the vault's folder."""
+    _mode("note_open", mode)
+    full = _path(vault)
+    if full not in _vaults():
+        raise NotFound(f"Obsidian doesn't know a vault at {full}")
+    if not isinstance(note, str) or not note.strip() or note.startswith(("/", ".")) or ".." in note.split("/") or "\n" in note:
+        raise ValueError("note must be a path inside the vault, without .md")
+    path = os.path.join(full, note + ".md")
+    if not os.path.isfile(path):
+        raise NotFound(f"no note {note!r} in {full}")
+    name = os.path.basename(full)
+    _start()
+    query = urllib.parse.urlencode({"vault": name, "file": note}, quote_via=urllib.parse.quote)
+    subprocess.run(["open", f"obsidian://open?{query}"], check=True)
+    want = unicodedata.normalize("NFC", f"{os.path.basename(note)} - {name} - Obsidian")
+    _wait_for(f"{note!r} open in the {name} window", lambda: any(unicodedata.normalize("NFC", _string(w, "AXTitle")).startswith(want)
+                                                                  for w in _windows()), TIMEOUT * 3)
+    return _checked("note_open", mode, {"vault": full, "note": note, "path": path})
