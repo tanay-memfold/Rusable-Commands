@@ -100,6 +100,12 @@ VERIFIED: dict = {
             "app": "15.5 (1732.6.4)"
         }
     },
+    "file_open_with": {
+        "ui": {
+            "macos": "15.6.1 (24G90)",
+            "app": "15.5 (1732.6.4)"
+        }
+    },
     "file_put_back": {
         "ui": {
             "macos": "15.6.1 (24G90)",
@@ -117,6 +123,16 @@ VERIFIED: dict = {
         }
     },
     "file_reveal": {
+        "ui": {
+            "macos": "15.6.1 (24G90)",
+            "app": "15.5 (1732.6.4)"
+        }
+    },
+    "file_set_locked": {
+        "background": {
+            "macos": "15.6.1 (24G90)",
+            "app": "15.5 (1732.6.4)"
+        },
         "ui": {
             "macos": "15.6.1 (24G90)",
             "app": "15.5 (1732.6.4)"
@@ -1093,3 +1109,111 @@ def file_make_alias(path: str, mode: str = "ui") -> dict:
         _keys(RETURN)
     _done()
     return _checked("file_make_alias", mode, {"name": made[0], "path": alias, "original": full})
+
+
+# Open With (overnight, in its own section, tested on its own) ------------------------------------------------------
+# The item is selected in a Finder window, then File > Open With > the app, chosen by its name in that submenu (Finder adds
+# " (default)" to the default app's name). Then the app must come to the front with a window showing the file.
+
+OPEN_WITH_ITEMS = """      return name of every menu item of menu 1 of menu item "Open With" of menu "File" of menu bar item "File" of menu bar 1"""
+
+FRONT_DOCS = r"""ObjC.import("AppKit");
+function run(argv) {
+  const app = $.NSWorkspace.sharedWorkspace.frontmostApplication;
+  const se = Application("System Events");
+  const out = {name: ObjC.unwrap(app.localizedName), docs: []};
+  try {
+    const p = se.processes.whose({unixId: app.processIdentifier})()[0];
+    for (const w of p.windows()) { try { out.docs.push(w.attributes.byName("AXDocument").value() || ""); } catch (e) {} }
+  } catch (e) {}
+  return JSON.stringify(out);
+}"""
+
+
+def file_open_with(path: str, app: str, mode: str = "ui") -> dict:
+    """Open the file at path with the app named app, as File > Open With in Finder offers it (for example "TextEdit" or "Preview").
+    The app must then be in front with a window showing the file."""
+    import json as _json
+    import urllib.parse as _up
+    _mode("file_open_with", mode, ("ui",))
+    if not isinstance(app, str) or not app.strip() or app.endswith("…"):
+        raise ValueError("app must be an app's name as Finder's Open With menu shows it")
+    full = _existing(path, "file")
+    if os.path.isdir(full):
+        raise ValueError(f"{full} is a folder; give a file")
+    _ready()
+    _select(full)
+    names = [n for n in _until("the Open With menu", OPEN_WITH_ITEMS).split(", ") if n and n != "missing value"]
+    item = next((n for n in names if n in (app, f"{app} (default)")), None)
+    if item is None:
+        _done()
+        raise NotFound(f"Finder's Open With menu doesn't offer {app!r} for this file (it offers {', '.join(n for n in names if not n.endswith('…'))})")
+    _until(f"{item} in the Open With menu", MENU_ITEM, "File", "Open With", item)
+
+    def showing():
+        state = _json.loads(_jxa(FRONT_DOCS))
+        if state["name"] != app:
+            return None
+        for url in state["docs"]:
+            if url and _os_path_same(_up.unquote(_up.urlparse(url).path), full):
+                return state
+        return None
+    _wait_for(f"{app} in front showing the file", showing, SAVE_TIMEOUT)
+    return _checked("file_open_with", mode, {**_shape(_info(full), None), "app": app, "default": item.endswith(" (default)")})
+
+
+def _os_path_same(a: str, b: str) -> bool:
+    import os as _o
+    import unicodedata as _u
+    try:
+        return _o.path.samefile(a, b)
+    except OSError:
+        return _u.normalize("NFC", a.rstrip("/")) == _u.normalize("NFC", b.rstrip("/"))
+
+
+# Locking (overnight, in its own section, tested on its own) --------------------------------------------------------
+# ui: the item's Get Info window, its Locked checkbox by name, then the window is closed. background: the file's own lock flag
+# (the user-immutable flag Finder's Locked sets), through the macOS file APIs.
+
+LOCKED_BOX = """      repeat with x in windows
+        if name of x is (item 1 of argv) then
+          repeat with c in (checkboxes of x & checkboxes of scroll area 1 of x)
+            if title of c is "Locked" then
+              if (value of c as integer) is not ((item 2 of argv) as integer) then click c
+              return "ok"
+            end if
+          end repeat
+        end if
+      end repeat"""
+
+
+def _is_locked(full: str) -> bool:
+    import stat as _stat
+    return bool(os.lstat(full).st_flags & _stat.UF_IMMUTABLE)
+
+
+def file_set_locked(path: str, locked: bool = True, mode: str = "ui") -> dict:
+    """Lock the file or folder at path (Get Info > Locked), or unlock it with locked=False. A locked item can't be changed or moved
+    to the Trash without unlocking it first."""
+    import stat as _stat
+    _mode("file_set_locked", mode)
+    if not isinstance(locked, bool):
+        raise ValueError("locked must be True or False")
+    full = _existing(path)
+    if _is_locked(full) == locked:
+        return _checked("file_set_locked", mode, {**_shape(_info(full), None), "locked": locked, "changed": False})
+    if mode == "background":
+        flags = os.lstat(full).st_flags
+        os.chflags(full, (flags | _stat.UF_IMMUTABLE) if locked else (flags & ~_stat.UF_IMMUTABLE), follow_symlinks=False)
+    else:
+        _ready()
+        _select(full)
+        info = f"{os.path.basename(full)} Info"
+        _until("Get Info in the File menu", MENU_ITEM, "File", "Get Info")
+        try:
+            _until("the Info window's Locked checkbox", LOCKED_BOX, info, "1" if locked else "0")
+        finally:
+            _until("the Info window to close", CLOSE_INFO, info)
+        _done()
+    _wait_for(f"{full} to be {'locked' if locked else 'unlocked'}", lambda: _is_locked(full) == locked, SAVE_TIMEOUT)
+    return _checked("file_set_locked", mode, {**_shape(_info(full), None), "locked": locked, "changed": True})

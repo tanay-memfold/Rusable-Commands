@@ -118,6 +118,19 @@ Adds a tag in the item's **Get Info** window (macOS 15.6.1's File menu has no Ta
 ### file_make_alias(path, mode="ui") → {name, path, original}
 **File > Make Alias**: an alias next to the item, named by Finder ("name alias").
 
+### file_set_locked(path, locked=True, mode="ui") → {name, path, …, locked, changed}
+Locks the item (or unlocks it with `locked=False`), so it can't be changed or moved to the Trash until it's unlocked. **ui:** the
+item's Get Info window, its **Locked** checkbox by name, then the window is closed. **background:** the file's own lock flag (the
+user-immutable flag Finder's Locked sets), through the macOS file APIs. `changed` is false if it already was. Added overnight at the
+end of the file and tested on its own (read from the item's own flags).
+
+### file_open_with(path, app, mode="ui") → {name, path, …, app, default}
+Selects the file in a Finder window, then **File > Open With > the app**, chosen by its name in that submenu (Finder adds
+" (default)" to the default app). The app must then be in front with a window showing the file as its document: **TextEdit, Preview
+and ColorSync Utility do; Safari and Script Editor don't**, so with them it raises `UIError` after the file has opened. `NotFound`
+if Open With doesn't offer the app for that file (the error lists what it offers). Folders are refused. Added overnight at the end of
+the file and tested on its own.
+
 ### folder_new_with_selection(paths, name, mode="ui") → the new folder, with `items`
 **File > New Folder with Selection**, then names the folder (when Finder doesn't leave the new name ready to type, it renames the
 folder like any other item). At least two items.
@@ -150,12 +163,16 @@ large clipboard (about 3.5 MB, text and other data) that had to come back exactl
 | `file_make_alias` | ui | yes | 20 | a confirmation dialog open, app closed, app hidden, minimized, another app in front, another folder/list/view showing, search field with text, another item selected, two windows open |
 | `file_move` | background | yes | 16 | a confirmation dialog open, app closed, app hidden, minimized, another app in front, another folder/list/view showing, search field with text, another item selected, two windows open |
 | `file_move` | ui | yes | 17 | a confirmation dialog open, app closed, app hidden, minimized, another app in front, another folder/list/view showing, search field with text, another item selected, two windows open, half-typed text in another item |
+| `file_open_with` | ui | yes | 33 | a confirmation dialog open, app closed, app hidden, minimized, another app in front, another folder/list/view showing, search field with text, another item selected, two windows open |
 | `file_put_back` | ui | yes | 11 | a confirmation dialog open, app closed, app hidden, minimized, another app in front, another folder/list/view showing, search field with text, another item selected, two windows open |
 | `file_rename` | background | yes | 17 | a confirmation dialog open, app closed, app hidden, minimized, another app in front, another folder/list/view showing, search field with text, another item selected, two windows open |
 | `file_rename` | ui | yes | 19 | a confirmation dialog open, app closed, app hidden, minimized, another app in front, another folder/list/view showing, search field with text, another item selected, two windows open, half-typed text in another item |
 | `file_reveal` | ui | yes | 11 | a confirmation dialog open, app closed, app hidden, minimized, another app in front, another folder/list/view showing, search field with text, another item selected, two windows open, half-typed text in another item |
+| `file_set_locked` | background | yes | 31 | a confirmation dialog open, app closed, app hidden, minimized, another app in front, another folder/list/view showing, search field with text, another item selected, two windows open |
+| `file_set_locked` | ui | yes | 32 | a confirmation dialog open, app closed, app hidden, minimized, another app in front, another folder/list/view showing, search field with text, another item selected, two windows open |
 | `file_trash` | background | yes | 15 | a confirmation dialog open, app closed, app hidden, minimized, another app in front, another folder/list/view showing, search field with text, another item selected, two windows open |
 | `file_trash` | ui | yes | 16 | a confirmation dialog open, app closed, app hidden, minimized, another app in front, another folder/list/view showing, search field with text, another item selected, two windows open, half-typed text in another item |
+| `files_create_pdf` | ui | no | 6 | app closed, app hidden, another folder/list/view showing, search field with text, another item selected, two windows open |
 | `folder_create` | background | yes | 16 | a confirmation dialog open, app closed, app hidden, minimized, another app in front, another folder/list/view showing, search field with text, another item selected, two windows open |
 | `folder_create` | ui | yes | 18 | a confirmation dialog open, app closed, app hidden, minimized, another app in front, another folder/list/view showing, search field with text, another item selected, two windows open, half-typed text in another item |
 | `folder_new_with_selection` | ui | yes | 13 | a confirmation dialog open, app closed, app hidden, minimized, another app in front, another folder/list/view showing, search field with text, another item selected, two windows open, half-typed text in another item |

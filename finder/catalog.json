@@ -1393,6 +1393,177 @@
         "UI mode depends on English names and was tested only in English.",
         "Finder names the alias; a clashing name gets a number."
       ]
+    },
+    {
+      "name": "file_set_locked",
+      "description": "Locks a file or folder (Get Info > Locked) so it can't be changed, or unlocks it.",
+      "args": [
+        {
+          "name": "path",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "An absolute path, or one starting with ~."
+        },
+        {
+          "name": "locked",
+          "type": "bool",
+          "required": false,
+          "default": true,
+          "meaning": "True to lock, False to unlock."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "\"ui\" or \"background\"; use one of this command's modes."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui",
+          "background"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Lock this file so it can't be edited",
+        "Unlock the report",
+        "Protect this folder from changes"
+      ],
+      "effects": "idempotent",
+      "destructive": false,
+      "precondition": "For ui mode, the program has Accessibility, and Automation for System Events.",
+      "postcondition": "The item's lock flag is as asked; its content is unchanged.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name",
+          "path",
+          "kind",
+          "size",
+          "modified_date",
+          "locked",
+          "changed"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "a name is being edited, a dialog holds text, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "nothing exists at the path, or the folder is missing; nothing is changed"
+        },
+        {
+          "name": "OutsideAllowedRoot",
+          "when": "FINDER_ALLOWED_ROOT is set and a path is outside it; nothing is done"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only touches what FINDER_ALLOWED_ROOT allows if it is set; if it isn't set, any path you can reach is accepted.",
+        "UI mode depends on English names and was tested only in English.",
+        "ui mode ticks or clears Locked in the item's Get Info window and closes it; background sets the file's own lock flag (the one Finder's Locked sets) through the macOS file APIs.",
+        "Added overnight at the end of the file and tested on its own."
+      ]
+    },
+    {
+      "name": "file_open_with",
+      "description": "Opens a file with a chosen app from Finder's File > Open With menu, by the app's name there.",
+      "args": [
+        {
+          "name": "path",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "An absolute path, or one starting with ~."
+        },
+        {
+          "name": "app",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The app's name as Open With shows it, such as TextEdit or Preview (without \" (default)\")."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": Finder has no scripting or file API that is the same action."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Open this PNG in ColorSync Utility",
+        "Open notes.txt with TextEdit",
+        "Open the image with Preview"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "For ui mode, the program has Accessibility, and Automation for System Events.",
+      "postcondition": "The app is in front with a window showing the file; the file is unchanged.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name",
+          "path",
+          "kind",
+          "size",
+          "modified_date",
+          "app",
+          "default"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "a name is being edited, a dialog holds text, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "there's no file at path, or Open With doesn't offer that app for it (the error lists what it offers)"
+        },
+        {
+          "name": "OutsideAllowedRoot",
+          "when": "FINDER_ALLOWED_ROOT is set and a path is outside it; nothing is done"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\": there is no background mode for this command"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only touches what FINDER_ALLOWED_ROOT allows if it is set; if it isn't set, any path you can reach is accepted.",
+        "UI mode depends on English names and was tested only in English.",
+        "The app must show the file as its window's document; TextEdit, Preview and ColorSync Utility do, but Safari and Script Editor don't, so with them it raises UIError after the file has opened.",
+        "Added overnight at the end of the file and tested on its own."
+      ]
     }
   ]
 }
