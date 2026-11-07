@@ -1,0 +1,47 @@
+#!/bin/sh
+# Run over SSH: rusable-utmctl status | start | stop | shutdown
+# Sends one request and waits. It never resends: no answer may mean a prompt is showing on the Mini's screen.
+set -u
+umask 077
+PATH=/usr/bin:/bin
+export PATH
+
+RELAY="$HOME/rusable-lab/relay"
+QUEUE="$RELAY/queue"
+ALIVE="$RELAY/alive"
+WAIT_SECONDS=90
+
+if [ $# -ne 1 ]; then
+    echo "usage: rusable-utmctl status|start|stop|shutdown" >&2
+    exit 2
+fi
+case "$1" in
+    status | start | stop) verb=$1 ;;
+    shutdown)
+        touch "$RELAY/SHUTDOWN"
+        echo "asked the relay to exit"
+        exit 0
+        ;;
+    *)
+        echo "refused: only status, start, stop and shutdown" >&2
+        exit 2
+        ;;
+esac
+if [ ! -e "$ALIVE" ] || [ $(( $(date +%s) - $(stat -f %m "$ALIVE") )) -gt 5 ]; then
+    echo "the relay isn't running" >&2
+    exit 3
+fi
+id="$(date +%s)-$$"
+printf '%s\n' "$verb" > "$QUEUE/.$id.new"
+mv "$QUEUE/.$id.new" "$QUEUE/$id.req"
+end=$(( $(date +%s) + WAIT_SECONDS ))
+while [ "$(date +%s)" -lt "$end" ]; do
+    if [ -e "$QUEUE/$id.out" ]; then
+        cat "$QUEUE/$id.out"
+        code=$(sed -n 's/^exit //p' "$QUEUE/$id.out" | tail -1)
+        exit "${code:-1}"
+    fi
+    sleep 1
+done
+echo "no answer in $WAIT_SECONDS seconds: not resending. A prompt may be showing on the Mini's screen." >&2
+exit 4
