@@ -46,6 +46,14 @@ needs platform support Xcode would download (here an iOS app needed iOS 18.5 sup
 is downloaded, and `NotSupported` is raised. Added on day 3 in its own section of the file and tested on its own; the code above it is
 unchanged.
 
+### project_clean(path, mode="ui") → {name, cleaned}
+**Product > Clean Build Folder…**. Xcode asks "Are you sure you want to clean the build folder for “<project>”?", and **Clean** is
+pressed only when the question names this project (otherwise Cancel and `UIError`). Then the project's built products must be gone
+from DerivedData. It deletes only what Xcode's own Clean deletes: build products and intermediate files, which a build makes again.
+Xcode keeps its own build database (`Build/Intermediates.noindex/XCBuildData`). Source files aren't touched. Opens the project first
+if Xcode doesn't show it. Added overnight in its own section and tested on its own (each case made and built a project with
+`project_new` and `project_build`, then cleaned it; the Build folder had to hold nothing but Xcode's build database).
+
 ## How it was verified
 
 In fresh copies of one VM, with made-up names (including spaces and accents) inside one test folder, with Xcode closed, open, with
@@ -59,8 +67,9 @@ command; for a source file made not to compile, the compiler's error). Every cas
 
 | Function | Mode | Verified | Cases | Start states |
 |---|---|---|---|---|
-| `project_build` | ui | yes | 12 | app closed, app hidden, app open, another app in front, project_open |
-| `project_new` | ui | yes | 25 | app closed, app hidden, app open, another app in front, project_open |
+| `project_build` | ui | yes | 12 | app closed, app hidden, app open, another app in front, another project open |
+| `project_clean` | ui | yes | 10 | app closed, app hidden, app open, another app in front, another project open |
+| `project_new` | ui | yes | 25 | app closed, app hidden, app open, another app in front, another project open |
 | `project_open` | ui | yes | 7 | app closed, app hidden, app open, another app in front |
 
 Verified on macOS 15.6.1 (24G90), xcode 16.4 (23792), 2026-11-06, in fresh VM clones.

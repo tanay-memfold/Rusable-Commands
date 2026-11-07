@@ -273,6 +273,81 @@
         "A failed build returns succeeded false and no products; its errors are in Xcode's Issue navigator.",
         "It waits up to 10 minutes for the build."
       ]
+    },
+    {
+      "name": "project_clean",
+      "description": "Deletes a project's build products and intermediate files with Product > Clean Build Folder…, pressing Clean only when Xcode's question names the project.",
+      "args": [
+        {
+          "name": "path",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The .xcodeproj or .xcworkspace, an absolute path or one starting with ~."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "\"ui\" (on screen)."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Clean the build folder of my Xcode project",
+        "Clean MyApp before rebuilding",
+        "Delete the build products"
+      ],
+      "effects": "idempotent",
+      "destructive": false,
+      "precondition": "The program has Accessibility, and Automation for System Events ().",
+      "postcondition": "The project's build folder in DerivedData holds nothing but Xcode's own build database; its source files are unchanged.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name",
+          "cleaned"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the result wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "an Xcode sheet holds typed text or can't be cancelled, or another app came to the front; nothing more was done"
+        },
+        {
+          "name": "NotFound",
+          "when": "the folder, project or template doesn't exist; nothing is done"
+        },
+        {
+          "name": "OutsideAllowedRoot",
+          "when": "XCODE_ALLOWED_ROOT is set and a path is outside it; nothing is done"
+        },
+        {
+          "name": "NotSupported",
+          "when": "the mode wasn't verified"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 with Xcode 16.4 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only touches what XCODE_ALLOWED_ROOT allows if it is set.",
+        "It depends on English names and was tested only in English.",
+        "It deletes only what Xcode's Clean Build Folder deletes (build products and intermediates, which a build makes again).",
+        "Added overnight in its own section and tested on its own."
+      ]
     }
   ]
 }

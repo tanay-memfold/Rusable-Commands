@@ -36,6 +36,12 @@ VERIFIED: dict = {
             "app": "16.4 (23792)"
         }
     },
+    "project_clean": {
+        "ui": {
+            "macos": "15.6.1 (24G90)",
+            "app": "16.4 (23792)"
+        }
+    },
     "project_new": {
         "ui": {
             "macos": "15.6.1 (24G90)",
@@ -566,3 +572,41 @@ def project_build(path: str, mode: str = "ui") -> dict:
     result = _wait_for("the build to finish", finished, 600, 1)
     # A failed build can leave a partly built .app behind, so products are listed only for a build that succeeded.
     return _checked("project_build", mode, {"name": name, "succeeded": result == "succeeded", "products": sorted(fresh()) if result == "succeeded" else []})
+
+
+# Clean (overnight, in its own section, tested on its own) ---------------------------------------------------------
+# Product > Clean Build Folder… makes Xcode ask "Are you sure you want to clean the build folder for “<project>”?". Clean is pressed
+# only when that question names this project; then the project's build products must be gone from DerivedData.
+
+def project_clean(path: str, mode: str = "ui") -> dict:
+    """Delete an open-able project's build products and intermediate files with Product > Clean Build Folder… (Xcode's own
+    question gets Clean only when it names this project). The source files aren't touched."""
+    _mode("project_clean", mode)
+    full = _full(path)
+    if not full.endswith((".xcodeproj", ".xcworkspace")):
+        raise ValueError("path must be an .xcodeproj or .xcworkspace")
+    if not os.path.isdir(full):
+        raise NotFound(f"nothing at {full}")
+    name = os.path.splitext(os.path.basename(full))[0]
+    if not (_running() and _window_for(name) is not None):
+        project_open(path=full)
+    _start()
+    window = _wait_for(f"Xcode's window for {name}", lambda: _window_for(name))
+    _AS.AXUIElementSetAttributeValue(window, _cf("AXMain"), _TRUE)
+    _wait_for(f"{name} in front", lambda: _is_true(window, "AXMain"))
+    _menu("Product", "Clean Build Folder…")
+
+    def question():
+        return next((e for e in _walk(window) if _role(e) == "AXSheet"), None)
+    sheet = _wait_for("Xcode's clean question", question, TIMEOUT)
+    texts = " ".join(_string(e, "AXValue") for e in _walk(sheet) if _role(e) == "AXStaticText")
+    clean = next((e for e in _walk(sheet) if _role(e) == "AXButton" and _string(e, "AXTitle") == "Clean"), None)
+    cancel = next((e for e in _walk(sheet) if _role(e) == "AXButton" and _string(e, "AXTitle") == "Cancel"), None)
+    if f"the build folder for “{name}”" not in unicodedata.normalize("NFC", texts) or clean is None:
+        if cancel is not None:
+            _press(cancel)
+        raise UIError(f"Xcode's question doesn't name {name!r}; nothing was cleaned")
+    _press(clean)
+    _wait_for("the question to close", lambda: question() is None, TIMEOUT)
+    _wait_for(f"{name}'s build products to be gone", lambda: not _products(name), TIMEOUT * 6, 0.5)
+    return _checked("project_clean", mode, {"name": name, "cleaned": True})
