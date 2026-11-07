@@ -122,6 +122,24 @@ Selects every card with exactly that name and uses **Card > Merge Selected Cards
 which name, company and note win is Contacts' own choice. UI only: Contacts' scripting has no merge. `ValueError` if only one card
 has the name.
 
+### contact_add_url(match, url, label="homepage", mode="background") → {id, name, urls}
+Adds a web address (`http` or `https`) under a label to the card named `match`, through Contacts' scripting; addresses already
+there stay. `AlreadyExists` if the card already has that address. Added overnight at the end of the file and tested on its own
+(read back from Contacts' database).
+
+### group_export_vcard(name, path, mode="background") → {name, path, count}
+Writes every card in the list (group) named `name` to a new `.vcf` file, as Contacts makes the vCards, through Contacts' scripting.
+Nothing is overwritten; the number of cards must match the list's. Added overnight at the end of the file and tested on its own (the
+file's cards compared with the list's members in Contacts' database).
+
+### contact_import_vcard(path, mode="ui") → {path, count}
+Adds the cards in a `.vcf` file as new cards. The file is opened in Contacts, as a double-click would. **Add** is pressed only when
+Contacts' question is exactly "Are you sure you want to add N cards?" with N the number of cards in the file. When some cards match
+cards you have, Contacts says they "will be updated" instead. That is cancelled and `AlreadyExists` raised, so **no existing card is
+changed**. UI only. In testing, each import also updated the modification time of the cards from the previous import, without changing
+their content. Added overnight at the end of the file and tested on its own (cards read back from Contacts'
+database, and every other card's name, company, emails and phones compared before and after).
+
 ## How it was verified
 
 In fresh copies of one VM with no contacts in it to begin with, using made-up data including emoji, accents, quotes and line breaks.
@@ -137,6 +155,7 @@ Each UI command that changes something was also run with a very large clipboard 
 | `contact_add_address` | background | yes | 10 | app closed, app hidden, app open, another app in front |
 | `contact_add_email` | background | yes | 5 | app closed, app hidden, another app in front, another folder/list/view showing |
 | `contact_add_phone` | background | yes | 5 | app closed, app hidden, another app in front, another folder/list/view showing |
+| `contact_add_url` | background | yes | 14 | app closed, app hidden, app open, another app in front |
 | `contact_create` | background | yes | 21 | app closed, app hidden, app still launching, minimized, no window open, app open, another app in front, another folder/list/view showing, search field with text, another item selected |
 | `contact_create` | ui | yes | 23 | app closed, app hidden, app still launching, minimized, no window open, app open, another app in front, another folder/list/view showing, search field with text, another item selected, half-typed text in another item |
 | `contact_delete` | background | yes | 12 | app closed, app hidden, app still launching, minimized, no window open, app open, another app in front, another folder/list/view showing, search field with text, another item selected |
@@ -144,6 +163,7 @@ Each UI command that changes something was also run with a very large clipboard 
 | `contact_details` | background | yes | 5 | app closed, app hidden, another app in front, another folder/list/view showing |
 | `contact_export_vcard` | background | yes | 11 | app closed, app hidden, another app in front, another folder/list/view showing |
 | `contact_get` | background | yes | 12 | app closed, app hidden, app still launching, minimized, no window open, app open, another app in front, another folder/list/view showing, search field with text, another item selected |
+| `contact_import_vcard` | ui | yes | 11 | app closed, app hidden, app open, another app in front |
 | `contact_list` | background | yes | 20 | app closed, app hidden, app still launching, minimized, no window open, app open, another app in front, another folder/list/view showing, search field with text, another item selected |
 | `contact_merge` | ui | yes | 12 | app closed, app hidden, minimized, no window open, another app in front, another folder/list/view showing, search field with text, another item selected |
 | `contact_remove_email` | background | yes | 5 | app closed, app hidden, another app in front, another folder/list/view showing |
@@ -159,6 +179,7 @@ Each UI command that changes something was also run with a very large clipboard 
 | `group_create` | ui | yes | 13 | app closed, app hidden, app still launching, minimized, no window open, app open, another app in front, another folder/list/view showing, search field with text, another item selected, half-typed text in another item |
 | `group_delete` | background | yes | 11 | app closed, app hidden, app still launching, minimized, no window open, app open, another app in front, another folder/list/view showing, search field with text, another item selected |
 | `group_delete` | ui | yes | 13 | app closed, app hidden, app still launching, minimized, no window open, app open, another app in front, another folder/list/view showing, search field with text, another item selected, half-typed text in another item |
+| `group_export_vcard` | background | yes | 9 | app closed, app hidden, app open, another app in front |
 | `group_list` | background | yes | 10 | app closed, app hidden, app still launching, minimized, no window open, app open, another app in front, another folder/list/view showing, search field with text, another item selected |
 | `group_remove` | background | yes | 10 | app closed, app hidden, app still launching, minimized, no window open, app open, another app in front, another folder/list/view showing, search field with text, another item selected |
 | `group_rename` | background | yes | 12 | app closed, app hidden, app still launching, minimized, no window open, app open, another app in front, another folder/list/view showing, search field with text, another item selected |

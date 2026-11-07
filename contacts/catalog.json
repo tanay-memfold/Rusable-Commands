@@ -1913,6 +1913,256 @@
         "Only tested with no account signed in to Contacts.",
         "State and region fields weren't tested."
       ]
+    },
+    {
+      "name": "contact_add_url",
+      "description": "Adds a web address with a label to a card, keeping the addresses already there.",
+      "args": [
+        {
+          "name": "match",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The card's exact name as Contacts shows it."
+        },
+        {
+          "name": "url",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "An http or https address."
+        },
+        {
+          "name": "label",
+          "type": "str",
+          "required": false,
+          "default": "homepage",
+          "meaning": "The label as Contacts stores it, such as mobile, home or work."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "background",
+          "meaning": "Must be \"background\": this command has no verified ui mode."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "background"
+        ],
+        "default": "background"
+      },
+      "example_requests": [
+        "Add Sam's website to his card",
+        "Save this link on Priya's contact",
+        "Put the company site on the card"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "The program has access to Contacts and Automation permission for Contacts.",
+      "postcondition": "The card has the address under the label; the others stay.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "id",
+          "name",
+          "urls"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "NotFound",
+          "when": "no card or list has that name; nothing is changed"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one matches; nothing is changed"
+        },
+        {
+          "name": "AlreadyExists",
+          "when": "the card already has that address; nothing is changed"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"ui\": this command has no verified ui mode"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only tested with no account signed in to Contacts.",
+        "Added overnight at the end of the file and tested on its own."
+      ]
+    },
+    {
+      "name": "group_export_vcard",
+      "description": "Writes every card in a list (group) to a new .vcf file.",
+      "args": [
+        {
+          "name": "name",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The list's exact name."
+        },
+        {
+          "name": "path",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "A new path ending in .vcf, in a folder that exists."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "background",
+          "meaning": "Must be \"background\": this command has no verified ui mode."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "background"
+        ],
+        "default": "background"
+      },
+      "example_requests": [
+        "Export my Project Team list as a vCard file",
+        "Save the Family group's contacts to a .vcf",
+        "Back up this contact list"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "The program has access to Contacts and Automation permission for Contacts.",
+      "postcondition": "The file holds one vCard per card in the list; nothing else changes.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name",
+          "path",
+          "count"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "NotFound",
+          "when": "no list has that name, or the folder doesn't exist"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "more than one matches; nothing is changed"
+        },
+        {
+          "name": "AlreadyExists",
+          "when": "the file exists; nothing is overwritten"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"ui\": this command has no verified ui mode"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only tested with no account signed in to Contacts.",
+        "The vCards are Contacts' own.",
+        "There is no allowed-folder check on the path.",
+        "Added overnight at the end of the file and tested on its own."
+      ]
+    },
+    {
+      "name": "contact_import_vcard",
+      "description": "Adds the cards in a .vcf file as new cards, through Contacts' own add question; refused if any card matches one you have.",
+      "args": [
+        {
+          "name": "path",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The .vcf file."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": this command has no background mode."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Import this vCard into Contacts",
+        "Add the contacts in team.vcf",
+        "Load these cards into my address book"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "The program has access to Contacts and Automation permission for Contacts. For ui mode, it also has Accessibility, and Automation for System Events.",
+      "postcondition": "Every card in the file is a new card; no existing card is changed.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "path",
+          "count"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "a card or list name is being edited, a dialog holds typed text, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "no card or list has that name; nothing is changed"
+        },
+        {
+          "name": "AlreadyExists",
+          "when": "some cards match cards you have, so Contacts would update them; nothing is imported"
+        },
+        {
+          "name": "ValueError",
+          "when": "path doesn't end in .vcf or has no cards"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\""
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "Only tested with no account signed in to Contacts.",
+        "UI mode depends on English names and was tested only in English.",
+        "The file is opened in Contacts as a double-click would; Add is pressed only when Contacts asks to add exactly the file's number of cards.",
+        "Added overnight at the end of the file and tested on its own."
+      ]
     }
   ]
 }

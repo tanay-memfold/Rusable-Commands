@@ -44,6 +44,12 @@ VERIFIED: dict = {
             "app": "14.0 (2695.500.71)"
         }
     },
+    "contact_add_url": {
+        "background": {
+            "macos": "15.6.1 (24G90)",
+            "app": "14.0 (2695.500.71)"
+        }
+    },
     "contact_create": {
         "background": {
             "macos": "15.6.1 (24G90)",
@@ -78,6 +84,12 @@ VERIFIED: dict = {
     },
     "contact_get": {
         "background": {
+            "macos": "15.6.1 (24G90)",
+            "app": "14.0 (2695.500.71)"
+        }
+    },
+    "contact_import_vcard": {
+        "ui": {
             "macos": "15.6.1 (24G90)",
             "app": "14.0 (2695.500.71)"
         }
@@ -162,6 +174,12 @@ VERIFIED: dict = {
             "app": "14.0 (2695.500.71)"
         },
         "ui": {
+            "macos": "15.6.1 (24G90)",
+            "app": "14.0 (2695.500.71)"
+        }
+    },
+    "group_export_vcard": {
+        "background": {
             "macos": "15.6.1 (24G90)",
             "app": "14.0 (2695.500.71)"
         }
@@ -1114,3 +1132,107 @@ def contact_add_address(match: str, street: str, city: str, zip: str | None = No
     _more("address", id=item["id"], label=label, street=street, city=city, zip=zip, country=country)
     got = _wait_for("the address to be saved", lambda: (lambda r: r if len(r["addresses"]) == before + 1 else None)(_more("read", id=item["id"])), SAVE_TIMEOUT, 1)
     return _checked("contact_add_address", mode, {"id": item["id"], "name": item["name"], "addresses": got["addresses"]})
+
+
+# Import (overnight, in its own section, tested on its own) ---------------------------------------------------------
+# The .vcf file is opened in Contacts, as a double-click on it would. Contacts then asks "Are you sure you want to add N cards?".
+# Add is pressed only when that is the whole question and N is the number of cards in the file: when some cards match ones you
+# have, Contacts says they "will be updated" instead, and that is cancelled, so no existing card is changed.
+
+PEOPLE_COUNT = 'function run() { return String(Application("Contacts").people.length); }'
+
+
+def contact_import_vcard(path: str, mode: str = "ui") -> dict:
+    """Add the cards in a .vcf file to Contacts as new cards. Refused (nothing imported) if any of them matches a card you have."""
+    _mode("contact_import_vcard", mode, ("ui",))
+    full = os.path.abspath(os.path.expanduser(path))
+    if not full.lower().endswith(".vcf"):
+        raise ValueError("path must end in .vcf")
+    if not os.path.isfile(full):
+        raise NotFound(f"no file at {full}")
+    with open(full, encoding="utf-8", errors="replace") as handle:
+        count = handle.read().upper().count("BEGIN:VCARD")
+    if not count:
+        raise ValueError(f"{full} has no cards")
+    _ready()
+    if _sheets():
+        raise StateBlocked("Contacts has a dialog open; it was left as it is")
+    before = int(_jxa(PEOPLE_COUNT))
+    subprocess.run(["open", "-a", APP, full], check=True)
+    sheet = _wait_for("Contacts' import question", lambda: next(iter(_sheets()), None), TIMEOUT * 2)
+    texts = [t for t in (_string(e, "AXValue") for e in _walk(sheet) if _role(e) == "AXStaticText") if t]
+    want = f"Are you sure you want to add {count} card{'s' if count != 1 else ''}?"
+
+    def cancel():
+        button = _find(sheet, "AXButton", "Cancel")
+        if button is not None:
+            _press(button)
+    if any("duplicate" in t.lower() for t in texts):
+        cancel()
+        raise AlreadyExists("some of the file's cards match cards you have, and Contacts would update them; nothing was imported")
+    add = _find(sheet, "AXButton", "Add")
+    if texts != [want] or add is None:
+        cancel()
+        raise UIError(f"Contacts asked {' '.join(texts)!r}, not {want!r}; nothing was imported")
+    _press(add)
+    _wait_for("the question to close", lambda: not _sheets(), TIMEOUT)
+    _wait_for(f"{count} new cards", lambda: int(_jxa(PEOPLE_COUNT)) == before + count, SAVE_TIMEOUT)
+    return _checked("contact_import_vcard", mode, {"path": full, "count": count})
+
+
+# Exporting a list (overnight, in its own section, tested on its own) -------------------------------------------------
+
+GROUP_VCARDS = r"""
+function run(argv) {
+  const C = Application("Contacts"), found = C.groups.whose({name: argv[0]})();
+  if (found.length !== 1) throw new Error("lists named " + argv[0] + ": " + found.length);
+  return JSON.stringify(found[0].people().map(p => p.vcard()));
+}"""
+
+
+def group_export_vcard(name: str, path: str, mode: str = "background") -> dict:
+    """Write every card in the list (group) named name to a new .vcf file, as Contacts makes the vCards. Nothing is overwritten."""
+    _mode("group_export_vcard", mode, ("background",))
+    full = os.path.abspath(os.path.expanduser(path))
+    if not full.lower().endswith(".vcf"):
+        raise ValueError("path must end in .vcf")
+    if os.path.lexists(full):
+        raise AlreadyExists(f"{full} already exists; nothing is overwritten")
+    if not os.path.isdir(os.path.dirname(full)):
+        raise NotFound(f"the folder {os.path.dirname(full)} doesn't exist")
+    _launch_hidden()
+    group = _group(name)
+    cards = json.loads(_jxa(GROUP_VCARDS, name))
+    if len(cards) != group["count"]:
+        raise UIError(f"Contacts gave {len(cards)} cards for {name!r}, which has {group['count']}")
+    with open(full, "x", encoding="utf-8", newline="") as handle:
+        handle.write("".join(card if card.endswith("\n") else card + "\n" for card in cards))
+    return _checked("group_export_vcard", mode, {"name": name, "path": full, "count": len(cards)})
+
+
+# Web addresses (overnight, in their own section, tested on their own) -------------------------------------------------
+
+URLS = r"""
+function run(argv) {
+  const C = Application("Contacts"), a = JSON.parse(argv[1]), p = C.people.byId(a.id);
+  if (argv[0] === "add") { p.urls.push(C.Url({label: a.label, value: a.url})); C.save(); }
+  return JSON.stringify(p.urls().map(u => ({label: u.label(), url: u.value()})));
+}"""
+
+
+def contact_add_url(match: str, url: str, label: str = "homepage", mode: str = "background") -> dict:
+    """Add a web address with a label (such as homepage or work) to the card named match. Addresses already there stay."""
+    import urllib.parse as _up
+    _mode("contact_add_url", mode, ("background",))
+    if not isinstance(url, str) or not url.strip() or "\n" in url or _up.urlparse(url).scheme not in ("http", "https") or not _up.urlparse(url).netloc:
+        raise ValueError("url must be an http or https address")
+    _label(label)
+    _ready_for(mode)
+    item = _one(match)
+    before = json.loads(_jxa(URLS, "read", json.dumps({"id": item["id"]})))
+    if any(u["url"] == url for u in before):
+        raise AlreadyExists(f"{item['name']} already has {url}")
+    json.loads(_jxa(URLS, "add", json.dumps({"id": item["id"], "url": url, "label": label})))
+    got = _wait_for("the address to be saved", lambda: (lambda r: r if len(r) == len(before) + 1 and any(u["url"] == url for u in r) else None)(
+        json.loads(_jxa(URLS, "read", json.dumps({"id": item["id"]})))), SAVE_TIMEOUT, 1)
+    return _checked("contact_add_url", mode, {"id": item["id"], "name": item["name"], "urls": got})
