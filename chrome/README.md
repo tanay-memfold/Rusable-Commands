@@ -68,6 +68,9 @@ address field or tabs, and pressing Escape didn't close it reliably, so close it
   quits.
 - `link_click` focuses the link and presses Return, because pressing a link through Accessibility reports success in Chrome and does nothing.
 - Elements depend on English names such as New Tab, Open Location…, Close Tab, Back, Forward and Reload.
+- **Many tabs in one window:** with 69 tabs open, a re-test found that `tab_list` could miss which tab is active, and
+  `tab_activate` and `tab_close` raised `NotFound` for a tab that was there, when Chrome was minimized or behind another app. With
+  fewer tabs, the same states passed. Keep the window to a modest number of tabs, or treat `NotFound` there as "not seen".
 
 ## Functions
 
@@ -94,6 +97,21 @@ Its address is checked first.
 
 ### page_back(mode="ui"), page_forward(mode="ui"), page_reload(mode="ui") → {title, url}
 
+### page_add_bookmark(title=None, folder="Other Bookmarks", mode="ui") → {title, url, bookmark, folder}
+**Bookmarks > Bookmark This Tab…** for the current page. Chrome adds the bookmark at once and shows its "Bookmark added" bubble.
+There the folder is chosen by name in its **Folder** menu (`"Bookmarks Bar"` or `"Other Bookmarks"`; others weren't tested), `title`
+is pasted into **Bookmark name** (the clipboard is restored), then **Done**. If a step fails, the bubble's own **Remove** takes the
+new bookmark out again. After Done, Chrome can show an offer to sign in and sync bookmarks ("Use bookmarks across devices"); it's
+closed with its **Close** button, and **Sign in is never pressed**. `AlreadyExists` if the page is already bookmarked (Chrome shows
+"Edit bookmark"; Done is pressed and nothing changes). Added overnight at the end of the file and tested on its own.
+
+### page_save(path, mode="ui") → {title, url, path, bytes}
+**File > Save Page As…** for the current page: `.html` or `.htm` saves the page's HTML only, `.mhtml` the page in one file, chosen
+by name in the save sheet's format menu. The folder is chosen with Go to Folder and the name pasted (the clipboard is restored), each
+read back before Save. Chrome then writes the file through its downloads; the call waits for the finished file, checks that it holds
+the page's title, and closes Chrome's downloads bubble (Escape). `path` must not exist and its folder must. Set
+`CHROME_ALLOWED_ROOT` to a folder and the path must be inside it. Added overnight at the end of the file and tested on its own.
+
 ## How it was verified
 
 In fresh copies of one VM, with Chrome 157 newly installed from Google, signed out and with no history, against a small test server on the same
@@ -103,22 +121,31 @@ Chrome loaded was read from that server's request log, which is separate from Ch
 with separate code, so those aren't independent of Chrome. `page_forward` was checked by the window title, because Chrome can restore that
 page without asking the server. Chrome's history held nothing but the test server's pages afterwards.
 
+`page_add_bookmark` (overnight) was tested in four start states with both folders, with and without a name, and read back from
+Chrome's own Bookmarks file (exactly one new bookmark, with that folder, name and address); a small clipboard had to come back, and
+one case ran with a very large clipboard.
+
+`page_save` (overnight) was tested in four start states as .html and .mhtml. The saved file had to hold the page's heading, the
+save folder had to gain only it, and Downloads had to stay the same.
+
 | Function | Mode | Verified | Cases | Start states |
 |---|---|---|---|---|
 | `link_click` | ui | yes | 16 | app closed, app hidden, app still launching, minimized, no window open, app open, another app in front, another tab showing, two windows open, half-typed text in another item |
+| `page_add_bookmark` | ui | yes | 12 | app hidden, minimized, app open, another app in front |
 | `page_back` | ui | yes | 13 | app closed, app hidden, app still launching, minimized, no window open, app open, another app in front, another tab showing, two windows open, half-typed text in another item |
 | `page_forward` | ui | yes | 13 | app closed, app hidden, app still launching, minimized, no window open, app open, another app in front, another tab showing, two windows open, half-typed text in another item |
 | `page_go` | ui | yes | 27 | app closed, app hidden, app still launching, minimized, no window open, app open, another app in front, another tab showing, two windows open, half-typed text in another item |
 | `page_info` | ui | yes | 13 | app closed, app hidden, app still launching, minimized, no window open, app open, another app in front, another tab showing, two windows open, half-typed text in another item |
 | `page_links` | ui | yes | 13 | app closed, app hidden, app still launching, minimized, no window open, app open, another app in front, another tab showing, two windows open, half-typed text in another item |
 | `page_reload` | ui | yes | 13 | app closed, app hidden, app still launching, minimized, no window open, app open, another app in front, another tab showing, two windows open, half-typed text in another item |
+| `page_save` | ui | yes | 13 | app hidden, minimized, app open, another app in front |
 | `page_text` | ui | yes | 13 | app closed, app hidden, app still launching, minimized, no window open, app open, another app in front, another tab showing, two windows open, half-typed text in another item |
 | `tab_activate` | ui | yes | 15 | app closed, app hidden, app still launching, minimized, no window open, app open, another app in front, another tab showing, two windows open, half-typed text in another item |
 | `tab_close` | ui | yes | 15 | app closed, app hidden, app still launching, minimized, no window open, app open, another app in front, another tab showing, two windows open, half-typed text in another item |
 | `tab_list` | ui | yes | 15 | app closed, the Find bar focused (StateBlocked), app hidden, app still launching, minimized, no window open, app open, another app in front, another tab showing, two windows open, half-typed text in another item |
 | `tab_open` | ui | yes | 18 | app closed, app hidden, app still launching, minimized, no window open, app open, another app in front, another tab showing, two windows open, half-typed text in another item |
 
-Verified on macOS 15.6.1 (24G90), chrome 157.0.8103.39 (8103.39), 2026-11-05, in fresh VM clones.
+Verified on macOS 15.6.1 (24G90), chrome 157.0.8103.39 (8103.39), 2026-11-06, in fresh VM clones.
 
 ## Permissions
 

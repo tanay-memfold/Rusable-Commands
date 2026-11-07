@@ -75,7 +75,8 @@
         "The url returned is as Chrome's field shows it, usually without https://.",
         "An address that redirects, or that Chrome shows differently from how it was given, can make the command time out with UIError after the page has loaded.",
         "If the Find bar has focus, the command raises StateBlocked, because Accessibility then shows only the Find bar.",
-        "It turns on Chrome's AXEnhancedUserInterface setting, which stays on until Chrome quits."
+        "It turns on Chrome's AXEnhancedUserInterface setting, which stays on until Chrome quits.",
+        "With many tabs in one window (69 in a re-test), it could miss tabs or the active tab while Chrome was minimized or behind another app."
       ]
     },
     {
@@ -211,7 +212,8 @@
         "Only the front window is listed.",
         "An address that redirects, or that Chrome shows differently from how it was given, can make the command time out with UIError after the page has loaded.",
         "If the Find bar has focus, the command raises StateBlocked, because Accessibility then shows only the Find bar.",
-        "It turns on Chrome's AXEnhancedUserInterface setting, which stays on until Chrome quits."
+        "It turns on Chrome's AXEnhancedUserInterface setting, which stays on until Chrome quits.",
+        "With many tabs in one window (69 in a re-test), it could miss tabs or the active tab while Chrome was minimized or behind another app."
       ]
     },
     {
@@ -287,7 +289,8 @@
         "It depends on English names and was tested only in English.",
         "An address that redirects, or that Chrome shows differently from how it was given, can make the command time out with UIError after the page has loaded.",
         "If the Find bar has focus, the command raises StateBlocked, because Accessibility then shows only the Find bar.",
-        "It turns on Chrome's AXEnhancedUserInterface setting, which stays on until Chrome quits."
+        "It turns on Chrome's AXEnhancedUserInterface setting, which stays on until Chrome quits.",
+        "With many tabs in one window (69 in a re-test), it could miss tabs or the active tab while Chrome was minimized or behind another app."
       ]
     },
     {
@@ -363,7 +366,8 @@
         "It depends on English names and was tested only in English.",
         "An address that redirects, or that Chrome shows differently from how it was given, can make the command time out with UIError after the page has loaded.",
         "If the Find bar has focus, the command raises StateBlocked, because Accessibility then shows only the Find bar.",
-        "It turns on Chrome's AXEnhancedUserInterface setting, which stays on until Chrome quits."
+        "It turns on Chrome's AXEnhancedUserInterface setting, which stays on until Chrome quits.",
+        "With many tabs in one window (69 in a re-test), it could miss tabs or the active tab while Chrome was minimized or behind another app."
       ]
     },
     {
@@ -837,6 +841,168 @@
         "An address that redirects, or that Chrome shows differently from how it was given, can make the command time out with UIError after the page has loaded.",
         "If the Find bar has focus, the command raises StateBlocked, because Accessibility then shows only the Find bar.",
         "It turns on Chrome's AXEnhancedUserInterface setting, which stays on until Chrome quits."
+      ]
+    },
+    {
+      "name": "page_add_bookmark",
+      "description": "Bookmarks the current page in Bookmarks Bar or Other Bookmarks with Bookmarks > Bookmark This Tab…, optionally under a name of your own.",
+      "args": [
+        {
+          "name": "title",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "The bookmark's name; None keeps the page's title."
+        },
+        {
+          "name": "folder",
+          "type": "str",
+          "required": false,
+          "default": "Other Bookmarks",
+          "meaning": "\"Bookmarks Bar\" or \"Other Bookmarks\"."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": this command has no background mode."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Bookmark this page in Chrome",
+        "Add this site to my bookmarks bar",
+        "Save a bookmark to this page called Recipes"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "The program has Accessibility, and Automation for System Events.",
+      "postcondition": "The page is bookmarked in the folder.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "title",
+          "url",
+          "bookmark",
+          "folder"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "folder isn't \"Bookmarks Bar\" or \"Other Bookmarks\", title is empty, or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or a page didn't finish loading in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "a field holds typed text, the Find bar has focus, a dialog can't be closed safely, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\", or the command wasn't verified"
+        },
+        {
+          "name": "AlreadyExists",
+          "when": "the page is already bookmarked; nothing is changed"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 with Chrome 157 against a local test server only, so macOS 26 and real websites aren't covered.",
+        "There is no background mode, because Chrome's scripting needs an Automation permission that wasn't granted.",
+        "It depends on English names and was tested only in English.",
+        "Chrome adds the bookmark as soon as Bookmark This Tab… is chosen; if a later step fails, the bubble's Remove takes it out again.",
+        "Chrome's offer to sign in and sync bookmarks, shown after Done, is closed with its Close button; Sign in is never pressed.",
+        "Added overnight at the end of the file and tested on its own."
+      ]
+    },
+    {
+      "name": "page_save",
+      "description": "Saves the current page as .html (HTML only) or .mhtml (one file) with File > Save Page As…, at a new path.",
+      "args": [
+        {
+          "name": "path",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The new file, ending in .html, .htm or .mhtml; its folder must exist."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": this command has no background mode."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Save this page as an HTML file",
+        "Download the page for offline reading",
+        "Save the article as a single file"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "The program has Accessibility, and Automation for System Events.",
+      "postcondition": "The file at path holds the page.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "title",
+          "url",
+          "path",
+          "bytes"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "path doesn't end in .html, .htm or .mhtml, or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "NotFound",
+          "when": "the folder doesn't exist"
+        },
+        {
+          "name": "AlreadyExists",
+          "when": "something is already at path; nothing is overwritten"
+        },
+        {
+          "name": "OutsideAllowedRoot",
+          "when": "CHROME_ALLOWED_ROOT is set and the path is outside it"
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or a page didn't finish loading in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "a field holds typed text, the Find bar has focus, a dialog can't be closed safely, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\", or the command wasn't verified"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 with Chrome 157 against a local test server only, so macOS 26 and real websites aren't covered.",
+        "There is no background mode, because Chrome's scripting needs an Automation permission that wasn't granted.",
+        "It depends on English names and was tested only in English.",
+        "Chrome writes the file through its downloads and then shows its downloads bubble, which is closed with Escape.",
+        "Added overnight at the end of the file and tested on its own."
       ]
     }
   ]

@@ -37,6 +37,12 @@ VERIFIED: dict = {
             "app": "157.0.8103.39 (8103.39)"
         }
     },
+    "page_add_bookmark": {
+        "ui": {
+            "macos": "15.6.1 (24G90)",
+            "app": "157.0.8103.39 (8103.39)"
+        }
+    },
     "page_back": {
         "ui": {
             "macos": "15.6.1 (24G90)",
@@ -68,6 +74,12 @@ VERIFIED: dict = {
         }
     },
     "page_reload": {
+        "ui": {
+            "macos": "15.6.1 (24G90)",
+            "app": "157.0.8103.39 (8103.39)"
+        }
+    },
+    "page_save": {
         "ui": {
             "macos": "15.6.1 (24G90)",
             "app": "157.0.8103.39 (8103.39)"
@@ -681,3 +693,206 @@ def page_reload(mode: str = "ui") -> dict:
     _mode("page_reload", mode)
     _ready()
     return _checked("page_reload", mode, _toolbar("Reload"))
+
+
+# Bookmarks (overnight, in their own section, tested on their own) --------------------------------------------------
+# Bookmarks > Bookmark This Tab… adds the bookmark at once and shows Chrome's "Bookmark added" bubble, whose Name field and Folder
+# menu are named. The folder is chosen by name there, the name pasted if one is given, then Done. If a step fails, the bubble's own
+# Remove takes the new bookmark out again, so a failed call adds nothing.
+
+class AlreadyExists(ChromeError):
+    pass
+
+
+def _bubble(title: str):
+    return next((w for w in _children(_app()) if _role(w) == "AXWindow" and _string(w, "AXTitle") == title), None)
+
+
+def page_add_bookmark(title: str | None = None, folder: str = "Other Bookmarks", mode: str = "ui") -> dict:
+    """Bookmark the current page in "Bookmarks Bar" or "Other Bookmarks" (Bookmarks > Bookmark This Tab…). title replaces the page's
+    title as the bookmark's name. AlreadyExists if the page is already bookmarked."""
+    _mode("page_add_bookmark", mode)
+    if title is not None and (not isinstance(title, str) or not title.strip()):
+        raise ValueError("title must be text, or None for the page's own title")
+    if folder not in ("Bookmarks Bar", "Other Bookmarks"):
+        raise ValueError('folder must be "Bookmarks Bar" or "Other Bookmarks"')
+    _ready()
+    page = _settle()
+    _menu("Bookmarks", "Bookmark This Tab…")
+    found = _wait_for("Chrome's bookmark bubble", lambda: _bubble("Bookmark added") or _bubble("Edit bookmark"), TIMEOUT)
+    if _string(found, "AXTitle") == "Edit bookmark":
+        done = next((e for e in _walk(found) if _role(e) == "AXButton" and _string(e, "AXTitle") == "Done"), None)
+        if done is not None:
+            _press(done)
+        raise AlreadyExists("this page is already bookmarked; nothing was changed")
+    bubble = found
+    time.sleep(1)  # Done pressed at once after the bubble opened was ignored in testing
+
+    def button(name):
+        return next((e for e in _walk(bubble) if _role(e) == "AXButton" and _string(e, "AXTitle") == name), None)
+    try:
+        where = _wait_for("the Folder menu", lambda: next((e for e in _walk(bubble) if _role(e) == "AXPopUpButton" and _string(e, "AXTitle") == "Folder"), None))
+        if _string(where, "AXValue") != folder:
+            _press(where)
+            item = _wait_for(f"{folder!r} in the Folder menu", lambda: next((e for w in _children(_app()) for e in _walk(w)
+                                                                            if _role(e) == "AXMenuItem" and _string(e, "AXTitle") == folder), None), 3)
+            _press(item)
+            _wait_for(f"the Folder menu to show {folder!r}", lambda: _string(where, "AXValue") == folder)
+        name = _wait_for("the Bookmark name field", lambda: next((e for e in _walk(bubble) if _role(e) == "AXTextField" and _string(e, "AXTitle") == "Bookmark name"), None))
+        if title is not None:
+            _focus(name)
+            _wait_for("the name field to have the keyboard", lambda: _string(_focused(), "AXTitle") == "Bookmark name")
+            _paste(title)
+        named = _string(name, "AXValue")
+        if not named:
+            raise UIError("the bookmark has no name")
+        done = button("Done")
+        if done is None:
+            raise UIError("the bubble's Done button wasn't found")
+        _press(done)
+    except Exception:
+        if _bubble("Bookmark added") is not None:
+            remove = button("Remove")
+            if remove is not None:
+                _press(remove)
+        raise
+    # After Done, Chrome can turn the bubble into an offer to sign in and sync bookmarks ("Use bookmarks across devices"). That
+    # offer is closed with its Close button, pressed once after it has settled (pressed too soon or too often it was ignored), then
+    # Escape if it's still there; Sign in is never pressed.
+    def offer():
+        for window in [w for w in _children(_app()) if _role(w) == "AXWindow" and _string(w, "AXSubrole") != "AXStandardWindow"]:
+            texts = " ".join(_string(e, "AXValue") for e in _walk(window) if _role(e) == "AXStaticText").lower()
+            if "sign in to chrome" in texts or _string(window, "AXTitle") == "Use bookmarks across devices":
+                return window
+        return None
+    tries = [0]
+
+    def closed():
+        window = offer()
+        if window is not None:
+            if tries[0] >= 3:
+                raise UIError("Chrome's sign-in offer didn't close")
+            tries[0] += 1
+            time.sleep(1.5)
+            close = next((e for e in _walk(window) if _role(e) == "AXButton" and _string(e, "AXTitle") == "Close"), None)
+            if close is not None:
+                _press(close)
+            time.sleep(2)
+            if offer() is not None:
+                _system_events("set frontmost to true")
+                _key(ESCAPE)
+                time.sleep(1)
+            return None
+        still = _bubble("Bookmark added")
+        if still is None:
+            return True
+        if time.monotonic() - pressed[0] > 2:  # Done was ignored: press it again
+            again = next((e for e in _walk(still) if _role(e) == "AXButton" and _string(e, "AXTitle") == "Done"), None)
+            if again is not None:
+                _press(again)
+            pressed[0] = time.monotonic()
+        return None
+    pressed = [time.monotonic()]
+    _wait_for("the bookmark bubble to close", closed, TIMEOUT * 4)
+    return _checked("page_add_bookmark", mode, {**page, "bookmark": named, "folder": folder})
+
+
+# Saving a page (overnight, in its own section, tested on its own) --------------------------------------------------
+# File > Save Page As… opens a normal save sheet. Its format menu is set by name ("Webpage, HTML Only" for .html or .htm,
+# "Webpage, Single File" for .mhtml), the folder chosen with Go to Folder and the name pasted, each read back before Save. Chrome
+# then writes the file through its downloads, so the call waits for the finished file.
+
+class OutsideAllowedRoot(ChromeError):
+    pass
+
+
+SAVE_FORMATS = {".html": "Webpage, HTML Only", ".htm": "Webpage, HTML Only", ".mhtml": "Webpage, Single File"}
+
+
+def _by_id(root, identifier: str):
+    return next((e for e in _walk(root) if _string(e, "AXIdentifier") == identifier), None)
+
+
+def page_save(path: str, mode: str = "ui") -> dict:
+    """Save the current page at path: .html or .htm (the page's HTML only) or .mhtml (the page in one file), with File > Save Page
+    As…. path must not exist and its folder must. Set CHROME_ALLOWED_ROOT to a folder and the path must be inside it."""
+    _mode("page_save", mode)
+    full = os.path.abspath(os.path.expanduser(path))
+    root = os.environ.get("CHROME_ALLOWED_ROOT")
+    if root:
+        allowed, real = os.path.realpath(os.path.expanduser(root)), os.path.realpath(os.path.dirname(full))
+        if real != allowed and not real.startswith(allowed + os.sep):
+            raise OutsideAllowedRoot(f"{full} is outside CHROME_ALLOWED_ROOT; nothing was done")
+    suffix = os.path.splitext(full)[1].lower()
+    if suffix not in SAVE_FORMATS:
+        raise ValueError("path must end in .html, .htm or .mhtml")
+    folder, name = os.path.split(full)
+    if not os.path.isdir(folder):
+        raise NotFound(f"the folder {folder} doesn't exist")
+    if os.path.lexists(full):
+        raise AlreadyExists(f"{full} already exists; nothing is overwritten")
+    _ready()
+    page = _settle()
+    _menu("File", "Save Page As…")
+    sheet = _wait_for("the save sheet", lambda: next(iter(_sheets()), None), TIMEOUT)
+    try:
+        kind = _wait_for("the format menu", lambda: next((e for e in _walk(sheet) if _role(e) == "AXPopUpButton"
+                                                         and _string(e, "AXValue").startswith("Webpage")), None))
+        if _string(kind, "AXValue") != SAVE_FORMATS[suffix]:
+            _press(kind)
+            item = _wait_for(f"{SAVE_FORMATS[suffix]} in the format menu", lambda: next((e for w in _children(_app()) for e in _walk(w)
+                                                                                     if _role(e) == "AXMenuItem" and _string(e, "AXTitle") == SAVE_FORMATS[suffix]), None), 3)
+            _press(item)
+            _wait_for("the format to change", lambda: _string(kind, "AXValue") == SAVE_FORMATS[suffix])
+        if _system_events("return frontmost") != "true":
+            raise StateBlocked("another app came to the front; nothing was saved")
+        _system_events("key code 5 using {command down, shift down}")
+        go = _wait_for("Go to Folder", lambda: _by_id(sheet, "GoToWindow"))
+        field = _wait_for("the folder field", lambda: _by_id(go, "PathTextField"))
+        _key(0, "command")
+        _paste(folder)
+        _wait_for("the folder path", lambda: _string(field, "AXValue") == folder)
+        _key(36)
+        _wait_for("Go to Folder to close", lambda: _by_id(sheet, "GoToWindow") is None)
+        where = _by_id(sheet, "where popup")
+        _wait_for("the folder to be chosen", lambda: _string(where, "AXValue") == os.path.basename(folder))
+        box = _wait_for("the file name field", lambda: _by_id(sheet, "saveAsNameTextField"))
+        _focus(box)
+        _wait_for("the name field to have the keyboard", lambda: _string(_focused(), "AXIdentifier") == "saveAsNameTextField")
+        _paste(name)
+        save = _by_id(sheet, "OKButton")
+        if save is None:
+            raise UIError("the Save button wasn't found")
+        _press(save)
+    except Exception:
+        cancel = _by_id(sheet, "CancelButton")
+        if cancel is not None and _sheets():
+            _press(cancel)
+        raise
+    _wait_for("the save sheet to close", lambda: not _sheets(), TIMEOUT)
+
+    def finished():
+        if not os.path.isfile(full) or os.path.exists(full + ".crdownload"):
+            return None
+        return os.path.getsize(full) > 0 or None
+    _wait_for("the saved page", finished, TIMEOUT * 3)
+    size = -1
+    while os.path.getsize(full) != size:
+        size = os.path.getsize(full)
+        time.sleep(0.5)
+    with open(full, "rb") as handle:
+        data = handle.read().decode("utf-8", "replace")
+    if page["title"] and page["title"] not in data:
+        raise UIError(f"{full} was written but doesn't hold the page's title")
+    # Chrome then shows its downloads bubble ("Recent Download History"), which has no close button and stays open; Escape closes it.
+    def bubble():
+        return next((w for w in _children(_app()) if _role(w) == "AXWindow" and _string(w, "AXTitle") == "Recent Download History"), None)
+    for _ in range(3):
+        if bubble() is None:
+            break
+        _system_events("set frontmost to true")
+        _key(ESCAPE)
+        time.sleep(1)
+    if bubble() is not None:
+        raise UIError("Chrome's downloads bubble didn't close (the page was saved)")
+    return _checked("page_save", mode, {**page, "path": full, "bytes": size})
