@@ -65,13 +65,50 @@ Selects the last page and uses **Edit > Insert > Page from File…** with the ot
 Pages are selected in the thumbnail sidebar with the arrow keys, and the selection is checked by the window title ("Page 2 of 3"),
 because the thumbnails can't be selected through Accessibility. Cut and Paste go through the clipboard, which is restored afterwards.
 
+### image_crop(path, left, top, right, bottom, mode="ui") → {name, path, left, top, right, bottom}
+Crops to the rectangle from (left, top) to (right, bottom), as fractions of the image (0 to 1): **View > Zoom to Fit**, **Tools >
+Rectangular Selection**, a drag over the image, **Tools > Crop**, **File > Save**. **The drag uses screen positions computed from the
+image element's own frame** (after Zoom to Fit, so the whole image shows; otherwise it refuses), never fixed positions.
+
+### image_adjust(path, exposure=None, contrast=None, saturation=None, mode="ui") → {name, path, …}
+**Tools > Adjust Color…**: each slider is found by the named icons beside it ("exposure", "contrast", "saturation") and set to the
+value, which must be inside that slider's own range (exposure −2 to 2, contrast −1 to 1, saturation 0 to 2). The panel is closed and
+the file saved.
+
+These two were added on day 4 in their own section of the file and tested on their own; the code above them is unchanged.
+
+### image_resize(path, width=None, height=None, mode="ui") → {name, path, width, height, was}
+**Tools > Adjust Size…** in pixels, with **Resample image** on. Give `width` or `height` to keep the proportions (**Scale
+proportionally** on), or both to set both exactly (off). Then **File > Save**. The dialog's size fields have no names, so **each is
+found on the row of its own label** ("Width:", "Height:") and checked by value (it must read the image's current size in pixels)
+before anything is typed. The saved size must match what the dialog showed. `was` is the old [width, height]. Whole pixels from 1 to
+20000; `ValueError` if nothing would change. Added overnight in its own section and tested on its own.
+
+### pdf_insert_blank_page(path, after, mode="ui") → {name, path, pages, blank_page}
+Selects page `after` (counting from 1) in the thumbnails, as the other page commands do, then **Edit > Insert > Blank Page**, which
+adds a blank page right after it, then **File > Save**. `blank_page` is the new page's number. Added overnight in its own section
+and tested on its own (pages read back with PDFKit: the new page has no text and sits right after `after`).
+
+### pdf_rotate_page(path, page, direction="right", mode="ui") → {name, path, page, direction, pages}
+Selects page `page` in the thumbnails, then **Tools > Rotate Right** or **Rotate Left**, then **File > Save**. Only that page turns.
+The library reads every page's rotation back from the saved file, and only that page may have turned, a quarter turn the asked way;
+otherwise `UIError`. Added overnight in its own section and tested on its own.
+
 ## Left out
 
-- **Adjust Color (exposure and the rest)** and **Adjust Size**: their sliders and fields have no accessible names or labels, so they
-  can't be set by name.
-- **Crop**: it needs a rectangle dragged on the image.
+- The other Adjust Color sliders (highlights, shadows, temperature, tint, sepia, sharpness): not offered yet.
+- **Extracting one PDF page** (`pdf_extract_page`): left out overnight. With Preview closed, a page delete meant for the untitled
+  copy didn't land there, and in one test another file changed, so both approaches (copy and New from Clipboard; Duplicate and
+  delete pages) were stopped after two fixes.
+- **Remove Background** (Tools menu): it was greyed out in the test VM for a plain made-up picture, so it couldn't be tried.
 
 ## How it was verified
+
+Resize (overnight): four-colour 200×160 test images, PNG and JPEG, made smaller, larger, by width, by height and both, in five start
+states. The saved size was read back with NSBitmapImageRep, and each corner had to keep its colour (scaled, not cropped).
+
+Crop and Adjust Color (day 4): four-colour test images were read back with NSBitmapImageRep: the cropped size (within 2 px) and
+which colours are in its corners; mean brightness for exposure; colour spread for saturation. In five start states, PNG and JPEG.
 
 In fresh copies of one VM, with made-up images and PDFs inside one test folder, including names with emoji, accents and quotes.
 Images were made with four coloured corners, and each result was read back from the saved file with separate code (ImageIO through
@@ -91,11 +128,16 @@ on the final code and passed. Every case, including the page commands, was rerun
 | `document_export` | ui | yes | 31 | app closed, app hidden, minimized, app open, another app in front |
 | `document_list` | ui | yes | 5 | app closed, app hidden, minimized, app open, another app in front |
 | `document_open` | ui | yes | 8 | app closed, app hidden, minimized, app open, another app in front |
+| `image_adjust` | ui | yes | 15 | app closed, app hidden, minimized, app open, another app in front |
+| `image_crop` | ui | yes | 25 | app closed, app hidden, minimized, app open, another app in front |
 | `image_flip` | ui | yes | 22 | app closed, app hidden, minimized, app open, another app in front |
+| `image_resize` | ui | yes | 33 | app closed, app hidden, minimized, app open, another app in front |
 | `image_rotate` | ui | yes | 24 | app closed, app hidden, minimized, app open, another app in front |
 | `pdf_append_file` | ui | yes | 8 | app closed, app hidden, minimized, app open, another app in front |
 | `pdf_delete_page` | ui | yes | 18 | app closed, app hidden, minimized, app open, another app in front |
+| `pdf_insert_blank_page` | ui | yes | 20 | app closed, app hidden, minimized, app open, another app in front |
 | `pdf_move_page` | ui | yes | 18 | app closed, app hidden, minimized, app open, another app in front |
+| `pdf_rotate_page` | ui | yes | 19 | app closed, app hidden, minimized, app open, another app in front |
 
 Verified on macOS 15.6.1 (24G90), preview 11.0 (1069.7.1), 2026-11-06, in fresh VM clones.
 

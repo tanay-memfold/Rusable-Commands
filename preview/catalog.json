@@ -723,6 +723,468 @@
         "It depends on English names and was tested only in English.",
         "Only small PDFs were tested."
       ]
+    },
+    {
+      "name": "image_crop",
+      "description": "Crops an image to a rectangle given as fractions of its width and height, and saves it (Tools > Rectangular Selection, a drag over the image, Tools > Crop).",
+      "args": [
+        {
+          "name": "path",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "An absolute path, or one starting with ~, to an image (.png, .jpg, .jpeg, .heic, .tif, .tiff, .gif, .bmp)."
+        },
+        {
+          "name": "left",
+          "type": "float",
+          "required": true,
+          "default": null,
+          "meaning": "The rectangle's left edge, 0 to 1 of the width."
+        },
+        {
+          "name": "top",
+          "type": "float",
+          "required": true,
+          "default": null,
+          "meaning": "Its top edge, 0 to 1 of the height."
+        },
+        {
+          "name": "right",
+          "type": "float",
+          "required": true,
+          "default": null,
+          "meaning": "Its right edge."
+        },
+        {
+          "name": "bottom",
+          "type": "float",
+          "required": true,
+          "default": null,
+          "meaning": "Its bottom edge."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": Preview has no scripting for this."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Crop the photo to its centre",
+        "Cut off the right third of the image",
+        "Crop this screenshot to the top half"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "The program has Accessibility, and Automation for System Events.",
+      "postcondition": "The file holds only the rectangle.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name",
+          "path"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "the document has a dialog open, a dialog with typed text is showing, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "nothing is at the path; nothing is changed"
+        },
+        {
+          "name": "OutsideAllowedRoot",
+          "when": "PREVIEW_ALLOWED_ROOT is set and a path is outside it; nothing is done"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\": there is no background mode"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 with Preview 11.0 only, so it isn't known to work on macOS 26 or any other version.",
+        "It depends on English names and was tested only in English.",
+        "The rectangle is dragged on screen with positions computed from the image element's own frame after Zoom to Fit, never fixed screen positions; the whole image must show in its window.",
+        "The rectangle must be at least 5% of the image wide and high; sizes come out within a pixel or two.",
+        "Added on day 4 in its own section and tested on its own."
+      ]
+    },
+    {
+      "name": "image_adjust",
+      "description": "Changes an image's exposure, contrast or saturation in Tools > Adjust Color… and saves it.",
+      "args": [
+        {
+          "name": "path",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "An absolute path, or one starting with ~, to an image (.png, .jpg, .jpeg, .heic, .tif, .tiff, .gif, .bmp)."
+        },
+        {
+          "name": "exposure",
+          "type": "float | None",
+          "required": false,
+          "default": null,
+          "meaning": "-2 to 2."
+        },
+        {
+          "name": "contrast",
+          "type": "float | None",
+          "required": false,
+          "default": null,
+          "meaning": "-1 to 1."
+        },
+        {
+          "name": "saturation",
+          "type": "float | None",
+          "required": false,
+          "default": null,
+          "meaning": "0 to 2 (1 is unchanged)."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": Preview has no scripting for this."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Brighten the photo",
+        "Raise the exposure a bit",
+        "Make the image black and white"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "The program has Accessibility, and Automation for System Events.",
+      "postcondition": "The file is saved with the change.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name",
+          "path"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "the document has a dialog open, a dialog with typed text is showing, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "nothing is at the path; nothing is changed"
+        },
+        {
+          "name": "OutsideAllowedRoot",
+          "when": "PREVIEW_ALLOWED_ROOT is set and a path is outside it; nothing is done"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\": there is no background mode"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 with Preview 11.0 only, so it isn't known to work on macOS 26 or any other version.",
+        "It depends on English names and was tested only in English.",
+        "Each slider is found by the named icons beside it and set to the value; a value outside the slider's own range raises ValueError.",
+        "Added on day 4 in its own section and tested on its own."
+      ]
+    },
+    {
+      "name": "image_resize",
+      "description": "Resizes an image in pixels with Tools > Adjust Size… and saves it, keeping its proportions when only a width or a height is given.",
+      "args": [
+        {
+          "name": "path",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "An absolute path, or one starting with ~, to an image (.png, .jpg, .jpeg, .heic, .tif, .tiff, .gif, .bmp)."
+        },
+        {
+          "name": "width",
+          "type": "int | None",
+          "required": false,
+          "default": null,
+          "meaning": "New width in pixels, 1 to 20000."
+        },
+        {
+          "name": "height",
+          "type": "int | None",
+          "required": false,
+          "default": null,
+          "meaning": "New height in pixels, 1 to 20000; give both to set both exactly."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": Preview has no scripting for this."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Resize the photo to 600 pixels wide",
+        "Make this image 400 pixels tall",
+        "Shrink the picture to 800 by 600"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "The program has Accessibility, and Automation for System Events.",
+      "postcondition": "The file is saved at the new size.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name",
+          "path",
+          "width",
+          "height",
+          "was"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "the document has a dialog open, a dialog with typed text is showing, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "nothing is at the path; nothing is changed"
+        },
+        {
+          "name": "OutsideAllowedRoot",
+          "when": "PREVIEW_ALLOWED_ROOT is set and a path is outside it; nothing is done"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\": there is no background mode"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 with Preview 11.0 only, so it isn't known to work on macOS 26 or any other version.",
+        "It depends on English names and was tested only in English.",
+        "The dialog's size fields have no names: each is found on the row of its own label (Width:, Height:) and checked by value before typing.",
+        "Added overnight in its own section and tested on its own."
+      ]
+    },
+    {
+      "name": "pdf_insert_blank_page",
+      "description": "Adds a blank page to a PDF right after a given page with Edit > Insert > Blank Page, and saves it.",
+      "args": [
+        {
+          "name": "path",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The PDF."
+        },
+        {
+          "name": "after",
+          "type": "int",
+          "required": true,
+          "default": null,
+          "meaning": "The page (from 1) the blank page goes after."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": Preview has no scripting for this."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Add a blank page after page 2",
+        "Insert an empty page at the end of this PDF",
+        "Put a blank page after the cover"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "The program has Accessibility, and Automation for System Events.",
+      "postcondition": "The PDF has one more page, blank, right after page after.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name",
+          "path",
+          "pages",
+          "blank_page"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "the document has a dialog open, a dialog with typed text is showing, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "nothing is at the path; nothing is changed"
+        },
+        {
+          "name": "OutsideAllowedRoot",
+          "when": "PREVIEW_ALLOWED_ROOT is set and a path is outside it; nothing is done"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\": there is no background mode"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 with Preview 11.0 only, so it isn't known to work on macOS 26 or any other version.",
+        "It depends on English names and was tested only in English.",
+        "Added overnight in its own section and tested on its own."
+      ]
+    },
+    {
+      "name": "pdf_rotate_page",
+      "description": "Turns one page of a PDF a quarter turn with Tools > Rotate Right or Rotate Left and saves it; the other pages stay as they are.",
+      "args": [
+        {
+          "name": "path",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The PDF."
+        },
+        {
+          "name": "page",
+          "type": "int",
+          "required": true,
+          "default": null,
+          "meaning": "The page to turn, from 1."
+        },
+        {
+          "name": "direction",
+          "type": "str",
+          "required": false,
+          "default": "right",
+          "meaning": "\"right\" (clockwise) or \"left\"."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": Preview has no scripting for this."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Rotate page 3 of this PDF",
+        "Turn the second page left",
+        "Fix the sideways page in the scan"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "The program has Accessibility, and Automation for System Events.",
+      "postcondition": "Only that page is turned a quarter turn in the saved PDF.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name",
+          "path",
+          "page",
+          "direction",
+          "pages"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "the document has a dialog open, a dialog with typed text is showing, or another app came to the front; nothing is changed"
+        },
+        {
+          "name": "NotFound",
+          "when": "nothing is at the path; nothing is changed"
+        },
+        {
+          "name": "OutsideAllowedRoot",
+          "when": "PREVIEW_ALLOWED_ROOT is set and a path is outside it; nothing is done"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\": there is no background mode"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 with Preview 11.0 only, so it isn't known to work on macOS 26 or any other version.",
+        "It depends on English names and was tested only in English.",
+        "The saved file's page rotations are read back and checked.",
+        "Added overnight in its own section and tested on its own."
+      ]
     }
   ]
 }

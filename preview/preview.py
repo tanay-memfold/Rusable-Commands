@@ -51,7 +51,25 @@ VERIFIED: dict = {
             "app": "11.0 (1069.7.1)"
         }
     },
+    "image_adjust": {
+        "ui": {
+            "macos": "15.6.1 (24G90)",
+            "app": "11.0 (1069.7.1)"
+        }
+    },
+    "image_crop": {
+        "ui": {
+            "macos": "15.6.1 (24G90)",
+            "app": "11.0 (1069.7.1)"
+        }
+    },
     "image_flip": {
+        "ui": {
+            "macos": "15.6.1 (24G90)",
+            "app": "11.0 (1069.7.1)"
+        }
+    },
+    "image_resize": {
         "ui": {
             "macos": "15.6.1 (24G90)",
             "app": "11.0 (1069.7.1)"
@@ -75,7 +93,19 @@ VERIFIED: dict = {
             "app": "11.0 (1069.7.1)"
         }
     },
+    "pdf_insert_blank_page": {
+        "ui": {
+            "macos": "15.6.1 (24G90)",
+            "app": "11.0 (1069.7.1)"
+        }
+    },
     "pdf_move_page": {
+        "ui": {
+            "macos": "15.6.1 (24G90)",
+            "app": "11.0 (1069.7.1)"
+        }
+    },
+    "pdf_rotate_page": {
         "ui": {
             "macos": "15.6.1 (24G90)",
             "app": "11.0 (1069.7.1)"
@@ -798,3 +828,308 @@ def pdf_append_file(path: str, add: str, mode: str = "ui") -> dict:
     _wait_for("the pages to be added", lambda: _page_count(window)[1] > pages, SAVE_TIMEOUT)
     _save(window, full, before)
     return _checked("pdf_append_file", mode, {**_item(full), "pages": _page_count(window)[1], "from": extra})
+
+
+# Crop and Adjust Color (day 4, in their own section, tested on their own) ----------------------------------------
+# Cropping needs a dragged rectangle. Its corners are computed from the image element's own frame on screen (never from fixed
+# screen positions), after View > Zoom to Fit, so the whole image is showing.
+
+_CG = ctypes.cdll.LoadLibrary("/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics")
+
+
+class _Point(ctypes.Structure):
+    _fields_ = [("x", ctypes.c_double), ("y", ctypes.c_double)]
+
+
+_CG.CGEventCreateMouseEvent.restype = _P
+_CG.CGEventCreateMouseEvent.argtypes = [_P, ctypes.c_uint32, _Point, ctypes.c_uint32]
+_CG.CGEventPost.argtypes = [ctypes.c_uint32, _P]
+_AS.AXValueGetValue.restype = ctypes.c_bool
+_AS.AXValueGetValue.argtypes = [_P, ctypes.c_int, _P]
+_CF.CFNumberCreate.restype = _P
+_CF.CFNumberCreate.argtypes = [_P, ctypes.c_int, _P]
+_CF.CFNumberGetValue.restype = ctypes.c_bool
+_CF.CFNumberGetValue.argtypes = [_P, ctypes.c_int, _P]
+_CF.CFRelease.argtypes = [_P]
+_MOVED, _DOWN, _UP, _DRAGGED = 5, 1, 2, 6
+ADJUSTMENTS = {"exposure": "exposure", "contrast": "contrast", "saturation": "saturation"}
+
+
+def _frame(element) -> tuple:
+    point, size = (ctypes.c_double * 2)(), (ctypes.c_double * 2)()
+    if not (_AS.AXValueGetValue(_attr(element, "AXPosition"), 1, point) and _AS.AXValueGetValue(_attr(element, "AXSize"), 2, size)):
+        raise UIError("an element's frame couldn't be read")
+    return point[0], point[1], size[0], size[1]
+
+
+def _mouse(kind: int, x: float, y: float) -> None:
+    event = _CG.CGEventCreateMouseEvent(None, kind, _Point(x, y), 0)
+    _CG.CGEventPost(0, event)
+    _CF.CFRelease(event)
+
+
+def _drag(x1: float, y1: float, x2: float, y2: float) -> None:
+    _mouse(_MOVED, x1, y1)
+    time.sleep(0.1)
+    _mouse(_DOWN, x1, y1)
+    time.sleep(0.15)
+    for step in range(1, 16):
+        _mouse(_DRAGGED, x1 + (x2 - x1) * step / 15, y1 + (y2 - y1) * step / 15)
+        time.sleep(0.03)
+    _mouse(_UP, x2, y2)
+    time.sleep(0.3)
+
+
+def _number(element, name: str):
+    value = _attr(element, name)
+    out = ctypes.c_double()
+    return out.value if value and _CF.CFNumberGetValue(value, 13, ctypes.byref(out)) else None
+
+
+def image_crop(path: str, left: float, top: float, right: float, bottom: float, mode: str = "ui") -> dict:
+    """Crop an image to the rectangle from (left, top) to (right, bottom), given as fractions of its width and height (0 to 1), and
+    save it: View > Zoom to Fit, Tools > Rectangular Selection, a drag over the image, Tools > Crop, File > Save."""
+    _mode("image_crop", mode)
+    for name, value in (("left", left), ("top", top), ("right", right), ("bottom", bottom)):
+        if not isinstance(value, (int, float)) or not 0 <= value <= 1:
+            raise ValueError(f"{name} must be a fraction from 0 to 1")
+    if right - left < 0.05 or bottom - top < 0.05:
+        raise ValueError("the rectangle must be at least 5% of the image wide and high")
+    full = _kind(_existing(path), IMAGES)
+    before = _stamp(full)
+    window = _opened(full)
+    if _has_menu_item("View", "Zoom to Fit"):
+        _menu("View", "Zoom to Fit")
+        time.sleep(0.6)
+    image = _wait_for("the image", lambda: next((e for e in _walk(window) if _role(e) == "AXImage"), None))
+
+    def fits():
+        x, y, w, h = _frame(image)
+        wx, wy, ww, wh = _frame(window)
+        return x >= wx - 1 and y >= wy - 1 and x + w <= wx + ww + 1 and y + h <= wy + wh + 1
+    try:
+        _wait_for("the whole image to show", fits, 3)
+    except UIError:
+        raise UIError("the whole image isn't showing in its window, so the rectangle can't be placed") from None
+    x, y, w, h = _frame(image)
+    _menu("Tools", "Rectangular Selection")
+    time.sleep(0.3)
+    if _system_events("return frontmost") != "true":
+        raise StateBlocked("another app came to the front; nothing was cropped")
+    _drag(x + left * w, y + top * h, x + right * w, y + bottom * h)
+    _menu("Tools", "Crop")
+    _save(window, full, before)
+    return _checked("image_crop", mode, {**_item(full), "left": left, "top": top, "right": right, "bottom": bottom})
+
+
+def _adjust_panel():
+    return next((w for w in _windows() if _string(w, "AXTitle").startswith("Adjust Color")), None)
+
+
+def _slider(panel, name: str):
+    """Adjust Color's sliders have no names; each sits between its named icons, such as "hud icon exposure min"."""
+    items = list(_walk(panel))
+    for index, element in enumerate(items):
+        if _string(element, "AXDescription") == f"hud icon {name} min":
+            return next((e for e in items[index:] if _role(e) == "AXSlider"), None)
+    return None
+
+
+def image_adjust(path: str, exposure: float | None = None, contrast: float | None = None, saturation: float | None = None,
+                 mode: str = "ui") -> dict:
+    """Change an image's exposure, contrast or saturation in Tools > Adjust Color… and save it. Each value is set on its slider and
+    must be inside that slider's own range (exposure -2 to 2 in testing; contrast and saturation as Preview shows them)."""
+    _mode("image_adjust", mode)
+    wanted = {k: v for k, v in (("exposure", exposure), ("contrast", contrast), ("saturation", saturation)) if v is not None}
+    if not wanted:
+        raise ValueError("give at least one of exposure, contrast or saturation")
+    full = _kind(_existing(path), IMAGES)
+    before = _stamp(full)
+    window = _opened(full)
+    if _adjust_panel() is None:
+        _menu("Tools", "Adjust Color…")
+    panel = _wait_for("the Adjust Color panel", _adjust_panel)
+    done = {}
+    try:
+        for name, value in wanted.items():
+            slider = _wait_for(f"the {name} slider", lambda name=name: _slider(panel, ADJUSTMENTS[name]))
+            low, high = _number(slider, "AXMinValue"), _number(slider, "AXMaxValue")
+            if low is None or high is None or not low <= value <= high:
+                raise ValueError(f"{name} must be from {low} to {high}")
+            number = ctypes.c_double(float(value))
+            if _AS.AXUIElementSetAttributeValue(slider, _cf("AXValue"), _CF.CFNumberCreate(None, 13, ctypes.byref(number))):
+                raise UIError(f"the {name} slider couldn't be set")
+            _wait_for(f"{name} to be {value}", lambda slider=slider: abs((_number(slider, "AXValue") or 0) - value) < 1e-3)
+            done[name] = value
+    finally:
+        close = next((e for e in _children(panel) if _string(e, "AXSubrole") == "AXCloseButton"), None) if panel is not None else None
+        if close is not None:
+            _press(close)
+            _wait_for("the Adjust Color panel to close", lambda: _adjust_panel() is None)
+    _raise(window)
+    _save(window, full, before)
+    return _checked("image_adjust", mode, {**_item(full), **done})
+
+
+# Resize (overnight, in its own section, tested on its own) -------------------------------------------------------
+# Tools > Adjust Size…'s fields have no names. Each is found on the row of its own label ("Width:", "Height:"): the text field whose
+# frame overlaps the label's row, nearest to its right. Then it is checked by value (in pixels it must read the image's current
+# width or height) before anything is typed.
+
+def _pixels(full: str) -> tuple:
+    out = _run(["sips", "-g", "pixelWidth", "-g", "pixelHeight", full])
+    values = dict(line.split(": ") for line in (l.strip() for l in out.splitlines()) if ": " in line)
+    return int(values["pixelWidth"]), int(values["pixelHeight"])
+
+
+def _field_on_row(sheet, label: str):
+    texts = list(_walk(sheet))
+    name = next((e for e in texts if _role(e) == "AXStaticText" and _string(e, "AXValue") == label), None)
+    if name is None:
+        return None
+    lx, ly, lw, lh = _frame(name)
+    best = None
+    for e in texts:
+        if _role(e) != "AXTextField":
+            continue
+        x, y, w, h = _frame(e)
+        if y < ly + lh and ly < y + h and x >= lx + lw - 1 and (best is None or x < _frame(best)[0]):
+            best = e
+    return best
+
+
+def _type_number(field, value: int) -> None:
+    _focus(field)
+    _wait_for("the field to have the keyboard", lambda: _attr(field, "AXFocused") == _TRUE.value)
+    _key(0, "command down")  # select all
+    _system_events(f'keystroke "{int(value)}"')
+    _key(48)  # Tab commits it, so Preview recomputes the other side
+    time.sleep(0.4)
+
+
+def image_resize(path: str, width: int | None = None, height: int | None = None, mode: str = "ui") -> dict:
+    """Resize an image in pixels with Tools > Adjust Size… and save it. Give width or height to keep its proportions, or both to set
+    both exactly."""
+    _mode("image_resize", mode)
+    for name, value in (("width", width), ("height", height)):
+        if value is not None and (not isinstance(value, int) or isinstance(value, bool) or not 1 <= value <= 20000):
+            raise ValueError(f"{name} must be a whole number of pixels from 1 to 20000")
+    if width is None and height is None:
+        raise ValueError("give width, height or both")
+    full = _kind(_existing(path), IMAGES)
+    old_w, old_h = _pixels(full)
+    if (width or old_w, height or old_h) == (old_w, old_h) or (width is None and round(old_w * height / old_h) == old_w) or (
+            height is None and round(old_h * width / old_w) == old_h):
+        raise ValueError(f"the image is already {old_w}×{old_h}")
+    before = _stamp(full)
+    window = _opened(full)
+    _raise(window)
+    _menu("Tools", "Adjust Size…")
+    sheet = _wait_for("the Adjust Size dialog", lambda: _sheet(window))
+    try:
+        resample = _wait_for("Resample image", lambda: _find(sheet, "AXCheckBox", "Resample image"))
+        if _attr(resample, "AXValue") and _number(resample, "AXValue") == 0:
+            _press(resample)
+            _wait_for("Resample image to be on", lambda: _number(resample, "AXValue") == 1)
+        units = next((e for e in _walk(sheet) if _role(e) == "AXPopUpButton" and _string(e, "AXValue") in
+                      ("inches", "cm", "mm", "points", "pixels", "percent")), None)
+        if units is None:
+            raise UIError("the size units menu wasn't found")
+        if _string(units, "AXValue") != "pixels":
+            _press(units)
+            item = _wait_for("pixels in the units menu", lambda: next((e for e in _walk(units) if _role(e) == "AXMenuItem" and _string(e, "AXTitle") == "pixels"), None))
+            _press(item)
+            _wait_for("the units to be pixels", lambda: _string(units, "AXValue") == "pixels")
+        fields = {}
+        for label, current in (("Width:", old_w), ("Height:", old_h)):
+            field = _wait_for(f"the field beside {label}", lambda label=label: _field_on_row(sheet, label))
+            try:
+                _wait_for(f"the field beside {label} to read {current}", lambda field=field, current=current: _string(field, "AXValue").replace(",", "") == str(current), 3)
+            except UIError:
+                raise UIError(f"the field beside {label} reads {_string(field, 'AXValue')!r}, not the image's {current} pixels") from None
+            fields[label] = field
+        scale = _find(sheet, "AXCheckBox", "Scale proportionally")
+        if scale is None:
+            raise UIError("Scale proportionally wasn't found")
+        keep = width is None or height is None
+        if (_number(scale, "AXValue") == 1) != keep:
+            _press(scale)
+            _wait_for("Scale proportionally to change", lambda: (_number(scale, "AXValue") == 1) == keep)
+        if width is not None:
+            _type_number(fields["Width:"], width)
+        if height is not None:
+            _type_number(fields["Height:"], height)
+        want_w = width if width is not None else max(1, round(old_w * height / old_h))
+        want_h = height if height is not None else max(1, round(old_h * width / old_w))
+
+        def reads():
+            w, h = (_string(fields[k], "AXValue").replace(",", "") for k in ("Width:", "Height:"))
+            return w.isdigit() and h.isdigit() and abs(int(w) - want_w) <= 1 and abs(int(h) - want_h) <= 1 and (int(w), int(h))
+        shown = _wait_for("the new size in the dialog", reads)
+        _press(_find(sheet, "AXButton", "OK"))
+    except Exception:
+        cancel = _find(sheet, "AXButton", "Cancel") if _sheet(window) is not None else None
+        if cancel is not None:
+            _press(cancel)
+        raise
+    _wait_for("the Adjust Size dialog to close", lambda: _sheet(window) is None)
+    _save(window, full, before)
+    new_w, new_h = _wait_for("the new size on disk", lambda: (lambda s: s if s != (old_w, old_h) else None)(_pixels(full)), SAVE_TIMEOUT)
+    if (new_w, new_h) != shown:
+        raise UIError(f"{full} was saved at {new_w}×{new_h}, not the {shown[0]}×{shown[1]} the dialog showed")
+    return _checked("image_resize", mode, {**_item(full), "width": new_w, "height": new_h, "was": [old_w, old_h]})
+
+
+# Blank page (overnight, in its own section, tested on its own) -----------------------------------------------------
+
+def pdf_insert_blank_page(path: str, after: int, mode: str = "ui") -> dict:
+    """Add a blank page to a PDF after page after (counting from 1) with Edit > Insert > Blank Page, and save it."""
+    _mode("pdf_insert_blank_page", mode)
+    full = _kind(_existing(path), (".pdf",))
+    if not isinstance(after, int) or isinstance(after, bool) or after < 1:
+        raise ValueError("after must be a page number from 1")
+    before = _stamp(full)
+    window = _opened(full)
+    pages = _select_page(window, after)
+    if _system_events('return enabled of menu item "Blank Page" of menu 1 of menu item "Insert" of menu "Edit" of menu bar item "Edit" of menu bar 1') != "true":
+        raise UIError("Edit > Insert > Blank Page isn't available")
+    _system_events('click menu item "Blank Page" of menu 1 of menu item "Insert" of menu "Edit" of menu bar item "Edit" of menu bar 1')
+    _wait_for("the blank page", lambda: _page_count(window)[1] == pages + 1)
+    _save(window, full, before)
+    return _checked("pdf_insert_blank_page", mode, {**_item(full), "pages": pages + 1, "blank_page": after + 1})
+
+
+# Rotate one PDF page (overnight, in its own section, tested on its own) ----------------------------------------------
+
+ROTATIONS = r"""ObjC.import("Quartz"); function run(argv) { const d = $.PDFDocument.alloc.initWithURL($.NSURL.fileURLWithPath(argv[0]));
+  if (d.isNil()) return "null"; const o = []; for (let i = 0; i < d.pageCount; i++) o.push(Number(d.pageAtIndex(i).rotation)); return JSON.stringify(o); }"""
+
+
+def _rotations(full: str):
+    return json.loads(_jxa(ROTATIONS, full)) or []
+
+
+def pdf_rotate_page(path: str, page: int, direction: str = "right", mode: str = "ui") -> dict:
+    """Rotate one page (counting from 1) of a PDF a quarter turn with Tools > Rotate Right or Rotate Left, and save it. The other
+    pages aren't turned."""
+    _mode("pdf_rotate_page", mode)
+    item = {"right": "Rotate Right", "left": "Rotate Left"}.get(direction)
+    if item is None:
+        raise ValueError('direction must be "right" or "left"')
+    full = _kind(_existing(path), (".pdf",))
+    turns_before = _rotations(full)
+    before = _stamp(full)
+    window = _opened(full)
+    pages = _select_page(window, page)
+    if not _has_enabled("Tools", item):
+        raise UIError(f"Tools > {item} isn't available")
+    _menu("Tools", item)
+    time.sleep(0.6)
+    _save(window, full, before)
+    # Read back from the file: only that page may have turned, by a quarter turn the asked way.
+    want = list(turns_before)
+    want[page - 1] = (want[page - 1] + (90 if direction == "right" else 270)) % 360
+    got = _wait_for("the page to be turned in the file", lambda: (lambda r: r if r == want else None)(_rotations(full)), SAVE_TIMEOUT)
+    if got != want:
+        raise UIError(f"{full} was saved but its pages are turned {got}, not {want}")
+    return _checked("pdf_rotate_page", mode, {**_item(full), "page": page, "direction": direction, "pages": pages})
