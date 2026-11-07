@@ -1,0 +1,486 @@
+{
+  "app": "System Settings",
+  "import": "import system_settings",
+  "macos_version": "15.6.1 (24G90)",
+  "app_version": "15.0 (15.0)",
+  "commands": [
+    {
+      "name": "wallpaper_list",
+      "description": "Lists every wallpaper in System Settings > Wallpaper, whether it's on this Mac, and which is current.",
+      "args": [
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": System Settings has no scripting for this."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "What wallpapers can I choose?",
+        "Which desktop pictures are built in?",
+        "What's my current wallpaper?"
+      ],
+      "effects": "read_only",
+      "destructive": false,
+      "precondition": "The program has Accessibility, and Automation for System Events.",
+      "postcondition": "Nothing changes.",
+      "returns": {
+        "type": "list",
+        "fields": [
+          "name",
+          "on_this_mac",
+          "current"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared or the result wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "a System Settings dialog is already open, or another app came to the front; nothing more was done"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\""
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 with System Settings 15.0 only, so it isn't known to work on macOS 26 or any other version.",
+        "It depends on English names and was tested only in English.",
+        "Takes about 20 s: the list is scrolled through and each group opened with Show All."
+      ]
+    },
+    {
+      "name": "wallpaper_set",
+      "description": "Sets the desktop picture of every display and Space to a named wallpaper from System Settings > Wallpaper.",
+      "args": [
+        {
+          "name": "name",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The wallpaper's name as the pane shows it, e.g. Sonoma or Plum."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": System Settings has no scripting for this."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Set my wallpaper to Sonoma",
+        "Change the desktop background to a plain blue color",
+        "Use the iMac Blue wallpaper"
+      ],
+      "effects": "idempotent",
+      "destructive": false,
+      "precondition": "The program has Accessibility, and Automation for System Events.",
+      "postcondition": "The pane and macOS's wallpaper store show the wallpaper.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "wallpaper",
+          "changed"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared or the result wasn't seen in time"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\""
+        },
+        {
+          "name": "NotFound",
+          "when": "no wallpaper has that name"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "the wallpaper isn't on this Mac (it would be downloaded), Show on all Spaces is off, a System Settings dialog is open, or another app came to the front; nothing was done"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 with System Settings 15.0 only, so it isn't known to work on macOS 26 or any other version.",
+        "It depends on English names and was tested only in English.",
+        "Wallpaper buttons ignore the Accessibility press, so the wallpaper is clicked in the middle of its own named button's frame, only once that frame is wholly inside the visible list and window (scrolled there with the wheel over the list's own frame, its group opened with Show All); never fixed screen positions.",
+        "Wallpapers not on this Mac (that System Settings would download from Apple, such as Ventura and most aerials on the tested Mac) are refused, not downloaded."
+      ]
+    },
+    {
+      "name": "login_item_list",
+      "description": "Lists the items that open at login (General > Login Items & Extensions > Open at Login).",
+      "args": [
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": System Settings has no scripting for this."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "What opens when I log in?",
+        "List my login items",
+        "Which apps start automatically?"
+      ],
+      "effects": "read_only",
+      "destructive": false,
+      "precondition": "The program has Accessibility, and Automation for System Events.",
+      "postcondition": "Nothing changes.",
+      "returns": {
+        "type": "list",
+        "fields": [
+          "name",
+          "kind"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared or the result wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "a System Settings dialog is already open, or another app came to the front; nothing more was done"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\""
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 with System Settings 15.0 only, so it isn't known to work on macOS 26 or any other version.",
+        "It depends on English names and was tested only in English."
+      ]
+    },
+    {
+      "name": "login_item_add",
+      "description": "Adds an app to Open at Login with the pane's Add button and its Open dialog.",
+      "args": [
+        {
+          "name": "app_path",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "Path of an existing .app."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": System Settings has no scripting for this."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Open Calculator automatically when I log in",
+        "Add Notes to my login items",
+        "Make this app start at login"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "The program has Accessibility, and Automation for System Events.",
+      "postcondition": "The app is listed in Open at Login.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name",
+          "kind",
+          "path"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared or the result wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "a System Settings dialog is already open, or another app came to the front; nothing more was done"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\""
+        },
+        {
+          "name": "NotFound",
+          "when": "there's no app at app_path"
+        },
+        {
+          "name": "AlreadyExists",
+          "when": "the app already opens at login; nothing is done"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 with System Settings 15.0 only, so it isn't known to work on macOS 26 or any other version.",
+        "It depends on English names and was tested only in English.",
+        "The app's path is pasted into the Open dialog's Go to Folder; the clipboard is restored."
+      ]
+    },
+    {
+      "name": "login_item_remove",
+      "description": "Stops an item opening at login: its Open at Login row is selected and checked by name, then Remove (the app isn't touched).",
+      "args": [
+        {
+          "name": "name",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The item's name as Open at Login shows it."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": System Settings has no scripting for this."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Stop Calculator opening at login",
+        "Remove Stickies from my login items",
+        "Don't start this app when I log in"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "The program has Accessibility, and Automation for System Events.",
+      "postcondition": "The item is gone from Open at Login; the app is unchanged.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name",
+          "removed"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared or the result wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "a System Settings dialog is already open, or another app came to the front; nothing more was done"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\""
+        },
+        {
+          "name": "NotFound",
+          "when": "nothing by that name opens at login"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "two login items share the name"
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 with System Settings 15.0 only, so it isn't known to work on macOS 26 or any other version.",
+        "It depends on English names and was tested only in English."
+      ]
+    },
+    {
+      "name": "appearance_set",
+      "description": "Sets macOS's appearance to light, dark or auto with System Settings > Appearance's own named buttons.",
+      "args": [
+        {
+          "name": "mode_name",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "\"light\", \"dark\" or \"auto\"."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": System Settings has no scripting for this."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Turn on dark mode",
+        "Switch my Mac to light mode",
+        "Make the appearance change automatically"
+      ],
+      "effects": "idempotent",
+      "destructive": false,
+      "precondition": "The program has Accessibility, and Automation for System Events.",
+      "postcondition": "The pane shows that appearance selected.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "appearance",
+          "changed"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared or the result wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "a System Settings dialog is already open, or another app came to the front; nothing more was done"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\""
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 with System Settings 15.0 only, so it isn't known to work on macOS 26 or any other version.",
+        "It depends on English names and was tested only in English.",
+        "Added overnight in its own section and tested on its own."
+      ]
+    },
+    {
+      "name": "dock_set",
+      "description": "Changes the Dock's auto-hide, position and recent-apps settings in System Settings > Desktop & Dock; only the values given change.",
+      "args": [
+        {
+          "name": "autohide",
+          "type": "bool | None",
+          "required": false,
+          "default": null,
+          "meaning": "Automatically hide and show the Dock."
+        },
+        {
+          "name": "position",
+          "type": "str | None",
+          "required": false,
+          "default": null,
+          "meaning": "\"left\", \"bottom\" or \"right\"."
+        },
+        {
+          "name": "show_recents",
+          "type": "bool | None",
+          "required": false,
+          "default": null,
+          "meaning": "Show suggested and recent apps in Dock."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": System Settings has no scripting for this."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Hide the Dock automatically",
+        "Move the Dock to the left",
+        "Stop showing recent apps in the Dock"
+      ],
+      "effects": "idempotent",
+      "destructive": false,
+      "precondition": "The program has Accessibility, and Automation for System Events.",
+      "postcondition": "The pane shows the Dock settings given.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "autohide",
+          "position",
+          "show_recents",
+          "changed"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared or the result wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "a System Settings dialog is already open, or another app came to the front; nothing more was done"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\""
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 with System Settings 15.0 only, so it isn't known to work on macOS 26 or any other version.",
+        "It depends on English names and was tested only in English.",
+        "Added overnight in its own section and tested on its own."
+      ]
+    }
+  ]
+}
