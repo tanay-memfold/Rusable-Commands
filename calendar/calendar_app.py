@@ -51,10 +51,28 @@ VERIFIED: dict = {
             "app": "16.0 (3036.4.14)"
         }
     },
+    "calendar_export_ics": {
+        "ui": {
+            "macos": "15.6.1 (24G90)",
+            "app": "15.0 (2995.7.1)"
+        }
+    },
+    "calendar_import_ics": {
+        "ui": {
+            "macos": "15.6.1 (24G90)",
+            "app": "15.0 (2995.7.1)"
+        }
+    },
     "calendar_list": {
         "background": {
             "macos": "26.6.2 (25G83)",
             "app": "16.0 (3036.4.14)"
+        }
+    },
+    "calendar_rename": {
+        "background": {
+            "macos": "15.6.1 (24G90)",
+            "app": "15.0 (2995.7.1)"
         }
     },
     "event_add_alert": {
@@ -894,3 +912,365 @@ def event_add_alert(match: str, date: str, minutes_before: int, calendar: str | 
                      lambda: (lambda m: m if sorted(m["alerts"]) == sorted(before + [minutes_before]) else None)(
                          _more("details", uid=event["uid"])), SAVE_TIMEOUT)
     return _checked("event_add_alert", mode, {**_shape(event, "uid," + DEFAULT_FIELDS), "alerts": sorted(done["alerts"])})
+
+
+# Export (day 4, in its own section, tested on its own) -------------------------------------------------------------
+# Choosing a folder in Calendar's save sheet with Go to Folder didn't work (day 3), so the sheet keeps the folder it shows, the
+# file gets a unique name, and the file is then moved to the path asked for.
+
+import os as _os
+import uuid as _uuid
+
+EXPORT_WHERE = """      repeat with s in sheets of w
+        repeat with p in pop up buttons of s
+          try
+            if value of attribute "AXIdentifier" of p is "where popup" then return value of p
+          end try
+        end repeat
+      end repeat"""
+
+EXPORT_NAME = """      repeat with s in sheets of w
+        repeat with t in text fields of s
+          try
+            if value of attribute "AXIdentifier" of t is "saveAsNameTextField" then
+              set focused of t to true
+              set value of t to (item 1 of argv)
+              if value of t is (item 1 of argv) then return "ok"
+            end if
+          end try
+        end repeat
+      end repeat"""
+
+EXPORT_PRESS = """      repeat with s in sheets of w
+        repeat with b in buttons of s
+          try
+            if value of attribute "AXIdentifier" of b is "OKButton" then
+              click b
+              return "ok"
+            end if
+          end try
+        end repeat
+      end repeat"""
+
+EXPORT_CANCEL = """      repeat with s in sheets of w
+        repeat with b in buttons of s
+          try
+            if value of attribute "AXIdentifier" of b is "CancelButton" then
+              click b
+              return "ok"
+            end if
+          end try
+        end repeat
+      end repeat
+      return "ok\""""
+
+
+EXPORT_ROW = """      -- The calendar list is found by its description at any depth of the window's split views (its place differs between macOS
+      -- versions); if it isn't showing, View > Show Calendar List.
+      set sidebar to missing value
+      set level to {w}
+      repeat 4 times
+        set nextLevel to {}
+        repeat with g in level
+          try
+            repeat with a in (scroll areas of g)
+              repeat with o in (outlines of a)
+                if description of o is "Calendar Sources" then set sidebar to o
+              end repeat
+            end repeat
+          end try
+          try
+            set nextLevel to nextLevel & (splitter groups of g as list)
+          end try
+        end repeat
+        if sidebar is not missing value then exit repeat
+        set level to nextLevel
+      end repeat
+      if sidebar is missing value then
+        try
+          click menu item "Show Calendar List" of menu "View" of menu bar item "View" of menu bar 1
+        end try
+        return "no"
+      end if
+      repeat with r in rows of sidebar
+        try
+          repeat with e in (UI elements of UI element 1 of r)
+            if role of e is in {"AXTextField", "AXStaticText"} and value of e is item 1 of argv then
+              set selected of r to true
+              set focused of sidebar to true
+              return "ok"
+            end if
+          end repeat
+        end try
+      end repeat"""
+
+
+def _export_folders(where: str) -> list:
+    """Folders the save sheet may be pointing at, from the name its "where" pop-up shows."""
+    home = _os.path.expanduser("~")
+    named = {"Documents": "~/Documents", "Desktop": "~/Desktop", "Downloads": "~/Downloads", "Home": "~", _os.path.basename(home): "~"}
+    out = [_os.path.expanduser(named[where])] if where in named else []
+    out += [_os.path.join(home, d) for d in (where,) if where and _os.path.isdir(_os.path.join(home, d))]
+    out += [_os.path.expanduser(p) for p in ("~/Documents", "~/Desktop", "~/Downloads", "~")]
+    return list(dict.fromkeys(out))
+
+
+# Day 4: the calendar is chosen by clicking its name in the calendar list, at the centre of that named element's own frame.
+import ctypes as _ct
+
+_AS = _ct.cdll.LoadLibrary("/System/Library/Frameworks/ApplicationServices.framework/ApplicationServices")
+_CFL = _ct.cdll.LoadLibrary("/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation")
+_CGL = _ct.cdll.LoadLibrary("/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics")
+_VP = _ct.c_void_p
+
+
+class _Pt(_ct.Structure):
+    _fields_ = [("x", _ct.c_double), ("y", _ct.c_double)]
+
+
+for _f, _r, _a in [(_AS.AXUIElementCreateApplication, _VP, [_ct.c_int]), (_AS.AXUIElementCopyAttributeValue, _ct.c_int, [_VP, _VP, _ct.POINTER(_VP)]),
+                   (_AS.AXValueGetValue, _ct.c_bool, [_VP, _ct.c_int, _VP]), (_CFL.CFStringCreateWithCString, _VP, [_VP, _ct.c_char_p, _ct.c_uint32]),
+                   (_CFL.CFStringGetLength, _ct.c_long, [_VP]), (_CFL.CFStringGetMaximumSizeForEncoding, _ct.c_long, [_ct.c_long, _ct.c_uint32]),
+                   (_CFL.CFStringGetCString, _ct.c_bool, [_VP, _ct.c_char_p, _ct.c_long, _ct.c_uint32]), (_CFL.CFGetTypeID, _ct.c_ulong, [_VP]),
+                   (_CFL.CFStringGetTypeID, _ct.c_ulong, []), (_CFL.CFArrayGetTypeID, _ct.c_ulong, []), (_CFL.CFArrayGetCount, _ct.c_long, [_VP]),
+                   (_CFL.CFArrayGetValueAtIndex, _VP, [_VP, _ct.c_long]), (_CGL.CGEventCreateMouseEvent, _VP, [_VP, _ct.c_uint32, _Pt, _ct.c_uint32]),
+                   (_CGL.CGEventPost, None, [_ct.c_uint32, _VP])]:
+    _f.restype, _f.argtypes = _r, _a
+_TRUE_CF = _VP.in_dll(_CFL, "kCFBooleanTrue")
+_cfs: dict = {}
+
+
+def _axs(text):
+    if text not in _cfs:
+        _cfs[text] = _CFL.CFStringCreateWithCString(None, text.encode(), 0x08000100)
+    return _cfs[text]
+
+
+def _ax(element, name):
+    out = _VP()
+    return out.value if _AS.AXUIElementCopyAttributeValue(element, _axs(name), _ct.byref(out)) == 0 else None
+
+
+def _axstr(element, name) -> str:
+    v = _ax(element, name)
+    if not v or _CFL.CFGetTypeID(v) != _CFL.CFStringGetTypeID():
+        return ""
+    size = _CFL.CFStringGetMaximumSizeForEncoding(_CFL.CFStringGetLength(v), 0x08000100) + 1
+    buf = _ct.create_string_buffer(size)
+    return buf.value.decode() if _CFL.CFStringGetCString(v, buf, size, 0x08000100) else ""
+
+
+def _axkids(element) -> list:
+    v = _ax(element, "AXChildren")
+    if not v or _CFL.CFGetTypeID(v) != _CFL.CFArrayGetTypeID():
+        return []
+    return [_CFL.CFArrayGetValueAtIndex(v, i) for i in range(_CFL.CFArrayGetCount(v))]
+
+
+def _axwalk(root):
+    stack = [root]
+    while stack:
+        e = stack.pop()
+        yield e
+        stack.extend(reversed(_axkids(e)))
+
+
+def _axframe(element):
+    p, z = (_ct.c_double * 2)(), (_ct.c_double * 2)()
+    if not (_AS.AXValueGetValue(_ax(element, "AXPosition"), 1, p) and _AS.AXValueGetValue(_ax(element, "AXSize"), 2, z)):
+        return None
+    return p[0], p[1], z[0], z[1]
+
+
+def _export_select(name: str) -> None:
+    """Select the calendar named name: find its name in the "Calendar Sources" list and click the centre of that element's frame."""
+    found = subprocess.run(["pgrep", "-x", "Calendar"], capture_output=True, text=True).stdout.split()
+    if not found:
+        raise UIError("Calendar isn't running")
+    app = _AS.AXUIElementCreateApplication(int(found[0]))
+    # Calendar's first launch shows What's New, which needs Continue (no prompt follows it).
+    _osascript('tell application "System Events" to tell process "Calendar"\n'
+               'repeat with x in windows\n'
+               'if exists (static text "What’s New in Calendar" of x) then click button "Continue" of x\n'
+               'end repeat\nend tell')
+    time.sleep(1)
+
+    def outline():
+        return next((e for w in _axkids(app) for e in _axwalk(w) if _axstr(e, "AXRole") == "AXOutline" and _axstr(e, "AXDescription") == "Calendar Sources"), None)
+    if outline() is None:
+        _until("Show Calendar List in the View menu", MENU_ITEM, "View", "Show Calendar List")
+        _wait_for("the calendar list", outline)
+
+    def label():
+        for window in _axkids(app):
+            for e in _axwalk(window):
+                if _axstr(e, "AXRole") == "AXOutline" and _axstr(e, "AXDescription") == "Calendar Sources":
+                    for item in _axwalk(e):
+                        if _axstr(item, "AXRole") in ("AXTextField", "AXStaticText") and _axstr(item, "AXValue") == name:
+                            return item
+        return None
+    item = _wait_for(f"{name!r} in the calendar list", label)
+    frame = _axframe(item)
+    if frame is None:
+        raise UIError("the calendar's name has no frame")
+    if _ui("      if frontmost then return \"ok\"") != "ok":
+        raise StateBlocked("another app came to the front; nothing was exported")
+    x, y = frame[0] + frame[2] / 2, frame[1] + frame[3] / 2
+    for kind in (5, 1, 2):  # move, down, up
+        _CGL.CGEventPost(0, _CGL.CGEventCreateMouseEvent(None, kind, _Pt(x, y), 0))
+        time.sleep(0.12)
+
+    def selected():
+        # The row holding the name is selected.
+        for window in _axkids(app):
+            for e in _axwalk(window):
+                if _axstr(e, "AXRole") == "AXRow" and _ax(e, "AXSelected") == _TRUE_CF.value and any(
+                        _axstr(k, "AXValue") == name for k in _axwalk(e)):
+                    return True
+        return False
+    _wait_for(f"{name!r} to be selected", selected)
+
+
+def calendar_export_ics(name: str, path: str, mode: str = "ui") -> dict:
+    """Export the local calendar named name to an .ics file at path (File > Export > Export…). path must end in .ics, its folder must
+    exist and nothing may be at path. Calendar saves the file in the folder its save sheet shows, under a unique name; the file is
+    then moved to path."""
+    _mode("calendar_export_ics", mode, ("ui",))
+    full = _os.path.abspath(_os.path.expanduser(path))
+    if not full.lower().endswith(".ics"):
+        raise ValueError("path must end in .ics")
+    if not _os.path.isdir(_os.path.dirname(full)):
+        raise NotFound(f"no folder at {_os.path.dirname(full)}")
+    if _os.path.exists(full):
+        raise AlreadyExists(f"{full} already exists; nothing is overwritten")
+    _calendar(name)
+    _ready()
+    _export_select(name)
+    _until("Export in the File menu", MENU_ITEM, "File", "Export", "Export…")
+    where = _until("the save sheet", EXPORT_WHERE)
+    temp = f"rusable-export-{_uuid.uuid4().hex[:12]}"
+    try:
+        _until("the file name", EXPORT_NAME, temp)
+        time.sleep(0.4)
+        _until("the Export button", EXPORT_PRESS)
+    except Exception:
+        _ui(EXPORT_CANCEL)
+        raise
+
+    def written():
+        for folder in _export_folders(where):
+            for candidate in (_os.path.join(folder, temp + ".ics"), _os.path.join(folder, temp)):
+                if _os.path.isfile(candidate) and _os.path.getsize(candidate) > 0:
+                    return candidate
+        return None
+    saved = _wait_for("the exported file", written, SAVE_TIMEOUT)
+    size = -1
+    while _os.path.getsize(saved) != size:
+        size = _os.path.getsize(saved)
+        time.sleep(0.5)
+    _done()
+    _os.replace(saved, full)
+    with open(full, encoding="utf-8", errors="replace") as handle:
+        events = handle.read().count("BEGIN:VEVENT")
+    return _checked("calendar_export_ics", mode, {"name": name, "path": full, "events": events})
+
+
+# Import (overnight, in its own section, tested on its own) ---------------------------------------------------------
+# The .ics file is opened in Calendar, as a double-click on it would; Calendar then shows its own "Add event" window, whose pop-up
+# names the destination calendar. The calendar is chosen there by name and OK pressed. Events are counted before and after through
+# Calendar's scripting.
+
+_AS.AXUIElementPerformAction.restype, _AS.AXUIElementPerformAction.argtypes = _ct.c_int, [_VP, _VP]
+
+IMPORT_COUNT = r"""
+function run(argv) {
+  const found = Application("Calendar").calendars.whose({name: argv[0]})();
+  if (found.length !== 1) throw new Error("calendars named " + argv[0] + ": " + found.length);
+  return String(found[0].events.length);
+}"""
+
+
+
+def _import_windows(app) -> list:
+    return [w for w in _axkids(app) if _axstr(w, "AXRole") == "AXWindow" and _axstr(w, "AXTitle").startswith("Add event")]
+
+
+def _axpress(element) -> None:
+    if _AS.AXUIElementPerformAction(element, _axs("AXPress")):
+        raise UIError("an element couldn't be pressed")
+
+
+def calendar_import_ics(path: str, calendar: str, mode: str = "ui") -> dict:
+    """Add the events in an .ics file to the local calendar named calendar: the file is opened in Calendar, and in Calendar's own
+    "Add event" window the calendar is chosen by name and OK pressed. Every event in the file must arrive."""
+    _mode("calendar_import_ics", mode, ("ui",))
+    full = _os.path.abspath(_os.path.expanduser(path))
+    if not full.lower().endswith(".ics"):
+        raise ValueError("path must end in .ics")
+    if not _os.path.isfile(full):
+        raise NotFound(f"no file at {full}")
+    with open(full, encoding="utf-8", errors="replace") as handle:
+        text = handle.read()
+    events = text.count("BEGIN:VEVENT")
+    if not events:
+        raise ValueError(f"{full} has no events")
+    _calendar(calendar)
+    _ready()
+    found = subprocess.run(["pgrep", "-x", "Calendar"], capture_output=True, text=True).stdout.split()
+    app = _AS.AXUIElementCreateApplication(int(found[0]))
+    if _import_windows(app):
+        raise StateBlocked("Calendar already shows an Add event window; it was left as it is")
+    before = int(_jxa(IMPORT_COUNT, calendar))
+    subprocess.run(["open", "-a", "Calendar", full], check=True)
+    window = _wait_for("Calendar's Add event window", lambda: next(iter(_import_windows(app)), None), TIMEOUT * 2)
+    try:
+        popup = _wait_for("the destination calendar menu", lambda: next((e for e in _axwalk(window) if _axstr(e, "AXRole") == "AXPopUpButton"), None))
+        if _axstr(popup, "AXValue") != calendar:
+            _axpress(popup)
+            item = _wait_for(f"{calendar!r} in the menu", lambda: (lambda xs: xs[0] if len(xs) == 1 else None)(
+                [e for e in _axwalk(popup) if _axstr(e, "AXRole") == "AXMenuItem" and _axstr(e, "AXTitle") == calendar]))
+            _axpress(item)
+            _wait_for(f"the menu to show {calendar!r}", lambda: _axstr(popup, "AXValue") == calendar)
+        ok = next((e for e in _axwalk(window) if _axstr(e, "AXRole") == "AXButton" and _axstr(e, "AXTitle") == "OK"), None)
+        if ok is None:
+            raise UIError("the Add event window has no OK button")
+        _axpress(ok)
+    except Exception:
+        for w in _import_windows(app):
+            cancel = next((e for e in _axwalk(w) if _axstr(e, "AXRole") == "AXButton" and _axstr(e, "AXTitle") == "Cancel"), None)
+            if cancel is not None:
+                _axpress(cancel)
+        raise
+    _wait_for("the Add event window to close", lambda: not _import_windows(app), TIMEOUT)
+    # Calendar skips events it already has without saying so, and its scripting ids aren't the file's UIDs, so a file whose events
+    # never arrive is reported, not waited on.
+    began = time.monotonic()
+    while True:
+        now = int(_jxa(IMPORT_COUNT, calendar))
+        if now == before + events:
+            break
+        if now == before and time.monotonic() - began > 10:
+            raise UIError(f"Calendar added none of the file's events to {calendar!r} (it skips events it already has)")
+        if time.monotonic() - began > SAVE_TIMEOUT * 2:
+            raise UIError(f"{now - before} of the file's {events} events arrived in {calendar!r}")
+        time.sleep(0.5)
+    return _checked("calendar_import_ics", mode, {"calendar": calendar, "path": full, "events": events})
+
+
+# Rename (overnight, macOS 15.6.1 only, in its own section, tested on its own) --------------------------------------
+
+def calendar_rename(name: str, to: str, mode: str = "background") -> dict:
+    """Rename the local calendar named name to to, through Calendar's own scripting. Its events stay."""
+    _mode("calendar_rename", mode, ("background",))
+    if not isinstance(to, str) or not to.strip() or "\n" in to:
+        raise ValueError("to must be one non-empty line")
+    if to == name:
+        raise ValueError("the new name is the same as the old one")
+    _launch_hidden()
+    _calendar(name)
+    if [c for c in _data("calendars") if c["name"] == to]:
+        raise AlreadyExists(f"a local calendar is already named {to!r}; nothing was changed")
+    _osascript('on run argv\ntell application "Calendar" to set name of calendar (item 1 of argv) to (item 2 of argv)\nend run', name, to)
+    _wait_for(f"the calendar to be named {to!r}", lambda: [c for c in _data("calendars") if c["name"] == to]
+              and not [c for c in _data("calendars") if c["name"] == name], SAVE_TIMEOUT)
+    return _checked("calendar_rename", mode, {"name": to, "was": name})

@@ -125,17 +125,37 @@ parts: FREQ (DAILY, WEEKLY, MONTHLY, YEARLY), INTERVAL, COUNT or UNTIL, BYDAY, B
 Adds an on-screen alert `minutes_before` minutes before the start (0 to 40320). `AlreadyExists` if one is already set for that
 time. **Removing alerts isn't supported**: every delete of an alert through Calendar's scripting failed.
 
-Left out: exporting a calendar as `.ics`. With a calendar selected, File > Export > Export… opens a normal save sheet, and it worked
-by hand, but in the test VMs Go to Folder in that sheet didn't close after the path was entered (with Return pressed again, and with
-the path confirmed through Accessibility), so the file couldn't be put in a chosen folder.
-
 These were read back from Calendar.sqlitedb (its repeat and alarm tables), not through Calendar, and every other event in the
 database was compared before and after.
+
+### calendar_export_ics(name, path, mode="ui") → {name, path, events}
+Exports a local calendar to an .ics file: the calendar is chosen by clicking its name in the calendar list (**at the centre of that
+named element's own frame**, never a fixed position; View > Show Calendar List if it's hidden), then **File > Export > Export…**. The
+save sheet keeps the folder it shows; the file gets a unique name there, and once written it is moved to `path`. So that folder
+(often Documents) briefly holds it. On Calendar's first launch its What's New screen gets **Continue**. Verified on macOS 15.6.1 only;
+it was added on day 4 in its own section of the file and tested on its own. The file was read back as iCalendar (both events' titles)
+and the sheet's possible folders were checked to end up exactly as before.
+
+### calendar_import_ics(path, calendar, mode="ui") → {calendar, path, events}
+Adds the events in an `.ics` file to a local calendar. The file is opened in Calendar, as a double-click on it would; in
+Calendar's own **Add event** window the calendar is chosen by name in its pop-up, then **OK**. Every event in the file must then
+arrive in that calendar, counted through Calendar's scripting. **Calendar silently skips events it already has**, and its scripting
+ids aren't the file's UIDs, so if none arrive within 10 s it raises `UIError` saying so; nothing is duplicated. Verified on macOS
+15.6.1 only; added overnight in its own section of the file and tested on its own. The events were read back from Calendar.sqlitedb
+(titles in that calendar), and every other event in the database was compared before and after.
+
+### calendar_rename(name, to, mode="background") → {name, was}
+Renames a local calendar through Calendar's own scripting; its events stay. `AlreadyExists` if another local calendar already has
+the new name. Background mode only. Verified on macOS 15.6.1 only; added overnight in its own section and tested on its own (the
+calendar's title and events read back from Calendar.sqlitedb).
 
 Commands added later, verified separately:
 
 | Function | Mode | Verified | Cases | macOS | App |
 |---|---|---|---|---|---|
+| `calendar_export_ics` | ui | yes | 9 | 15.6.1 (24G90) | 15.0 (2995.7.1) |
+| `calendar_import_ics` | ui | yes | 12 | 15.6.1 (24G90) | 15.0 (2995.7.1) |
+| `calendar_rename` | background | yes | 9 | 15.6.1 (24G90) | 15.0 (2995.7.1) |
 | `event_add_alert` | background | yes | 23 | 15.6.1 (24G90) | 15.0 (2995.7.1) |
 | `event_details` | background | yes | 10 | 15.6.1 (24G90) | 15.0 (2995.7.1) |
 | `event_set_repeat` | background | yes | 36 | 15.6.1 (24G90) | 15.0 (2995.7.1) |

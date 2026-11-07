@@ -1073,6 +1073,254 @@
         "Only on-screen alerts; sound and email alerts aren't covered."
       ],
       "verified_on": "15.6.1"
+    },
+    {
+      "name": "calendar_export_ics",
+      "description": "Exports a local calendar to an .ics file (File > Export > Export…).",
+      "args": [
+        {
+          "name": "name",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The local calendar's exact name."
+        },
+        {
+          "name": "path",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "A new .ics path, absolute or starting with ~; its folder must exist."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": Calendar's scripting has no export."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Export the Family Events calendar to my Desktop",
+        "Save the Work calendar as an .ics file",
+        "Share my calendar as a file"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "The calendar exists. It has Accessibility, and Automation for System Events and Calendar.",
+      "postcondition": "path holds the calendar's events as iCalendar.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name",
+          "path",
+          "events"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "path doesn't end in .ics, or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "NotFound",
+          "when": "no calendar has that name, or path's folder doesn't exist; nothing is done"
+        },
+        {
+          "name": "AlreadyExists",
+          "when": "something is at path; nothing is overwritten"
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the file wasn't written in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "another app came to the front; nothing was exported"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\""
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 with Calendar 15.0 only, so it isn't known to work on macOS 26 or any other version.",
+        "It depends on English names and was tested only in English.",
+        "The calendar is chosen by clicking its name in the calendar list, at the centre of that named element's own frame.",
+        "Calendar saves the file in the folder its save sheet already shows, under a unique name; the file is then moved to path, so that folder (often Documents) briefly holds it.",
+        "On Calendar's first launch its What's New screen gets Continue.",
+        "Added on day 4 in its own section and tested on its own."
+      ],
+      "verified_on": "15.6.1"
+    },
+    {
+      "name": "calendar_import_ics",
+      "description": "Adds the events in an .ics file to a local calendar through Calendar's own Add event window (the calendar chosen by name in its pop-up, then OK).",
+      "args": [
+        {
+          "name": "path",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The .ics file."
+        },
+        {
+          "name": "calendar",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The local calendar's exact name."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\"."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Import this .ics file into my Work calendar",
+        "Add the events from family_events.ics to Calendar",
+        "Load the invite file into the Trips calendar"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "The calendar exists. It has Accessibility, and Automation for System Events and Calendar.",
+      "postcondition": "Every event in the file is in the calendar.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "calendar",
+          "path",
+          "events"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "path doesn't end in .ics, the file has no events, or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "NotFound",
+          "when": "no file at path, or no local calendar with that name"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "two calendars share the name"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "Calendar already shows an Add event window, or a dialog; it was left as it is"
+        },
+        {
+          "name": "UIError",
+          "when": "Calendar added none of the events (it skips ones it already has), only some arrived, or a named element never appeared"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\""
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 with Calendar 15.0 only, so it isn't known to work on macOS 26 or any other version.",
+        "It depends on English names and was tested only in English.",
+        "The file is opened in Calendar as a double-click would; Calendar skips events it already has without saying so, which is reported as UIError.",
+        "Added overnight in its own section and tested on its own."
+      ],
+      "verified_on": "15.6.1"
+    },
+    {
+      "name": "calendar_rename",
+      "description": "Renames a local calendar through Calendar's own scripting; its events stay.",
+      "args": [
+        {
+          "name": "name",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The calendar's exact name now."
+        },
+        {
+          "name": "to",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The new name, one line; no other local calendar may have it."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "background",
+          "meaning": "Must be \"background\"."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "background"
+        ],
+        "default": "background"
+      },
+      "example_requests": [
+        "Rename my Work calendar to Office",
+        "Call the Trips calendar Travel 2027",
+        "Change this calendar's name"
+      ],
+      "effects": "idempotent",
+      "destructive": false,
+      "precondition": "The calendar is a local calendar with a name no other local calendar has. It has Automation permission for Calendar.",
+      "postcondition": "The calendar has the new name and the same events.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "name",
+          "was"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "to is empty, has a line break or is the same name, or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "NotFound",
+          "when": "no local calendar has that name"
+        },
+        {
+          "name": "Ambiguous",
+          "when": "two calendars share the name"
+        },
+        {
+          "name": "AlreadyExists",
+          "when": "another local calendar already has the new name; nothing is changed"
+        },
+        {
+          "name": "UIError",
+          "when": "the new name wasn't seen in time"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"ui\""
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 only, unlike this app's other commands (macOS 26.6.2), so it isn't known to work on macOS 26 or any other version.",
+        "Added overnight in its own section and tested on its own."
+      ],
+      "verified_on": "15.6.1"
     }
   ]
 }
