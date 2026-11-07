@@ -243,6 +243,79 @@
         "The text is pasted through the clipboard, which is restored afterwards; VS Code's own formatting on paste was off.",
         "Whether the pasted text landed is judged from the window title only; if the paste is lost (say, a VS Code dialog takes it), the new file is saved empty and UIError is raised, leaving that empty file."
       ]
+    },
+    {
+      "name": "extension_install",
+      "description": "Installs an extension from the Marketplace by its id in VS Code's Extensions view; the first extension from a publisher gets VS Code's own Trust Publisher & Install.",
+      "args": [
+        {
+          "name": "ext_id",
+          "type": "str",
+          "required": true,
+          "default": null,
+          "meaning": "The extension's id, publisher.name, such as esbenp.prettier-vscode."
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "default": "ui",
+          "meaning": "Must be \"ui\": VS Code's command-line tool is a shell command, so it isn't offered as a mode."
+        }
+      ],
+      "modes": {
+        "verified": [
+          "ui"
+        ],
+        "default": "ui"
+      },
+      "example_requests": [
+        "Install the Prettier extension",
+        "Add ESLint to VS Code",
+        "Get the YAML extension"
+      ],
+      "effects": "non_idempotent",
+      "destructive": false,
+      "precondition": "The program has Accessibility, and Automation for System Events.",
+      "postcondition": "The extension is installed for this user.",
+      "returns": {
+        "type": "object",
+        "fields": [
+          "id",
+          "installed"
+        ]
+      },
+      "errors": [
+        {
+          "name": "ValueError",
+          "when": "an argument is invalid or mode isn't \"ui\" or \"background\""
+        },
+        {
+          "name": "UIError",
+          "when": "a named element never appeared, or the change wasn't seen in time"
+        },
+        {
+          "name": "StateBlocked",
+          "when": "another app came to the front; nothing more was done"
+        },
+        {
+          "name": "AlreadyExists",
+          "when": "the extension is already installed; nothing is changed"
+        },
+        {
+          "name": "NotSupported",
+          "when": "mode is \"background\""
+        }
+      ],
+      "known_gaps": [
+        "Verified on macOS 15.6.1 with VS Code 1.105.1 only, so it isn't known to work on macOS 26 or any other version.",
+        "It depends on English names and was tested only in English.",
+        "VS Code is asked to show its window to Accessibility, which turns on its Screen Reader Optimized mode while it runs.",
+        "It needs the internet; it downloads from Microsoft's Marketplace.",
+        "Install is pressed only on the search result for exactly this id; if VS Code installs anything else too, the result lists it under also_installed.",
+        "VS Code's Trust Publisher & Install is pressed for a new publisher; a workspace-trust question gets plain Install, which doesn't trust the workspace.",
+        "Added on day 4 in its own section and tested on its own."
+      ]
     }
   ]
 }

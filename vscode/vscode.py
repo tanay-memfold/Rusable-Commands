@@ -27,6 +27,12 @@ ROOT_ENV = "VSCODE_ALLOWED_ROOT"
 APP_PLIST = "/Applications/Visual Studio Code.app/Contents/Info.plist"
 
 VERIFIED: dict = {
+    "extension_install": {
+        "ui": {
+            "macos": "15.6.1 (24G90)",
+            "app": "1.105.1 (1.105.1)"
+        }
+    },
     "file_new": {
         "ui": {
             "macos": "15.6.1 (24G90)",
@@ -532,3 +538,85 @@ def file_open(path: str, mode: str = "ui") -> dict:
     time.sleep(1.5)
     _distrust()
     return _checked("file_open", mode, {"name": name, "path": full, "window": _main_title()})
+
+
+# Extensions (day 4, in their own section, tested on their own) --------------------------------------
+
+EXTENSIONS = os.path.expanduser("~/.vscode/extensions")
+
+
+def _installed() -> set:
+    """Extension ids installed for this user, from VS Code's own extensions folder."""
+    try:
+        with open(os.path.join(EXTENSIONS, "extensions.json"), encoding="utf-8") as handle:
+            return {e["identifier"]["id"].lower() for e in json.load(handle)}
+    except (OSError, ValueError, KeyError, TypeError):
+        return set()
+
+
+def _button_named(name: str):
+    return next((e for w in _windows() for e in _walk(w) if _role(e) == "AXButton" and name in (_string(e, "AXTitle"), _string(e, "AXDescription"))), None)
+
+
+def extension_install(ext_id: str, mode: str = "ui") -> dict:
+    """Install an extension from the Marketplace by its id (publisher.name, such as esbenp.prettier-vscode) in the Extensions view.
+    The first extension from a publisher makes VS Code ask "Trust Publisher & Install"; that is pressed. A workspace-trust question
+    gets plain Install, which doesn't trust the workspace."""
+    _mode("extension_install", mode)
+    if not ext_id or ext_id.count(".") != 1 or " " in ext_id:
+        raise ValueError("ext_id must be publisher.name")
+    if ext_id.lower() in _installed():
+        raise AlreadyExists(f"{ext_id} is already installed")
+    _start()
+    _accessible()
+    # Just after it starts, VS Code ignores the menu until its window is ready: wait for the sidebar's Extensions button first.
+    _wait_for("VS Code's window to be ready", lambda: any(_role(e) in ("AXButton", "AXRadioButton", "AXTab", "AXGroup") and _string(e, "AXDescription").startswith("Extensions (")
+                                                       for w in _windows() for e in _walk(w)), TIMEOUT * 3)
+    def search_box():
+        return next((e for w in _windows() for e in _walk(w) if _role(e) in ("AXTextArea", "AXTextField")
+                     and "Search Extensions" in (_string(e, "AXDescription") + _string(e, "AXPlaceholderValue"))), None)
+    search = None
+    for attempt in range(3):
+        # Soon after VS Code starts, the menu choice or its Accessibility can be lost: ask again, then choose the view again.
+        _accessible()
+        _menu("View", "Extensions")
+        try:
+            search = _wait_for("the extensions search", search_box, 8)
+            break
+        except UIError:
+            if attempt == 2:
+                raise
+    _AS.AXUIElementSetAttributeValue(search, _cf("AXFocused"), _TRUE)
+    _key(KEY_A, "command down")
+    _paste_text("@id:" + ext_id, lambda: ("@id:" + ext_id) in _string(search, "AXValue"))
+    def result():
+        # Only the search results' list, and only once it holds just this one extension (not the lists shown before the search).
+        lists = [e for w in _windows() for e in _walk(w) if _role(e) == "AXList" and _string(e, "AXDescription") == "Extensions"]
+        if len(lists) != 1:
+            return None
+        items = [e for e in _children(lists[0]) if _role(e) in ("AXGroup", "AXRow")]
+        if len(items) != 1:
+            return None
+        return next((b for b in _walk(items[0]) if _role(b) == "AXButton" and "Install" in (_string(b, "AXTitle"), _string(b, "AXDescription"))), None)
+    before = _installed()
+    install = _wait_for(f"{ext_id} alone in the search results", result, SAVE_TIMEOUT * 2)
+    _press(install)
+
+    def installed_or_asked():
+        if ext_id.lower() in _installed():
+            return True
+        publisher = _button_named("Trust Publisher & Install")
+        if publisher is not None:
+            _press(publisher)
+            return False
+        for window in _windows():
+            items = list(_walk(window))
+            if any(_role(e) == "AXButton" and "Trust Workspace & Install" in (_string(e, "AXTitle"), _string(e, "AXDescription")) for e in items):
+                plain = next((e for e in items if _role(e) == "AXButton" and _string(e, "AXTitle") == "Install"), None)
+                if plain is not None:
+                    _press(plain)
+        return False
+    _wait_for(f"{ext_id} to be installed", installed_or_asked, SAVE_TIMEOUT * 6)
+    _distrust()
+    extra = sorted(_installed() - before - {ext_id.lower()})
+    return _checked("extension_install", mode, {"id": ext_id, "installed": True, **({"also_installed": extra} if extra else {})})
