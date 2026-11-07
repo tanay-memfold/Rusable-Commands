@@ -23,6 +23,9 @@ install, no model, no keys.
 | VS Code | [`vscode/`](vscode/) | `import vscode` |
 | Xcode | [`xcode/`](xcode/) | `import xcode` |
 | OBS Studio | [`obs/`](obs/) | `import obs` |
+| Anaconda Navigator | [`anaconda/`](anaconda/) | `import anaconda` |
+| LibreOffice Calc | [`libreoffice/`](libreoffice/) | `import calc` |
+| System Settings | [`settings/`](settings/) | `import system_settings` |
 
 An agent writes a short program with keyword arguments, like this:
 
@@ -41,7 +44,7 @@ doesn't clash with Python's own `calendar` module, so import it `as calendar`.
 
 ## Catalog
 
-`notes/catalog.json`, `calendar/catalog.json`, `gmail/catalog.json`, `finder/catalog.json`, `safari/catalog.json`, `chrome/catalog.json`, `reminders/catalog.json`, `contacts/catalog.json`, `textedit/catalog.json`, `preview/catalog.json`, `keka/catalog.json`, `obsidian/catalog.json`, `automator/catalog.json`, `vscode/catalog.json`, `xcode/catalog.json` and `obs/catalog.json` describe every verified command, so an agent can find and call
+`notes/catalog.json`, `calendar/catalog.json`, `gmail/catalog.json`, `finder/catalog.json`, `safari/catalog.json`, `chrome/catalog.json`, `reminders/catalog.json`, `contacts/catalog.json`, `textedit/catalog.json`, `preview/catalog.json`, `keka/catalog.json`, `obsidian/catalog.json`, `automator/catalog.json`, `vscode/catalog.json`, `xcode/catalog.json`, `obs/catalog.json`, `anaconda/catalog.json`, `libreoffice/catalog.json` and `settings/catalog.json` describe every verified command, so an agent can find and call
 one without reading the code. Each file gives the app, its import line, the versions it was verified on, and one
 entry per command: description, arguments, verified and default modes, example requests, effects, whether it is
 destructive, precondition, postcondition, returned fields and errors.
@@ -153,7 +156,10 @@ Each app's catalog gives the versions it was verified on. **Finder, Safari, Chro
 |---|---|---|
 | `calendar_create` | verified | verified |
 | `calendar_delete` | verified | verified |
+| `calendar_export_ics` | — | verified |
+| `calendar_import_ics` | — | verified |
 | `calendar_list` | verified | — |
+| `calendar_rename` | verified | — |
 | `event_add_alert` | verified | — |
 | `event_create` | verified | — |
 | `event_delete` | verified | verified |
@@ -192,9 +198,11 @@ Each app's catalog gives the versions it was verified on. **Finder, Safari, Chro
 | `file_list` | verified | — |
 | `file_make_alias` | — | verified |
 | `file_move` | verified | verified |
+| `file_open_with` | — | verified |
 | `file_put_back` | — | verified |
 | `file_rename` | verified | verified |
 | `file_reveal` | — | verified |
+| `file_set_locked` | verified | verified |
 | `file_trash` | verified | verified |
 | `folder_create` | verified | verified |
 | `folder_new_with_selection` | — | verified |
@@ -205,6 +213,7 @@ Each app's catalog gives the versions it was verified on. **Finder, Safari, Chro
 | Function | Background | UI |
 |---|---|---|
 | `link_click` | — | verified |
+| `page_add_bookmark` | — | verified |
 | `page_add_to_reading_list` | — | verified |
 | `page_back` | — | verified |
 | `page_forward` | — | verified |
@@ -212,6 +221,7 @@ Each app's catalog gives the versions it was verified on. **Finder, Safari, Chro
 | `page_info` | — | verified |
 | `page_links` | — | verified |
 | `page_reload` | — | verified |
+| `page_save` | — | verified |
 | `page_save_pdf` | — | verified |
 | `page_text` | — | verified |
 | `tab_activate` | — | verified |
@@ -224,12 +234,14 @@ Each app's catalog gives the versions it was verified on. **Finder, Safari, Chro
 | Function | Background | UI |
 |---|---|---|
 | `link_click` | — | verified |
+| `page_add_bookmark` | — | verified |
 | `page_back` | — | verified |
 | `page_forward` | — | verified |
 | `page_go` | — | verified |
 | `page_info` | — | verified |
 | `page_links` | — | verified |
 | `page_reload` | — | verified |
+| `page_save` | — | verified |
 | `page_text` | — | verified |
 | `tab_activate` | — | verified |
 | `tab_close` | — | verified |
@@ -261,11 +273,13 @@ Each app's catalog gives the versions it was verified on. **Finder, Safari, Chro
 | `contact_add_address` | verified | — |
 | `contact_add_email` | verified | — |
 | `contact_add_phone` | verified | — |
+| `contact_add_url` | verified | — |
 | `contact_create` | verified | verified |
 | `contact_delete` | verified | verified |
 | `contact_details` | verified | — |
 | `contact_export_vcard` | verified | — |
 | `contact_get` | verified | — |
+| `contact_import_vcard` | — | verified |
 | `contact_list` | verified | — |
 | `contact_merge` | — | verified |
 | `contact_remove_email` | verified | — |
@@ -278,6 +292,7 @@ Each app's catalog gives the versions it was verified on. **Finder, Safari, Chro
 | `group_add` | verified | — |
 | `group_create` | verified | verified |
 | `group_delete` | verified | verified |
+| `group_export_vcard` | verified | — |
 | `group_list` | verified | — |
 | `group_remove` | verified | — |
 | `group_rename` | verified | verified |
@@ -288,6 +303,7 @@ Each app's catalog gives the versions it was verified on. **Finder, Safari, Chro
 |---|---|---|
 | `document_append` | verified | verified |
 | `document_close` | verified | verified |
+| `document_convert` | — | verified |
 | `document_copy_to_new` | verified | verified |
 | `document_create` | verified | verified |
 | `document_export_pdf` | — | verified |
@@ -306,11 +322,16 @@ Each app's catalog gives the versions it was verified on. **Finder, Safari, Chro
 | `document_export` | — | verified |
 | `document_list` | — | verified |
 | `document_open` | — | verified |
+| `image_adjust` | — | verified |
+| `image_crop` | — | verified |
 | `image_flip` | — | verified |
+| `image_resize` | — | verified |
 | `image_rotate` | — | verified |
 | `pdf_append_file` | — | verified |
 | `pdf_delete_page` | — | verified |
+| `pdf_insert_blank_page` | — | verified |
 | `pdf_move_page` | — | verified |
+| `pdf_rotate_page` | — | verified |
 
 **Keka** ([README](keka/README.md)):
 
@@ -326,6 +347,8 @@ Each app's catalog gives the versions it was verified on. **Finder, Safari, Chro
 | Function | Background | UI |
 |---|---|---|
 | `note_create` | — | verified |
+| `note_open` | — | verified |
+| `plugin_install` | — | verified |
 | `vault_create` | — | verified |
 | `vault_list` | — | verified |
 
@@ -333,15 +356,22 @@ Each app's catalog gives the versions it was verified on. **Finder, Safari, Chro
 
 | Function | Background | UI |
 |---|---|---|
+| `action_add_items` | — | verified |
+| `action_set_filter` | — | verified |
+| `action_set_folder` | — | verified |
+| `action_set_option` | — | verified |
 | `workflow_actions` | — | verified |
 | `workflow_add_action` | — | verified |
 | `workflow_new` | — | verified |
+| `workflow_open` | — | verified |
+| `workflow_run` | — | verified |
 | `workflow_save` | — | verified |
 
 **VS Code** ([README](vscode/README.md)):
 
 | Function | Background | UI |
 |---|---|---|
+| `extension_install` | — | verified |
 | `file_new` | — | verified |
 | `file_open` | — | verified |
 | `folder_open` | — | verified |
@@ -351,6 +381,7 @@ Each app's catalog gives the versions it was verified on. **Finder, Safari, Chro
 | Function | Background | UI |
 |---|---|---|
 | `project_build` | — | verified |
+| `project_clean` | — | verified |
 | `project_new` | — | verified |
 | `project_open` | — | verified |
 
@@ -362,3 +393,29 @@ Each app's catalog gives the versions it was verified on. **Finder, Safari, Chro
 | `recording_stop` | — | verified |
 | `scene_add` | — | verified |
 | `source_add` | — | verified |
+
+**Anaconda Navigator** ([README](anaconda/README.md)):
+
+| Function | Background | UI |
+|---|---|---|
+| `environment_remove` | — | verified |
+
+**LibreOffice Calc** ([README](libreoffice/README.md)):
+
+| Function | Background | UI |
+|---|---|---|
+| `csv_convert` | — | verified |
+| `csv_sort` | — | verified |
+| `spreadsheet_to_csv` | — | verified |
+
+**System Settings** ([README](settings/README.md)):
+
+| Function | Background | UI |
+|---|---|---|
+| `appearance_set` | — | verified |
+| `dock_set` | — | verified |
+| `login_item_add` | — | verified |
+| `login_item_list` | — | verified |
+| `login_item_remove` | — | verified |
+| `wallpaper_list` | — | verified |
+| `wallpaper_set` | — | verified |
